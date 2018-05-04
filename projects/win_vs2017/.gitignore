@@ -1,0 +1,10 @@
+
+# Mac OS X
+*.DS_Store
+
+# Windows
+[Tt]humbs.db
+
+# Nuget Packages.
+packages/
+packages.config

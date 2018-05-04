@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\include\sxcore\com.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\sxcore\debug.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\include\sxcore\vectors.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\main.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\GLTFLoader.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\MaterialData.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\MeshData.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\SceneData.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\ImageData.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\GLTFImporterInterface.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="..\source\GlobalHeader.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\GLTFLoader.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\MaterialData.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\MeshData.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\SceneData.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\ImageData.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\GLTFImporterInterface.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="script2.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\source\resources\zh_CN.lproj\sxuls\text.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="..\source\resources\zh_CN.lproj\sxuls\strings.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="..\source\resources\ja.lproj\sxuls\strings.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="..\source\resources\en.lproj\sxuls\strings.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="..\source\resources\ja.lproj\sxuls\text.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="..\source\resources\en.lproj\sxuls\text.sxul">
+      <Filter>SXUL</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="sources">
+      <UniqueIdentifier>{708d3699-5387-498c-9ce4-0d4b3e3b0e97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SXUL">
+      <UniqueIdentifier>{1888daaa-a0a7-41e9-ad2a-9e4e8bdc318b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mysources">
+      <UniqueIdentifier>{337909e2-677d-4ef0-89b9-ff6bbef94434}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
