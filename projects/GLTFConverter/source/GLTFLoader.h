@@ -13,6 +13,12 @@ class CSceneData;
 class CGLTFLoader
 {
 private:
+	/**
+	 * DeserializeJson()を呼ぶ前に、Deserializeに失敗する要素を削除しておく.
+	 * @param[in]  jsonStr           gltfのjsonテキスト.
+	 * @param[out] outputJsonStr     修正後のjsonテキストが返る.
+	 */
+	bool m_checkPreDeserializeJson (const std::string jsonStr, std::string& outputJsonStr);
 
 public:
 	CGLTFLoader ();

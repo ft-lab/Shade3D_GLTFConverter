@@ -171,8 +171,8 @@ void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 
 	// 頂点座標を格納。.
 	// GLTFではメートル単位であるので、Shade3Dのミリメートルに変換して渡している.
+	const size_t versCou = meshD.vertices.size();
 	{
-		const size_t versCou = meshD.vertices.size();
 		const float scale = 1000.0f;
 		for (size_t i = 0; i < versCou; ++i) {
 			const sxsdk::vec3 v =  meshD.vertices[i] * scale;
@@ -184,9 +184,14 @@ void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 	{
 		const size_t triCou = meshD.triangleIndices.size() / 3;
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-			scene->append_polygon_mesh_face(meshD.triangleIndices[iPos + 0],
-											meshD.triangleIndices[iPos + 1],
-											meshD.triangleIndices[iPos + 2]);
+			const int i0 = meshD.triangleIndices[iPos + 0];
+			const int i1 = meshD.triangleIndices[iPos + 1];
+			const int i2 = meshD.triangleIndices[iPos + 2];
+			if (i0 < 0 || i1 < 0 || i2 < 0 || i0 >= versCou || i1 >= versCou || i2 >= versCou) {
+				continue;
+			}
+
+			scene->append_polygon_mesh_face(i0, i1, i2);
 		}
 	}
 
@@ -197,14 +202,11 @@ void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 	if (!meshD.uv0.empty()) {
 		const int uvIndex = pMesh.append_uv_layer();
 
-		const size_t triCou = meshD.triangleIndices.size() / 3;
+		const int triCou = pMesh.get_number_of_faces();
 		int triIndices[3];
-		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-			triIndices[0] = meshD.triangleIndices[iPos + 0];
-			triIndices[1] = meshD.triangleIndices[iPos + 1];
-			triIndices[2] = meshD.triangleIndices[iPos + 2];
-
+		for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 			sxsdk::face_class& f = pMesh.face(i);
+			f.get_vertex_indices(triIndices);
 			for (int j = 0; j < 3; ++j) {
 				f.set_face_uv(uvIndex, j, meshD.uv0[ triIndices[j] ]);
 			}
@@ -213,14 +215,11 @@ void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 	if (!meshD.uv1.empty()) {
 		const int uvIndex = pMesh.append_uv_layer();
 
-		const size_t triCou = meshD.triangleIndices.size() / 3;
+		const int triCou = pMesh.get_number_of_faces();
 		int triIndices[3];
-		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-			triIndices[0] = meshD.triangleIndices[iPos + 0];
-			triIndices[1] = meshD.triangleIndices[iPos + 1];
-			triIndices[2] = meshD.triangleIndices[iPos + 2];
-
+		for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 			sxsdk::face_class& f = pMesh.face(i);
+			f.get_vertex_indices(triIndices);
 			for (int j = 0; j < 3; ++j) {
 				f.set_face_uv(uvIndex, j, meshD.uv1[ triIndices[j] ]);
 			}

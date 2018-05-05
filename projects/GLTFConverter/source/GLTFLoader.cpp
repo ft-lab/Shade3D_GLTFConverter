@@ -16,6 +16,10 @@
 #include <GLTFSDK/GLTFResourceWriter.h>
 #include <GLTFSDK/GLBResourceReader.h>
 #include <GLTFSDK/GLTFResourceReader.h>
+
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -189,7 +193,10 @@ namespace {
 
 				const size_t versCou = uvs.size() / 2;
 				if (versCou > 0) {
-					dstMeshData.uv0.resize(versCou);
+					// 頂点数とUV数は同じであるはずだが、異なる場合がある ?
+					const size_t versCouV = dstMeshData.vertices.size();
+					dstMeshData.uv0.resize(std::max(versCou, versCouV), sxsdk::vec2(0, 0));
+
 					for (size_t j = 0, iPos = 0; j < versCou; ++j, iPos += 2) {
 						dstMeshData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 					}
@@ -209,7 +216,10 @@ namespace {
 
 				const size_t versCou = uvs.size() / 2;
 				if (versCou > 0) {
-					dstMeshData.uv1.resize(versCou);
+					// 頂点数とUV数は同じであるはずだが、異なる場合がある ?
+					const size_t versCouV = dstMeshData.vertices.size();
+					dstMeshData.uv1.resize(std::max(versCou, versCouV), sxsdk::vec2(0, 0));
+
 					for (size_t j = 0, iPos = 0; j < versCou; ++j, iPos += 2) {
 						dstMeshData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 					}
@@ -410,11 +420,11 @@ namespace {
 				// 画像ファイルの拡張子を取得.
 				const std::string extStr = ::getFileExtension(image.uri);
 				if (extStr != "") {
-					dstImageData.name     = image.uri;
+					dstImageData.name     = ::getFileNameFromFullPath(image.uri);
 					dstImageData.mimeType = std::string("image/") + extStr;
 				}
 			} else {
-				dstImageData.name     = image.name;
+				dstImageData.name     = ::getFileNameFromFullPath(image.name);
 				dstImageData.mimeType = image.mimeType;
 			}
 
@@ -555,6 +565,18 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		}
 	}
 
+	// jsonStr内のjsonテキストのうち、.
+	//    "JOINTS_0":-1
+	//    "WEIGHTS_0":-1
+	// のようなマイナス値があると、次の「DeserializeJson」で例外が発生する.
+	//    "targets":[] 
+	// のような何も定義されていないものがあっても例外発生.
+	// 
+	// このような記述がある場合は削除したほうがよい.
+	
+	// jsonデータより、不要なデータを削除.
+	if (!m_checkPreDeserializeJson(jsonStr, jsonStr)) return false;
+
 	{
 		// jsonデータをパース.
 		try {
@@ -592,3 +614,110 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	}
 }
 
+/**
+ * DeserializeJson()を呼ぶ前に、Deserializeに失敗する要素を削除しておく.
+ * @param[in]  jsonStr           gltfのjsonテキスト.
+ * @param[out] outputJsonStr     修正後のjsonテキストが返る.
+ */
+bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::string& outputJsonStr)
+{
+	outputJsonStr = jsonStr;
+
+	/*
+	   jsonStr内のjsonテキストのうち、.
+	     "JOINTS_0":-1
+	      "WEIGHTS_0":-1
+	   のようなマイナス値があると、次の「DeserializeJson」で例外が発生する.
+	      "targets":[] 
+	   のような何も定義されていないものがあっても例外発生.
+	   このようなエラーにつながる部分を除去する.
+	 */
+	rapidjson::Document doc;
+	doc.Parse(jsonStr.c_str());		// jsonとしてパース.
+	if (doc.HasParseError()) return false;
+
+	// [meshes] - [primitives] 内のチェック.
+	try {
+		rapidjson::Value& meshesV = doc["meshes"];
+		rapidjson::SizeType num = meshesV.Size();			// meshesは配列.
+		for (rapidjson::SizeType i = 0; i < num; ++i) {
+			rapidjson::Value& meshD = meshesV[i];
+			if (!meshD.HasMember("primitives")) continue;
+			rapidjson::Value& primitives = meshD["primitives"];
+			rapidjson::SizeType numP = primitives.Size();	// primitivesは配列.
+			for (rapidjson::SizeType j = 0; j < numP; ++j) {
+				rapidjson::Value& prV = primitives[j];
+
+				// [meshes] - [primitives] 内の要素を列挙し、数値で値がマイナスのものを削除.
+				if (prV.HasMember("attributes")) {
+					rapidjson::Value& attributes = prV["attributes"];
+					std::vector<std::string> removeKeyList;
+					for(rapidjson::Value::MemberIterator itr = attributes.MemberBegin(); itr != attributes.MemberEnd(); itr++) {
+						const std::string name = itr->name.GetString();
+						const rapidjson::Type type = itr->value.GetType();
+						if (type == rapidjson::kNumberType) {		// 数値の場合.
+							if ((itr->value.GetInt()) < 0) {
+								// 値がマイナスの要素は削除対象にする.
+								removeKeyList.push_back(name);
+							}
+						}
+					}
+					for (size_t j = 0; j < removeKeyList.size(); ++j) {
+						attributes.RemoveMember(removeKeyList[j].c_str());	// 指定のキーの要素を削除.
+					}
+				}
+
+				// [meshes] - [primitives] 内の要素を列挙し、配列でサイズが0のものを削除.
+				{
+					std::vector<std::string> removeKeyList;
+					for(rapidjson::Value::MemberIterator itr = prV.MemberBegin(); itr != prV.MemberEnd(); itr++) {
+						const std::string name = itr->name.GetString();
+						const rapidjson::Type type = itr->value.GetType();
+						if (type == rapidjson::kArrayType) {		// 配列の場合.
+							if (itr->value.Size() == 0) {
+								removeKeyList.push_back(name);
+							}
+						}
+					}
+					for (size_t j = 0; j < removeKeyList.size(); ++j) {
+						prV.RemoveMember(removeKeyList[j].c_str());		// 指定のキーの要素を削除.
+					}
+				}
+			}
+		}
+	} catch (...) {
+		return false;
+	}
+
+#if 0
+	// [bufferViews]の要素をチェック.
+	// "byteStride": 0  がエラーになる.
+	try {
+		rapidjson::Value& bufferViewsV = doc["bufferViews"];
+		rapidjson::SizeType num = bufferViewsV.Size();			// meshesは配列.
+		for (rapidjson::SizeType i = 0; i < num; ++i) {
+			rapidjson::Value& bufferViewsD = bufferViewsV[i];
+			if (!bufferViewsD.HasMember("byteStride")) continue;
+			rapidjson::Value::MemberIterator itr = bufferViewsD.FindMember("byteStride");
+			const std::string name = itr->name.GetString();
+			const rapidjson::Type type = itr->value.GetType();
+			if (type == rapidjson::kNumberType) {		// 数値の場合.
+				if (itr->value.GetInt() == 0) {
+					bufferViewsD.RemoveMember(name.c_str());
+				}
+			}
+		}
+	} catch (...) {
+		return false;
+	}
+#endif
+
+	// jsonテキストのインデントを整列した形でbufに格納.
+	// buf.GetString() が出力されたjsonテキスト.
+	rapidjson::StringBuffer buf;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
+    doc.Accept(writer);
+
+	outputJsonStr = buf.GetString();
+	return true;
+}
