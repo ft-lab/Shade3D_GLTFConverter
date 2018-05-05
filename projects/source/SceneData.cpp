@@ -14,9 +14,13 @@ CNodeData::CNodeData ()
 {
 	clear();
 }
+CNodeData::~CNodeData ()
+{
+}
 
 void CNodeData::clear ()
 {
+	used = false;
 	name = "";
 	meshIndex = -1;
 	prevNodeIndex = -1;
@@ -39,11 +43,30 @@ void CSceneData::clear()
 {
 	assetVersion    = "";
 	assetGenerator  = "";
+	assetCopyRight  = "";
 	fileName        = "";
+	filePath        = "";
 
+	nodes.clear();
 	materials.clear();
 	meshes.clear();
 	images.clear();
+}
+
+/**
+ * ファイル名を除いたディレクトリを取得.
+ */
+const std::string CSceneData::getFileDir () const
+{
+	int iPos  = filePath.find_last_of("/");
+	int iPos2 = filePath.find_last_of("\\");
+	if (iPos == std::string::npos && iPos2 == std::string::npos) return filePath;
+	if (iPos != std::string::npos && iPos2 != std::string::npos) {
+		iPos = std::max(iPos, iPos2);
+	} else if (iPos == std::string::npos) iPos = iPos2;
+	if (iPos == std::string::npos) return filePath;
+
+	return filePath.substr(0, iPos);
 }
 
 /**

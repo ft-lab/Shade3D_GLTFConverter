@@ -87,6 +87,7 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	shade.message(std::string("File : ") + fileName);
 	shade.message(std::string("Asset generator : ") + sceneData.assetGenerator);
 	shade.message(std::string("Asset version : ") + sceneData.assetVersion);
+	shade.message(std::string("Asset copyright : ") + sceneData.assetCopyRight);
 
 	shade.message(std::string("Meshes : ") + std::to_string(sceneData.meshes.size()));
 	shade.message(std::string("Materials : ") + std::to_string(sceneData.materials.size()));

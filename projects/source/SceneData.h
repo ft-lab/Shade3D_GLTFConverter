@@ -19,6 +19,7 @@
 class CNodeData
 {
 public:
+	bool used;				// 使用してるかどうか.
 	std::string name;		// 名前.
 	int meshIndex;			// 参照するメッシュ番号.
 
@@ -33,6 +34,22 @@ public:
 
 public:
 	CNodeData ();
+	~CNodeData ();
+
+    CNodeData& operator = (const CNodeData &v) {
+		this->used            = v.used;
+		this->name            = v.name;
+		this->meshIndex       = v.meshIndex;
+		this->prevNodeIndex   = v.prevNodeIndex;
+		this->nextNodeIndex   = v.nextNodeIndex;
+		this->childNodeIndex  = v.childNodeIndex;
+		this->parentNodeIndex = v.parentNodeIndex;
+		this->translation     = v.translation;
+		this->scale           = v.scale;
+		this->rotation        = v.rotation;
+
+		return (*this);
+    }
 
 	void clear ();
 };
@@ -46,7 +63,12 @@ class CSceneData
 public:
 	std::string assetVersion;				// Assetバージョン.
 	std::string assetGenerator;				// 作成ツール.
+	std::string assetCopyRight;				// Copy Right.
+
+	std::string filePath;					// ファイルフルパス.
 	std::string fileName;					// ファイル名.
+
+	std::vector<CNodeData> nodes;			// ノード情報.
 
 	std::vector<CMaterialData> materials;	// マテリアル情報の配列.
 	std::vector<CMeshData> meshes;			// メッシュ情報の配列.
@@ -56,6 +78,11 @@ public:
 	CSceneData ();
 
 	void clear();
+
+	/**
+	 * ファイル名を除いたディレクトリを取得.
+	 */
+	const std::string getFileDir () const;
 
 	/**
 	 * 作業フォルダに画像ファイルを出力.

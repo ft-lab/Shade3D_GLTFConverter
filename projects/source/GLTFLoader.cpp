@@ -1,5 +1,12 @@
 ﻿/**
  * GLTFの読み込みクラス.
+ * Microsoft.glTF.CPP を使用.
+ *
+ *  Microsoft.glTF.CPPはnugetを使用して
+ *  [win_vs2017]ディレクトリ内に packages.configと[packages]ディレクトリを配置する必要がある.
+ *
+ * GLTF 2.0フォーマットの参考:
+ * https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md
  */
 
 #include "GLTFLoader.h"
@@ -8,9 +15,11 @@
 #include <GLTFSDK/Serialize.h>
 #include <GLTFSDK/GLTFResourceWriter.h>
 #include <GLTFSDK/GLBResourceReader.h>
+#include <GLTFSDK/GLTFResourceReader.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 using namespace Microsoft::glTF;
 
@@ -18,7 +27,7 @@ using namespace Microsoft::glTF;
 
 namespace {
 	/**
-	 * 読み込み用.
+	 * リソース読み込み用.
 	 */
 	class InStream : public IStreamReader
 	{
@@ -27,13 +36,33 @@ namespace {
 		{
 		}
 
-		std::shared_ptr<std::istream> GetInputStream(const std::string&) const override
+		virtual std::shared_ptr<std::istream> GetInputStream(const std::string&) const override
 		{
 			return std::dynamic_pointer_cast<std::istream>(m_stream);
 		}
 
 	private:
 		std::shared_ptr<std::stringstream> m_stream;
+	};
+
+	/**
+	 * バイナリ読み込み用.
+	 */
+	class BinStream : public IStreamReader
+	{
+	private:
+		std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
+
+	public:
+		BinStream (std::string basePath) : m_basePath(basePath)
+		{
+		}
+
+		virtual std::shared_ptr<std::istream> GetInputStream(const std::string& filename) const override
+		{
+			const std::string path = m_basePath + std::string("/") + filename;
+			return std::make_shared<std::ifstream>(path, std::ios::binary);
+		}
 	};
 
 	/**
@@ -47,71 +76,33 @@ namespace {
 		if (iPos == std::string::npos) return "";
 		return fileName2.substr(iPos + 1);
 	}
-}
 
-CGLTFLoader::CGLTFLoader ()
-{
-}
+	/**
+	 * GLTFのMesh情報を取得して格納.
+	 */
+	void storeGLTFMeshes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		const size_t meshesSize = gltfDoc.meshes.Size();
 
-/**
- * 指定のGLTFファイルを読み込み.
- * @param[in]  fileName    読み込み形状名 (gltfまたはglb).
- * @param[out] sceneData   読み込んだGLTFのシーン情報が返る.
- */
-bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
-{
-	if (!sceneData) return false;
-
-	// fileNameがglbファイルかどうか.
-	const bool glbFile = (::getFileExtension(fileName) == std::string("glb"));
-
-	sceneData->clear();
-
-	try {
-		// glbファイルを読み込み.
-		auto glbStream = std::make_shared<std::ifstream>(fileName, std::ios::binary);
-		auto streamReader = std::make_unique<InStream>();
-		GLBResourceReader reader(*streamReader, glbStream);
-
-		// glbファイルからjson部を取得.
-		std::string json = reader.GetJson();
-		GLTFDocument gltfDoc;
-		
-		try {
-			gltfDoc = DeserializeJson(json);		// TODO : glbによってはここで例外発生.
-		} catch (...) {
-			return false;
-		}
-
-		// 各要素の数を取得.
-		const size_t meshesSize      = gltfDoc.meshes.Size();
-		const size_t materialsSize   = gltfDoc.materials.Size();
-		const size_t accessorsSize   = gltfDoc.accessors.Size();
-		const size_t buffersSize     = gltfDoc.buffers.Size();
-		const size_t bufferViewsSize = gltfDoc.bufferViews.Size();
-		const size_t imagesSize      = gltfDoc.images.Size();
-
-		{
-			sceneData->fileName = "";
-			{
-				const int iPos = fileName.find_last_of("/");
-				if (iPos > 0) {
-					sceneData->fileName = fileName.substr(iPos + 1);
+		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
+		std::shared_ptr<BinStream> binStreamReader;
+		std::shared_ptr<GLTFResourceReader> binReader;
+		if (!reader) {
+			const size_t size = gltfDoc.buffers.Size();
+			if (size > 0 && gltfDoc.buffers[0].uri != "") {
+				try {
+					const std::string fileDir = sceneData->getFileDir();
+					if (size > 0) {
+						binStreamReader.reset(new BinStream(fileDir));
+						binReader.reset(new GLTFResourceReader(*binStreamReader));
+					}
+				} catch (...) {
+					return;
 				}
-			}
-			if ((sceneData->fileName) == "") {
-				const int iPos = fileName.find_last_of("\\");
-				if (iPos > 0) {
-					sceneData->fileName = fileName.substr(iPos + 1);
-				}
+			} else {
+				return;
 			}
 		}
 
-		// Asset情報を取得.
-		sceneData->assetVersion   = gltfDoc.asset.version;
-		sceneData->assetGenerator = gltfDoc.asset.generator;
-
-		// メッシュ情報を取得.
 		for (size_t i = 0; i < meshesSize; ++i) {
 			sceneData->meshes.push_back(CMeshData());
 			CMeshData& dstMeshData = sceneData->meshes[i];
@@ -136,7 +127,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				const int bufferViewID = std::stoi(acce.bufferViewId);
 
 				// 頂点座標の配列を取得.
-				std::vector<Vector3> vers = reader.ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				std::vector<Vector3> vers;
+				if (reader) vers = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				else if (binReader) vers = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
 				const size_t versCou = vers.size();
 				if (versCou > 0) {
 					dstMeshData.vertices.resize(versCou);
@@ -153,7 +147,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				const int bufferViewID = std::stoi(acce.bufferViewId);
 
 				// 法線の配列を取得.
-				std::vector<Vector3> normals = reader.ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				std::vector<Vector3> normals;
+				if (reader) normals = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				else if (binReader) normals = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
 				const size_t versCou = normals.size();
 				if (versCou > 0) {
 					dstMeshData.normals.resize(versCou);
@@ -171,7 +168,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 				// UV0の配列を取得.
 				// floatの配列で返るため、/2 がUV要素数.
-				std::vector<float> uvs = reader.ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				std::vector<float> uvs;
+				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
 				const size_t versCou = uvs.size() / 2;
 				if (versCou > 0) {
 					dstMeshData.uv0.resize(versCou);
@@ -188,7 +188,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 				// UV1の配列を取得.
 				// floatの配列で返るため、/2 がUV要素数.
-				std::vector<float> uvs = reader.ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				std::vector<float> uvs;
+				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
 				const size_t versCou = uvs.size() / 2;
 				if (versCou > 0) {
 					dstMeshData.uv1.resize(versCou);
@@ -205,30 +208,22 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				const int bufferViewID = std::stoi(acce.bufferViewId);
 
 				// 頂点インデックスの配列を取得.
-				dstMeshData.triangleIndices = reader.ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				if (reader) {
+					dstMeshData.triangleIndices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				} else if (binReader) {
+					dstMeshData.triangleIndices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				}
 			}
 		}
+	}
 
-		// テクスチャ画像情報を取得.
-		for (size_t i = 0; i < imagesSize; ++i) {
-			sceneData->images.push_back(CImageData());
-			CImageData& dstImageData = sceneData->images.back();
-
-			const Image& image = gltfDoc.images[i];
-			const int bufferViewID = std::stoi(image.bufferViewId);
-
-			dstImageData.name     = image.name;
-			dstImageData.mimeType = image.mimeType;
-			//if (dstImageData.name == "") {
-			//	dstImageData.name = std::string("image_") + std::to_string(i);
-			//}
-
-			// 画像バッファを取得.
-			const std::vector<uint8_t> imageData = reader.ReadBinaryData(gltfDoc, image);
-			const size_t dCou = imageData.size();
-			dstImageData.imageDatas.resize(dCou);
-			for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
-		}
+	/**
+	 * GLTFのMaterial情報を取得して格納.
+	 */
+	void storeGLTFMaterials (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		if (sceneData->images.empty()) return;
+		const size_t materialsSize   = gltfDoc.materials.Size();
+		const size_t imagesSize      = gltfDoc.images.Size();
 
 		// マテリアル情報を取得.
 		for (size_t i = 0; i < materialsSize; ++i) {
@@ -369,11 +364,173 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				imageD.name = std::string("image_") + std::to_string(i);
 			}
 		}
-
-	} catch (...) {
-		return false;
 	}
 
-	return true;
+	/**
+	 * GLTFのImage情報を取得して格納.
+	 */
+	void storeGLTFImages (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		const size_t imagesSize = gltfDoc.images.Size();
+
+		// GLTFから読み込む場合は、外部の画像を読み込みすることになる.
+		// そのためのReaderを作成.
+		std::shared_ptr<BinStream> binStreamReader;
+		std::shared_ptr<GLTFResourceReader> binReader;
+		if (!reader) {
+			try {
+				const std::string fileDir = sceneData->getFileDir();
+				binStreamReader.reset(new BinStream(fileDir));
+				binReader.reset(new GLTFResourceReader(*binStreamReader));
+			} catch (...) {
+				return;
+			}
+		} else {
+			return;
+		}
+
+		for (size_t i = 0; i < imagesSize; ++i) {
+			sceneData->images.push_back(CImageData());
+			CImageData& dstImageData = sceneData->images.back();
+
+			const Image& image = gltfDoc.images[i];
+			if (!reader) {
+				if (image.uri == "") continue;
+				// 画像ファイルの拡張子を取得.
+				const std::string extStr = ::getFileExtension(image.uri);
+				if (extStr != "") {
+					dstImageData.name     = image.uri;
+					dstImageData.mimeType = std::string("image/") + extStr;
+				}
+			} else {
+				dstImageData.name     = image.name;
+				dstImageData.mimeType = image.mimeType;
+			}
+
+			// 画像バッファを取得.
+			const std::vector<uint8_t> imageData = (reader) ? (reader->ReadBinaryData(gltfDoc, image)) : (binReader->ReadBinaryData(gltfDoc, image));
+			const size_t dCou = imageData.size();
+			dstImageData.imageDatas.resize(dCou);
+			for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
+		}
+	}
+
+	/**
+	 * ノード階層を格納.
+	 */
+	void storeGLTFNodes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		if (!reader) return;
+	}
+}
+
+CGLTFLoader::CGLTFLoader ()
+{
+}
+
+/**
+ * 指定のGLTFファイルを読み込み.
+ * @param[in]  fileName    読み込み形状名 (gltfまたはglb).
+ * @param[out] sceneData   読み込んだGLTFのシーン情報が返る.
+ */
+bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
+{
+	if (!sceneData) return false;
+
+	sceneData->clear();
+
+	// ファイル名を格納.
+	{
+		sceneData->filePath = fileName;
+		sceneData->fileName = "";
+		{
+			const int iPos = fileName.find_last_of("/");
+			if (iPos > 0) {
+				sceneData->fileName = fileName.substr(iPos + 1);
+			}
+		}
+		if ((sceneData->fileName) == "") {
+			const int iPos = fileName.find_last_of("\\");
+			if (iPos > 0) {
+				sceneData->fileName = fileName.substr(iPos + 1);
+			}
+		}
+	}
+
+	std::shared_ptr<GLBResourceReader> reader;
+	GLTFDocument gltfDoc;
+	std::string jsonStr = "";
+
+	// fileNameがglbファイルかどうか.
+	const bool glbFile = (::getFileExtension(fileName) == std::string("glb"));
+
+	// gltf/glbの拡張子より、読み込みを分岐.
+	if (glbFile) {
+		try {
+			// glbファイルを読み込み.
+			auto glbStream = std::make_shared<std::ifstream>(fileName, std::ios::binary);
+			auto streamReader = std::make_unique<InStream>();
+			reader.reset(new GLBResourceReader(*streamReader, glbStream));
+
+			// glbファイルからjson部を取得.
+			jsonStr = reader->GetJson();
+		
+		} catch (...) {
+			return false;
+		}
+	} else {				// gltfファイルを読み込み.
+		// 拡張子gltfを読み込んだ場合は、.
+		// 読み込んだgltfファイル(json)からbuffers/imagesのuriを使ってbinや画像を別途読み込む必要がある.
+		try {
+			std::ifstream gltfStream(fileName);
+			if (!gltfStream) return false;
+
+			// json部を取得.
+			jsonStr = "";
+			{
+				std::string str;
+				while (!gltfStream.eof()) {
+					std::getline(gltfStream, str);
+					jsonStr += str + std::string("\n");
+				}
+			}
+		} catch (...) {
+			return false;
+		}
+	}
+
+	{
+		// jsonデータをパース.
+		try {
+			gltfDoc = DeserializeJson(jsonStr);		// TODO : glbによってはここで例外発生する場合がある.
+		} catch (...) {
+			return false;
+		}
+
+		// 各要素の数を取得.
+		const size_t meshesSize      = gltfDoc.meshes.Size();
+		const size_t materialsSize   = gltfDoc.materials.Size();
+		const size_t accessorsSize   = gltfDoc.accessors.Size();
+		const size_t buffersSize     = gltfDoc.buffers.Size();
+		const size_t bufferViewsSize = gltfDoc.bufferViews.Size();
+		const size_t imagesSize      = gltfDoc.images.Size();
+
+		// Asset情報を取得.
+		sceneData->assetVersion   = gltfDoc.asset.version;
+		sceneData->assetGenerator = gltfDoc.asset.generator;
+		sceneData->assetCopyRight = gltfDoc.asset.copyright;
+
+		// メッシュ情報を取得.
+		::storeGLTFMeshes(gltfDoc, reader, sceneData);
+
+		// イメージ情報を取得.
+		::storeGLTFImages(gltfDoc, reader, sceneData);
+
+		// マテリアル情報を取得.
+		::storeGLTFMaterials(gltfDoc, reader, sceneData);
+
+		// ノード階層を取得.
+		::storeGLTFNodes(gltfDoc, reader, sceneData);
+
+		return true;
+	}
 }
 
