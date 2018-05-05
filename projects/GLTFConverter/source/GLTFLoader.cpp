@@ -153,11 +153,13 @@ namespace {
 				if (reader) vers = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 				else if (binReader) vers = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
+				const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+
 				const size_t versCou = vers.size();
-				if (versCou > 0) {
-					dstMeshData.vertices.resize(versCou);
-					for (size_t j = 0; j < versCou; ++j) {
-						dstMeshData.vertices[j] = sxsdk::vec3(vers[j].x, vers[j].y, vers[j].z);
+				if (versCou > 0 && acce.count > 0) {
+					dstMeshData.vertices.resize(acce.count);
+					for (size_t j = 0; j < acce.count; ++j) {
+						dstMeshData.vertices[j] = sxsdk::vec3(vers[j + offsetI].x, vers[j + offsetI].y, vers[j + offsetI].z);
 					}
 				}
 			}
@@ -173,11 +175,13 @@ namespace {
 				if (reader) normals = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 				else if (binReader) normals = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
+				const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+
 				const size_t versCou = normals.size();
-				if (versCou > 0) {
-					dstMeshData.normals.resize(versCou);
-					for (size_t j = 0; j < versCou; ++j) {
-						dstMeshData.normals[j] = sxsdk::vec3(normals[j].x, normals[j].y, normals[j].z);
+				if (versCou > 0 && acce.count > 0) {
+					dstMeshData.normals.resize(acce.count);
+					for (size_t j = 0; j < acce.count; ++j) {
+						dstMeshData.normals[j] = sxsdk::vec3(normals[j + offsetI].x, normals[j + offsetI].y, normals[j + offsetI].z);
 					}
 				}
 			}
@@ -194,13 +198,13 @@ namespace {
 				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-				const size_t versCou = uvs.size() / 2;
-				if (versCou > 0) {
-					// 頂点数とUV数は同じであるはずだが、異なる場合がある ?
-					const size_t versCouV = dstMeshData.vertices.size();
-					dstMeshData.uv0.resize(std::max(versCou, versCouV), sxsdk::vec2(0, 0));
+				const int offsetI = acce.byteOffset / (sizeof(float));
 
-					for (size_t j = 0, iPos = 0; j < versCou; ++j, iPos += 2) {
+				const size_t versCou = uvs.size();
+				if (versCou > 0 && acce.count > 0) {
+					dstMeshData.uv0.resize(acce.count);
+
+					for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
 						dstMeshData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 					}
 				}
@@ -217,13 +221,12 @@ namespace {
 				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-				const size_t versCou = uvs.size() / 2;
-				if (versCou > 0) {
-					// 頂点数とUV数は同じであるはずだが、異なる場合がある ?
-					const size_t versCouV = dstMeshData.vertices.size();
-					dstMeshData.uv1.resize(std::max(versCou, versCouV), sxsdk::vec2(0, 0));
+				const int offsetI = acce.byteOffset / (sizeof(float));
 
-					for (size_t j = 0, iPos = 0; j < versCou; ++j, iPos += 2) {
+				const size_t versCou = uvs.size();
+				if (versCou > 0 && acce.count > 0) {
+					dstMeshData.uv1.resize(acce.count);
+					for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
 						dstMeshData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 					}
 				}
@@ -245,28 +248,42 @@ namespace {
 					} else if (binReader) {
 						indices = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					}
-					dstMeshData.triangleIndices.resize(indices.size());
-					for (size_t j = 0; j < indices.size(); ++j) {
-						dstMeshData.triangleIndices[j] = (int)indices[j];
+
+					const int offsetI = acce.byteOffset / sizeof(unsigned char);
+
+					dstMeshData.triangleIndices.resize(acce.count);
+					for (size_t j = 0; j < acce.count; ++j) {
+						dstMeshData.triangleIndices[j] = (int)indices[j + offsetI];
 					}
 
-				} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shirtデータとして取得.
+				} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shortデータとして取得.
 					std::vector<unsigned short> indices;
 					if (reader) {
 						indices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					} else if (binReader) {
 						indices = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					}
-					dstMeshData.triangleIndices.resize(indices.size());
-					for (size_t j = 0; j < indices.size(); ++j) {
-						dstMeshData.triangleIndices[j] = (int)indices[j];
+
+					const int offsetI = acce.byteOffset / sizeof(unsigned short);
+
+					dstMeshData.triangleIndices.resize(acce.count);
+					for (size_t j = 0; j < acce.count; ++j) {
+						dstMeshData.triangleIndices[j] = (int)indices[j + offsetI];
 					}
 
 				} else {			// intデータとして取得.
+					std::vector<int> indices;
 					if (reader) {
-						dstMeshData.triangleIndices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						indices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					} else if (binReader) {
-						dstMeshData.triangleIndices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						indices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
+
+					const int offsetI = acce.byteOffset / sizeof(int);
+
+					dstMeshData.triangleIndices.resize(acce.count);
+					for (size_t j = 0; j < acce.count; ++j) {
+						dstMeshData.triangleIndices[j] = indices[j + offsetI];
 					}
 				}
 			}
@@ -749,7 +766,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
     doc.Accept(writer);
 
-#if 0
+#if 1
 	try {
 		std::ofstream outStream("E:\\Data\\User\\VCProgram\\GLTFConverter\\xxxx.gltf");
 		outStream << buf.GetString();
