@@ -83,6 +83,14 @@ public:
 	const std::string getFileDir () const;
 
 	/**
+	 * ノードの変換行列を取得.
+	 * @param[in] nodeIndex  ノード番号.
+	 * @param[in] unitMtoMM  メートルからミリメートルに単位変換する場合はtrue.
+	 * @return 変換行列.
+	 */
+	sxsdk::mat4 getNodeMatrix (const int nodeIndex, const bool unitMtoMM = true);
+
+	/**
 	 * 作業フォルダに画像ファイルを出力.
 	 * @param[in] imageIndex  画像番号.
 	 * @param[in] tempPath    作業用フォルダ.

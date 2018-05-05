@@ -446,9 +446,25 @@ namespace {
 			CNodeData& dstNodeD = sceneData->nodes[i];
 
 			dstNodeD.name        = node.name;
-			dstNodeD.translation = sxsdk::vec3(node.translation.x, node.translation.y, node.translation.z);
-			dstNodeD.scale       = sxsdk::vec3(node.scale.x, node.scale.y, node.scale.z);
-			dstNodeD.rotation    = sxsdk::quaternion_class(node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
+			if (node.GetTransformationType() == TRANSFORMATION_MATRIX) {
+				// 行列としての取得.
+				sxsdk::mat4 m;
+				int iPos = 0;
+				for (int y = 0; y < 4; ++y) {
+					for (int x = 0; x < 4; ++x) {
+						m[y][x] = node.matrix.values[iPos++];
+					}
+				}
+				sxsdk::vec3 trans, scale, rotate, shear;
+				m.unmatrix(scale, shear, rotate, trans);
+				dstNodeD.translation = trans;
+				dstNodeD.scale       = scale;
+				dstNodeD.rotation    = sxsdk::quaternion_class(rotate);
+			} else {
+				dstNodeD.translation = sxsdk::vec3(node.translation.x, node.translation.y, node.translation.z);
+				dstNodeD.scale       = sxsdk::vec3(node.scale.x, node.scale.y, node.scale.z);
+				dstNodeD.rotation    = sxsdk::quaternion_class(node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
+			}
 
 			if (node.meshId != "") {
 				dstNodeD.meshIndex = std::stoi(node.meshId);

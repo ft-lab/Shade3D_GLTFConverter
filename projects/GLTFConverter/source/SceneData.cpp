@@ -100,3 +100,20 @@ std::string CSceneData::outputTempImage (const int imageIndex, const std::string
 
 	return fileName;
 }
+
+/**
+ * ノードの変換行列を取得.
+ * @param[in] nodeIndex  ノード番号.
+ * @param[in] unitMtoMM  メートルからミリメートルに単位変換する場合はtrue.
+ * @return 変換行列.
+ */
+sxsdk::mat4 CSceneData::getNodeMatrix (const int nodeIndex, const bool unitMtoMM)
+{
+	const CNodeData& nodeD = nodes[nodeIndex];
+
+	const sxsdk::mat4 mTrans = sxsdk::mat4::translate(nodeD.translation * (unitMtoMM ? 1000.0f : 1.0f));
+	const sxsdk::mat4 mScale = sxsdk::mat4::scale(nodeD.scale);
+	const sxsdk::mat4 mRot   = sxsdk::mat4(nodeD.rotation);
+	
+	return (mScale * mRot * mTrans);
+}
