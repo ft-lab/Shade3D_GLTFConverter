@@ -132,6 +132,9 @@ namespace {
 			const int primitiveIndex = 0;		// TODO : 複数のprimitiveがある場合は追加処理が必要かも.
 			const MeshPrimitive& meshPrim = mesh.primitives[primitiveIndex];
 
+			// meshMode = MESH_TRIANGLES(4)の場合は、三角形.
+			MeshMode meshMode = meshPrim.mode;
+
 			// メッシュ名.
 			dstMeshData.name = mesh.name;
 
@@ -232,11 +235,39 @@ namespace {
 				const Accessor& acce = gltfDoc.accessors[indicesID];
 				const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				// 頂点インデックスの配列を取得.
-				if (reader) {
-					dstMeshData.triangleIndices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-				} else if (binReader) {
-					dstMeshData.triangleIndices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				// COMPONENT_BYTE(5120) / COMPONENT_UNSIGNED_SHORT(5123) / COMPONENT_UNSIGNED_INT(5125) / COMPONENT_FLOAT(5126)など.
+				ComponentType compType = acce.componentType;
+
+				if (compType == COMPONENT_UNSIGNED_BYTE) {		// byteデータとして取得.
+					std::vector<unsigned char> indices;
+					if (reader) {
+						indices = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					} else if (binReader) {
+						indices = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
+					dstMeshData.triangleIndices.resize(indices.size());
+					for (size_t j = 0; j < indices.size(); ++j) {
+						dstMeshData.triangleIndices[j] = (int)indices[j];
+					}
+
+				} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shirtデータとして取得.
+					std::vector<unsigned short> indices;
+					if (reader) {
+						indices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					} else if (binReader) {
+						indices = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
+					dstMeshData.triangleIndices.resize(indices.size());
+					for (size_t j = 0; j < indices.size(); ++j) {
+						dstMeshData.triangleIndices[j] = (int)indices[j];
+					}
+
+				} else {			// intデータとして取得.
+					if (reader) {
+						dstMeshData.triangleIndices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					} else if (binReader) {
+						dstMeshData.triangleIndices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
 				}
 			}
 		}
@@ -689,7 +720,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 		return false;
 	}
 
-#if 0
+#if 1
 	// [bufferViews]の要素をチェック.
 	// "byteStride": 0  がエラーになる.
 	try {
@@ -717,6 +748,14 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 	rapidjson::StringBuffer buf;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
     doc.Accept(writer);
+
+#if 0
+	try {
+		std::ofstream outStream("E:\\Data\\User\\VCProgram\\GLTFConverter\\xxxx.gltf");
+		outStream << buf.GetString();
+		outStream.flush();
+	} catch (...) { }
+#endif
 
 	outputJsonStr = buf.GetString();
 	return true;
