@@ -78,6 +78,21 @@ namespace {
 	}
 
 	/**
+	 * 指定のパスより、ファイル名だけを取得.
+	 */
+	std::string getFileNameFromFullPath (const std::string fileName)  {
+		int iPos  = fileName.find_last_of("/");
+		int iPos2 = fileName.find_last_of("\\");
+		if (iPos == std::string::npos && iPos2 == std::string::npos) return fileName;
+		if (iPos != std::string::npos && iPos2 != std::string::npos) {
+			iPos = std::max(iPos, iPos2);
+		} else if (iPos == std::string::npos) iPos = iPos2;
+		if (iPos == std::string::npos) return fileName;
+
+		return fileName.substr(iPos + 1);
+	}
+
+	/**
 	 * GLTFのMesh情報を取得して格納.
 	 */
 	void storeGLTFMeshes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
@@ -415,7 +430,49 @@ namespace {
 	 * ノード階層を格納.
 	 */
 	void storeGLTFNodes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
-		if (!reader) return;
+		const size_t nodesCou = gltfDoc.nodes.Size();
+
+		sceneData->nodes.clear();
+		if (nodesCou == 0) return;
+		sceneData->nodes.resize(nodesCou);
+
+		for (size_t i = 0; i < nodesCou; ++i) {
+			CNodeData& dstNodeD = sceneData->nodes[i];
+			dstNodeD.clear();
+		}
+
+		for (size_t i = 0; i < nodesCou; ++i) {
+			const Node& node = gltfDoc.nodes[i];
+			CNodeData& dstNodeD = sceneData->nodes[i];
+
+			dstNodeD.name        = node.name;
+			dstNodeD.translation = sxsdk::vec3(node.translation.x, node.translation.y, node.translation.z);
+			dstNodeD.scale       = sxsdk::vec3(node.scale.x, node.scale.y, node.scale.z);
+			dstNodeD.rotation    = sxsdk::quaternion_class(node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
+
+			if (node.meshId != "") {
+				dstNodeD.meshIndex = std::stoi(node.meshId);
+			}
+
+			// 子の数.
+			const size_t childCou = node.children.size();
+			if (childCou == 0) continue;
+
+			dstNodeD.childNodeIndex = std::stoi(node.children[0]);
+			for (size_t j = 0; j < childCou; ++j) {
+				const int cIndex = std::stoi(node.children[j]);
+				sceneData->nodes[cIndex].parentNodeIndex = i;
+			}
+			{
+				int cIndex0 = std::stoi(node.children[0]);
+				for (size_t j = 1; j < childCou; ++j) {
+					const int cIndex = std::stoi(node.children[j]);
+					sceneData->nodes[cIndex].prevNodeIndex = cIndex0;
+					sceneData->nodes[cIndex0].nextNodeIndex = cIndex;
+					cIndex0 = cIndex;
+				}
+			}
+		}
 	}
 }
 
@@ -437,19 +494,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	// ファイル名を格納.
 	{
 		sceneData->filePath = fileName;
-		sceneData->fileName = "";
-		{
-			const int iPos = fileName.find_last_of("/");
-			if (iPos > 0) {
-				sceneData->fileName = fileName.substr(iPos + 1);
-			}
-		}
-		if ((sceneData->fileName) == "") {
-			const int iPos = fileName.find_last_of("\\");
-			if (iPos > 0) {
-				sceneData->fileName = fileName.substr(iPos + 1);
-			}
-		}
+		sceneData->fileName = ::getFileNameFromFullPath(fileName);
 	}
 
 	std::shared_ptr<GLBResourceReader> reader;

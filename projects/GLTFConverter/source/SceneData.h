@@ -19,7 +19,6 @@
 class CNodeData
 {
 public:
-	bool used;				// 使用してるかどうか.
 	std::string name;		// 名前.
 	int meshIndex;			// 参照するメッシュ番号.
 
@@ -37,7 +36,6 @@ public:
 	~CNodeData ();
 
     CNodeData& operator = (const CNodeData &v) {
-		this->used            = v.used;
 		this->name            = v.name;
 		this->meshIndex       = v.meshIndex;
 		this->prevNodeIndex   = v.prevNodeIndex;

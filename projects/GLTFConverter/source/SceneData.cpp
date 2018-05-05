@@ -20,7 +20,6 @@ CNodeData::~CNodeData ()
 
 void CNodeData::clear ()
 {
-	used = false;
 	name = "";
 	meshIndex = -1;
 	prevNodeIndex = -1;
