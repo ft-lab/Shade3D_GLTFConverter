@@ -221,7 +221,6 @@ namespace {
 	 * GLTFのMaterial情報を取得して格納.
 	 */
 	void storeGLTFMaterials (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
-		if (sceneData->images.empty()) return;
 		const size_t materialsSize   = gltfDoc.materials.Size();
 		const size_t imagesSize      = gltfDoc.images.Size();
 
@@ -384,8 +383,6 @@ namespace {
 			} catch (...) {
 				return;
 			}
-		} else {
-			return;
 		}
 
 		for (size_t i = 0; i < imagesSize; ++i) {
