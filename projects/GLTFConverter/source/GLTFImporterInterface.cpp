@@ -126,13 +126,13 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 {
 	const CNodeData& nodeD = sceneData->nodes[nodeIndex];
 	sxsdk::part_class* part = NULL;
-	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
+	if (nodeIndex > 0 && (nodeD.meshIndex < 0 || nodeD.childNodeIndex >= 0)) {
 		part = &(scene->begin_part(nodeD.name.c_str()));
 	}
 
 	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
 		// メッシュを生成.
-		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex);
+		const sxsdk::mat4 m = (nodeD.childNodeIndex >= 0) ? sxsdk::mat4::identity : (sceneData->getNodeMatrix(nodeIndex));
 		m_createGLTFMesh(scene, sceneData, nodeD.meshIndex, m);
 	}
 
@@ -148,7 +148,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 		m_createGLTFNodeHierarchy(scene, sceneData, childNodeIndexList[i]);
 	}
 
-	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
+	if (nodeIndex > 0 && (nodeD.meshIndex < 0 || nodeD.childNodeIndex >= 0)) {
 		// nodeIndexでの変換行列を取得.
 		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex, true);
 
