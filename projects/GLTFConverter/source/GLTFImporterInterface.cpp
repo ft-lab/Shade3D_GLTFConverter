@@ -113,7 +113,7 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 	scene->begin_part(sceneData->fileName.c_str());
 
 	// シーン階層をたどってノードとメッシュ作成.
-	m_createGLTFNodeHierarchy(scene, sceneData,0);
+	m_createGLTFNodeHierarchy(scene, sceneData, 0);
 
 	scene->end_part();
 	scene->end_creating();
@@ -126,13 +126,14 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 {
 	const CNodeData& nodeD = sceneData->nodes[nodeIndex];
 	sxsdk::part_class* part = NULL;
-	if (nodeD.meshIndex < 0) {
+	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
 		part = &(scene->begin_part(nodeD.name.c_str()));
 	}
 
-	if (nodeD.meshIndex >= 0) {
+	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
 		// メッシュを生成.
-		m_createGLTFMesh(scene, sceneData, nodeD.meshIndex);
+		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex);
+		m_createGLTFMesh(scene, sceneData, nodeD.meshIndex, m);
 	}
 
 	std::vector<int> childNodeIndexList;
@@ -147,7 +148,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 		m_createGLTFNodeHierarchy(scene, sceneData, childNodeIndexList[i]);
 	}
 
-	if (nodeD.meshIndex < 0) {
+	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
 		// nodeIndexでの変換行列を取得.
 		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex, true);
 
@@ -162,7 +163,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 /**
  * 指定のメッシュを生成.
  */
-void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex)
+void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
 {
 	const CMeshData& meshD = sceneData->meshes[meshIndex];
 
@@ -175,7 +176,7 @@ void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 	{
 		const float scale = 1000.0f;
 		for (size_t i = 0; i < versCou; ++i) {
-			const sxsdk::vec3 v =  meshD.vertices[i] * scale;
+			const sxsdk::vec3 v =  (meshD.vertices[i] * scale) * matrix;
 			scene->append_polygon_mesh_point(v);
 		}
 	}

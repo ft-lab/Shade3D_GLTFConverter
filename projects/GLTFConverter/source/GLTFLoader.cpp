@@ -492,7 +492,7 @@ namespace {
 
 		sceneData->nodes.clear();
 		if (nodesCou == 0) return;
-		sceneData->nodes.resize(nodesCou);
+		sceneData->nodes.resize(nodesCou + 1);		// 0番目はルートノードとする.
 
 		for (size_t i = 0; i < nodesCou; ++i) {
 			CNodeData& dstNodeD = sceneData->nodes[i];
@@ -501,16 +501,16 @@ namespace {
 
 		for (size_t i = 0; i < nodesCou; ++i) {
 			const Node& node = gltfDoc.nodes[i];
-			CNodeData& dstNodeD = sceneData->nodes[i];
+			CNodeData& dstNodeD = sceneData->nodes[i + 1];
 
-			dstNodeD.name        = node.name;
+			dstNodeD.name = node.name;
 			if (node.GetTransformationType() == TRANSFORMATION_MATRIX) {
 				// 行列としての取得.
 				sxsdk::mat4 m;
 				int iPos = 0;
 				for (int y = 0; y < 4; ++y) {
 					for (int x = 0; x < 4; ++x) {
-						m[y][x] = node.matrix.values[iPos++];
+						m[x][y] = node.matrix.values[iPos++];		// 転置して入れている. 
 					}
 				}
 				sxsdk::vec3 trans, scale, rotate, shear;
@@ -532,18 +532,47 @@ namespace {
 			const size_t childCou = node.children.size();
 			if (childCou == 0) continue;
 
-			dstNodeD.childNodeIndex = std::stoi(node.children[0]);
+			dstNodeD.childNodeIndex = std::stoi(node.children[0]) + 1;
 			for (size_t j = 0; j < childCou; ++j) {
-				const int cIndex = std::stoi(node.children[j]);
-				sceneData->nodes[cIndex].parentNodeIndex = i;
+				const int cIndex = std::stoi(node.children[j]) + 1;
+				sceneData->nodes[cIndex].parentNodeIndex = i + 1;
 			}
 			{
-				int cIndex0 = std::stoi(node.children[0]);
+				int cIndex0 = std::stoi(node.children[0]) + 1;
 				for (size_t j = 1; j < childCou; ++j) {
-					const int cIndex = std::stoi(node.children[j]);
-					sceneData->nodes[cIndex].prevNodeIndex = cIndex0;
+					const int cIndex = std::stoi(node.children[j]) + 1;
+					sceneData->nodes[cIndex].prevNodeIndex  = cIndex0;
 					sceneData->nodes[cIndex0].nextNodeIndex = cIndex;
 					cIndex0 = cIndex;
+				}
+			}
+		}
+
+		// 親が存在しないノードをルートの子とする.
+		{
+			std::vector<int> rootChildIndex;
+			CNodeData& rootNodeD = sceneData->nodes[0];
+			rootNodeD.name = "root";
+
+			for (size_t i = 0; i < nodesCou; ++i) {
+				CNodeData& nodeD = sceneData->nodes[i + 1];
+				if (nodeD.parentNodeIndex < 0) {
+					rootChildIndex.push_back(i + 1);
+				}
+			}
+			if (!rootChildIndex.empty()) {
+				const size_t childCou = rootChildIndex.size();
+				rootNodeD.childNodeIndex = rootChildIndex[0];
+				int cIndex0 = rootNodeD.childNodeIndex;
+				for (size_t j = 1; j < childCou; ++j) {
+					const int cIndex = rootChildIndex[j];
+					sceneData->nodes[cIndex].prevNodeIndex  = cIndex0;
+					sceneData->nodes[cIndex0].nextNodeIndex = cIndex;
+					cIndex0 = cIndex;
+				}
+				for (size_t j = 0; j < childCou; ++j) {
+					const int cIndex = rootChildIndex[j];
+					sceneData->nodes[cIndex].parentNodeIndex = 0;
 				}
 			}
 		}
@@ -628,7 +657,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	{
 		// jsonデータをパース.
 		try {
-			gltfDoc = DeserializeJson(jsonStr);		// TODO : glbによってはここで例外発生する場合がある.
+			gltfDoc = DeserializeJson(jsonStr);
 		} catch (...) {
 			return false;
 		}
@@ -715,14 +744,14 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 					}
 				}
 
-				// [meshes] - [primitives] 内の要素を列挙し、配列でサイズが0のものを削除.
+				// [meshes] - [primitives] 内の要素を列挙し、配列でサイズが0のものとtargetsを削除.
 				{
 					std::vector<std::string> removeKeyList;
 					for(rapidjson::Value::MemberIterator itr = prV.MemberBegin(); itr != prV.MemberEnd(); itr++) {
 						const std::string name = itr->name.GetString();
 						const rapidjson::Type type = itr->value.GetType();
 						if (type == rapidjson::kArrayType) {		// 配列の場合.
-							if (itr->value.Size() == 0) {
+							if (itr->value.Size() == 0 || name == "targets") {
 								removeKeyList.push_back(name);
 							}
 						}
@@ -736,6 +765,27 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 	} catch (...) {
 		return false;
 	}
+
+	// [nodes]内のskinを削除.
+	try {
+		rapidjson::Value& nodesV = doc["nodes"];
+		rapidjson::SizeType num = nodesV.Size();			// nodesは配列.
+		for (rapidjson::SizeType i = 0; i < num; ++i) {
+			rapidjson::Value& nodeD = nodesV[i];
+
+			if (!nodeD.HasMember("skin")) continue;
+			rapidjson::Value::MemberIterator itr = nodeD.FindMember("skin");
+			const std::string name = itr->name.GetString();
+			nodeD.RemoveMember(name.c_str());	
+		}
+	} catch (...) { }
+
+	// [skins]内の削除.
+	try {
+		if (doc.HasMember("skins")) {
+			doc.RemoveMember("skins");	
+		}
+	} catch (...) { }
 
 #if 1
 	// [bufferViews]の要素をチェック.
@@ -766,7 +816,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
     doc.Accept(writer);
 
-#if 1
+#if 0
 	try {
 		std::ofstream outStream("E:\\Data\\User\\VCProgram\\GLTFConverter\\xxxx.gltf");
 		outStream << buf.GetString();

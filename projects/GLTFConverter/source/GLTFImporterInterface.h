@@ -63,7 +63,7 @@ private:
 	/**
 	 * 指定のメッシュを生成.
 	 */
-	void m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex);
+	void m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix);
 
 	/**
 	 * GLTFを読み込んだシーン情報より、マスターイメージを作成.
