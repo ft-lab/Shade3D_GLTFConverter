@@ -306,7 +306,7 @@ namespace {
 
 			dstMaterialData.name = material.name;
 			dstMaterialData.alphaCutOff = material.alphaCutoff;
-			dstMaterialData.alphaMode   = material.alphaMode;
+			dstMaterialData.alphaMode   = material.alphaMode;		// ALPHA_OPAQUE / ALPHA_BLEND / ALPHA_MASK.
 			dstMaterialData.doubleSided = material.doubleSided;
 			{
 				Color4 col = material.metallicRoughness.baseColorFactor;

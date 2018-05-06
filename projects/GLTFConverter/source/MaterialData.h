@@ -29,9 +29,11 @@ public:
 	int normalImageIndex;				// 法線マップとしての画像番号.
 	int emissionImageIndex;				// 発光としての画像番号.
 	int metallicRoughnessImageIndex;	// Metallic/Roughnessとしての画像番号.
-	int occlusionImageIndex;			// Ambient Occlusionとしての画像番号 (metallicRoughnessImageIndexの画像の要素を参照している模様).
+										// Metallic(B) / Roughness(G) を使用。これはGLTF2.0の仕様として決まっている.
+										// Ambient Occlusionも含む指定の場合は、(R)をAOとして使用することになる.
+	int occlusionImageIndex;			// Ambient Occlusionとしての画像番号.
 
-	sxsdk::master_surface_class* shadeMasterSurface;	// Shadeでの対応するマスターサーフェスのポインタ.
+	sxsdk::master_surface_class* shadeMasterSurface;	// Shade3Dでの対応するマスターサーフェスのポインタ.
 
 	float roughnessFactor;				// Roughnessの値.
 	float metallicFactor;				// Metallicの値.

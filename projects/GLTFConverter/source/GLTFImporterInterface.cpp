@@ -319,7 +319,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_blur(true);
 			}
 
-			// 法線マップを拡散反射のマッピングレイヤとして追加.
+			// 法線マップをマッピングレイヤとして追加.
 			if (materialD.normalImageIndex >= 0) {
 				surface->append_mapping_layer();
 				const int layerIndex = surface->get_number_of_mapping_layers() - 1;
@@ -336,8 +336,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_blur(true);
 			}
 
-			// 発光を拡散反射のマッピングレイヤとして追加.
-			if (materialD.emissionImageIndex > 0) {
+			// 発光をマッピングレイヤとして追加.
+			if (materialD.emissionImageIndex >= 0) {
 				surface->set_glow_color(materialD.emissionFactor);
 				surface->set_glow(1.0f);
 
@@ -354,6 +354,142 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 
 				mLayer.set_blur(true);
+			}
+
+			{
+				surface->set_reflection(materialD.metallicFactor);
+				surface->set_roughness(materialD.roughnessFactor);
+
+				if (materialD.metallicRoughnessImageIndex >= 0) {
+					const CImageData& imageD = sceneData->images[materialD.metallicRoughnessImageIndex];
+
+					// 拡散反射にMetallicの反転を乗算.
+					{
+						surface->append_mapping_layer();
+						const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+						sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+						mLayer.set_pattern(sxsdk::enums::image_pattern);
+						mLayer.set_type(sxsdk::enums::diffuse_mapping);
+
+						// テクスチャ画像を割り当て.
+						if (imageD.m_shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+
+							// Metallicは[B]の要素を参照.
+							mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_blue_mode);
+
+							mLayer.set_blend_mode(7);		// 乗算合成.
+							mLayer.set_flip_color(true);
+							mLayer.set_weight(0.5f);
+						}
+						mLayer.set_blur(true);
+					}
+
+					// Metallicを「反射」要素としてマッピングレイヤに追加.
+					{
+						surface->append_mapping_layer();
+						const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+						sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+						mLayer.set_pattern(sxsdk::enums::image_pattern);
+						mLayer.set_type(sxsdk::enums::reflection_mapping);
+
+						// テクスチャ画像を割り当て.
+						if (imageD.m_shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+
+							// Metallicは[B]の要素を参照.
+							mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_blue_mode);
+						}
+						mLayer.set_blur(true);
+					}
+
+					// BaseColorを「反射」に乗算.
+					{
+						surface->append_mapping_layer();
+						const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+						sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+						mLayer.set_pattern(sxsdk::enums::image_pattern);
+						mLayer.set_type(sxsdk::enums::reflection_mapping);
+
+						const CImageData& imageBaseColorD = sceneData->images[materialD.baseColorImageIndex];
+
+						// テクスチャ画像を割り当て.
+						if (imageBaseColorD.m_shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageBaseColorD.m_shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+
+							mLayer.set_blend_mode(7);		// 乗算合成.
+							mLayer.set_weight(1.0f);
+						}
+						mLayer.set_blur(true);
+					}
+
+					// Roughnessを「荒さ」要素としてマッピングレイヤに追加.
+					{
+						surface->append_mapping_layer();
+						const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+						sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+						mLayer.set_pattern(sxsdk::enums::image_pattern);
+						mLayer.set_type(sxsdk::enums::roughness_mapping);
+
+						// テクスチャ画像を割り当て.
+						if (imageD.m_shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+
+							// Roughnessは[G]の要素を参照.
+							mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_green_mode);
+							mLayer.set_flip_color(true);		// RoughnessはShade3Dのマッピングレイヤでは、黒に近づくにつれて粗くなる.
+						}
+						mLayer.set_blur(true);
+					}
+
+					// Occlusionを「拡散反射」の乗算としてマッピングレイヤに追加.
+					if (imageD.imageMask & CImageData::gltf_image_mask_occlusion) {
+						surface->append_mapping_layer();
+						const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+						sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+						mLayer.set_pattern(sxsdk::enums::image_pattern);
+						mLayer.set_type(sxsdk::enums::diffuse_mapping);
+
+						// テクスチャ画像を割り当て.
+						if (imageD.m_shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+
+							// Occlusionは[R]の要素を参照.
+							mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_red_mode);
+
+							mLayer.set_blend_mode(7);		// 乗算合成.
+						}
+						mLayer.set_blur(true);
+						mLayer.set_weight(materialD.occlusionStrength);
+					}
+				}
+			}
+
+			// Occlusionをマッピングレイヤとして追加.
+			if (materialD.occlusionImageIndex >= 0) {
+				if (materialD.occlusionImageIndex != materialD.metallicRoughnessImageIndex) {
+					surface->append_mapping_layer();
+					const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+					sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+					mLayer.set_pattern(sxsdk::enums::image_pattern);
+					mLayer.set_type(sxsdk::enums::diffuse_mapping);
+
+					// テクスチャ画像を割り当て.
+					if (sceneData->images[materialD.occlusionImageIndex].m_shadeMasterImage) {
+						compointer<sxsdk::image_interface> image(sceneData->images[materialD.occlusionImageIndex].m_shadeMasterImage->get_image());
+						mLayer.set_image_interface(image);
+
+						mLayer.set_blend_mode(7);		// 乗算合成.
+					}
+
+					mLayer.set_blur(true);
+					mLayer.set_weight(materialD.occlusionStrength);
+				}
 			}
 
 			masterSurface.update();
