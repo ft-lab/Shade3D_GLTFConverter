@@ -18,7 +18,7 @@ public:
 
 	/**
 	 * 指定のGLTFファイルを出力.
-	 * @param[in]  fileName    出力ファイル名 (glb).
+	 * @param[in]  fileName    出力ファイル名 (gltf/glb).
 	 * @param[in]  sceneData   GLTFのシーン情報.
 	 */
 	bool saveGLTF (const std::string& fileName, const CSceneData* sceneData);
