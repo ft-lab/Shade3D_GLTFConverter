@@ -7,5 +7,6 @@
 
 	<string id="title" value="gltf"/>
 	<string id="gltf_importer_title" value="GLTF (gltf/glb) ..."/>
-	
+	<string id="gltf_exporter_title" value="GLTF (glb) ..."/>
+
 </strings>

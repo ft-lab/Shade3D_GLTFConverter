@@ -9,8 +9,47 @@
 #include <vector>
 #include <string>
 
+//---------------------------------------------------------------.
 /**
- * 1つのメッシュ情報.
+ * 1つのメッシュ情報 (Shade3Dでの構成).
+ */
+class CTempMeshData
+{
+public:
+	std::string name;						// 形状名.
+
+	std::vector<sxsdk::vec3> vertices;		// 頂点座標.
+
+	std::vector<int> triangleIndices;				// 三角形の頂点インデックス.
+	std::vector<sxsdk::vec3> triangleNormals;		// 三角形ごとの法線.
+	std::vector<sxsdk::vec2> triangleUV0;			// 三角形ごとのUV0.
+	std::vector<sxsdk::vec2> triangleUV1;			// 三角形ごとのUV1.
+
+	int materialIndex;						// 対応するマテリアル番号.
+
+public:
+	CTempMeshData ();
+	~CTempMeshData ();
+
+    CTempMeshData& operator = (const CTempMeshData &v) {
+		this->name            = v.name;
+		this->vertices        = v.vertices;
+		this->triangleIndices = v.triangleIndices;
+		this->triangleNormals = v.triangleNormals;
+		this->triangleUV0     = v.triangleUV0;
+		this->triangleUV1     = v.triangleUV1;
+
+		this->materialIndex   = v.materialIndex;
+
+		return (*this);
+    }
+
+	void clear ();
+};
+
+//---------------------------------------------------------------.
+/**
+ * 1つのメッシュ情報 (GLTFでの構成).
  */
 class CMeshData
 {
@@ -44,6 +83,16 @@ public:
     }
 
 	void clear ();
+
+	/**
+	 * CTempMeshDataからコンバート.
+	 */
+	void convert (const CTempMeshData& tempMeshData);
+
+	/**
+	 * 頂点座標のバウンディングボックスを計算.
+	 */
+	void calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const;
 };
 
 #endif

@@ -31,6 +31,18 @@
     <ClCompile Include="..\source\GLTFImporterInterface.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\GLTFSaver.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\GLTFExporterInterface.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\ShapeStack.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\MathUtil.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -53,6 +65,18 @@
       <Filter>mysources</Filter>
     </ClInclude>
     <ClInclude Include="..\source\GLTFImporterInterface.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\GLTFSaver.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\GLTFExporterInterface.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\ShapeStack.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\MathUtil.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

@@ -58,6 +58,9 @@ public:
  */
 class CSceneData
 {
+private:
+	std::vector<int> m_nodeStack;			// ノードを格納する際の階層構造のためのスタック.
+
 public:
 	std::string assetVersion;				// Assetバージョン.
 	std::string assetGenerator;				// 作成ツール.
@@ -71,6 +74,9 @@ public:
 	std::vector<CMaterialData> materials;	// マテリアル情報の配列.
 	std::vector<CMeshData> meshes;			// メッシュ情報の配列.
 	std::vector<CImageData> images;			// 画像情報の配列.
+
+private:
+
 
 public:
 	CSceneData ();
@@ -97,6 +103,27 @@ public:
 	 * @return 出力ファイル名. 
 	 */
 	std::string outputTempImage (const int imageIndex, const std::string& tempPath);
+
+	/* **************************************************************************** */
+	/*   エクスポート時の、データ格納用.											*/
+	/* **************************************************************************** */
+	/**
+	 * ノードの格納開始.
+	 * @param[in] nodeName  ノード名.
+	 * @param[in] m         変換行列.
+	 * @return ノード番号.
+	 */
+	int beginNode (const std::string& nodeName, const sxsdk::mat4 m = sxsdk::mat4::identity);
+
+	/**
+	 * ノードの格納終了.
+	 */
+	void endNode ();
+
+	/**
+	 * 現在処理中のカレントノード番号を取得.
+	 */
+	int getCurrentNodeIndex () const;
 };
 
 #endif

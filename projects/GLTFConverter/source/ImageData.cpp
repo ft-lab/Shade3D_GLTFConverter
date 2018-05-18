@@ -13,7 +13,6 @@ CImageData::~CImageData ()
 {
 }
 
-
 void CImageData::clear ()
 {
 	name = "";

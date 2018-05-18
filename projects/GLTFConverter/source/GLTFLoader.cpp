@@ -7,6 +7,9 @@
  *
  * GLTF 2.0フォーマットの参考:
  * https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md
+ *
+ * 以下は、Microsoft.glTF.CPP の使い方の参考になる.
+ * https://github.com/Microsoft/glTF-Toolkit
  */
 
 #include "GLTFLoader.h"
@@ -27,6 +30,7 @@
 
 using namespace Microsoft::glTF;
 
+// 以下はGLTFSDK/rapidjsonのincludeよりも後に指定しないとビルドエラーになる.
 #include "SceneData.h"
 
 namespace {

@@ -5,6 +5,7 @@
 
 #include "GlobalHeader.h"
 #include "GLTFImporterInterface.h"
+#include "GLTFExporterInterface.h"
 
 //**************************************************//
 //	グローバル関数									//
@@ -20,6 +21,11 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
 			u = new CGLTFImporterInterface(*shade);
 		}
 	}
+	if (iid == exporter_iid) {
+		if (i == 0) {
+			u = new CGLTFExporterInterface(*shade);
+		}
+	}
 
 	if (u) {
 		u->AddRef();
@@ -33,6 +39,7 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
 extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_interface *shade) {
 
 	if (iid == importer_iid) return 1;
+	if (iid == exporter_iid) return 1;
 
 	return 0;
 }
@@ -46,6 +53,11 @@ extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxs
 			return CGLTFImporterInterface::name(shade);
 		}
 	}
+	if (iid == exporter_iid) {
+		if (i == 0) {
+			return CGLTFExporterInterface::name(shade);
+		}
+	}
 
 	return 0;
 }
@@ -57,6 +69,11 @@ extern "C" SXSDKEXPORT sx::uuid_class STDCALL get_uuid (const IID &iid, int i, v
 	if (iid == importer_iid) {
 		if (i == 0) {
 			return GLTF_IMPORTER_INTERFACE_ID;
+		}
+	}
+	if (iid == exporter_iid) {
+		if (i == 0) {
+			return GLTF_EXPORTER_INTERFACE_ID;
 		}
 	}
 
