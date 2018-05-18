@@ -67,7 +67,6 @@ public:
 	std::string assetCopyRight;				// Copy Right.
 
 	std::string filePath;					// ファイルフルパス.
-	std::string fileName;					// ファイル名.
 
 	std::vector<CNodeData> nodes;			// ノード情報.
 
@@ -84,9 +83,20 @@ public:
 	void clear();
 
 	/**
+	 * ファイルパスからファイル名のみを取得.
+	 * @param[in] hasExtension  trueの場合は拡張子も付ける.
+	 */
+	const std::string getFileName (const bool hasExtension = true) const;
+
+	/**
 	 * ファイル名を除いたディレクトリを取得.
 	 */
 	const std::string getFileDir () const;
+
+	/**
+	 * ファイルパスから拡張子を取得 (gltfまたはglb).
+	 */
+	const std::string getFileExtension () const;
 
 	/**
 	 * ノードの変換行列を取得.

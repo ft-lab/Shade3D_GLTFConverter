@@ -43,7 +43,6 @@ void CSceneData::clear()
 	assetVersion    = "";
 	assetGenerator  = "";
 	assetCopyRight  = "";
-	fileName        = "";
 	filePath        = "";
 
 	nodes.clear();
@@ -67,6 +66,45 @@ const std::string CSceneData::getFileDir () const
 	if (iPos == std::string::npos) return filePath;
 
 	return filePath.substr(0, iPos);
+}
+
+/**
+ * ファイルパスからファイル名のみを取得.
+ * @param[in] hasExtension  trueの場合は拡張子も付ける.
+ */
+const std::string CSceneData::getFileName (const bool hasExtension) const
+{
+	// ファイルパスからファイル名を取得.
+	std::string fileNameS = filePath;
+	int iPos  = filePath.find_last_of("/");
+	int iPos2 = filePath.find_last_of("\\");
+	if (iPos != std::string::npos || iPos2 != std::string::npos) {
+		if (iPos != std::string::npos && iPos2 != std::string::npos) {
+			iPos = std::max(iPos, iPos2);
+		} else if (iPos == std::string::npos) iPos = iPos2;
+		if (iPos != std::string::npos) fileNameS = fileNameS.substr(iPos + 1);
+	}
+	if (hasExtension) return fileNameS;
+
+	iPos = fileNameS.find_last_of(".");
+	if (iPos != std::string::npos) {
+		fileNameS = fileNameS.substr(0, iPos);
+	}
+	return fileNameS;
+}
+
+/**
+ * ファイルパスから拡張子を取得 (gltfまたはglb).
+ */
+const std::string CSceneData::getFileExtension () const
+{
+	std::string fileNameS = getFileName();
+	const int iPos = fileNameS.find_last_of(".");
+	if (iPos == std::string::npos) return "";
+
+	std::transform(fileNameS.begin(), fileNameS.end(), fileNameS.begin(), ::tolower);
+
+	return fileNameS.substr(iPos + 1);
 }
 
 /**

@@ -110,7 +110,7 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 	// マテリアル情報から、マスターサーフェスを作成.
 	m_createGLTFMaterials(scene, sceneData);
 
-	scene->begin_part(sceneData->fileName.c_str());
+	scene->begin_part(sceneData->getFileName().c_str());
 
 	// シーン階層をたどってノードとメッシュ作成.
 	m_createGLTFNodeHierarchy(scene, sceneData, 0);

@@ -56,13 +56,13 @@ namespace {
 	/**
 	 * バイナリ読み込み用.
 	 */
-	class BinStream : public IStreamReader
+	class BinStreamReader : public IStreamReader
 	{
 	private:
 		std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
 
 	public:
-		BinStream (std::string basePath) : m_basePath(basePath)
+		BinStreamReader (std::string basePath) : m_basePath(basePath)
 		{
 		}
 
@@ -107,7 +107,7 @@ namespace {
 		const size_t meshesSize = gltfDoc.meshes.Size();
 
 		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
-		std::shared_ptr<BinStream> binStreamReader;
+		std::shared_ptr<BinStreamReader> binStreamReader;
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			const size_t size = gltfDoc.buffers.Size();
@@ -115,7 +115,7 @@ namespace {
 				try {
 					const std::string fileDir = sceneData->getFileDir();
 					if (size > 0) {
-						binStreamReader.reset(new BinStream(fileDir));
+						binStreamReader.reset(new BinStreamReader(fileDir));
 						binReader.reset(new GLTFResourceReader(*binStreamReader));
 					}
 				} catch (...) {
@@ -450,12 +450,12 @@ namespace {
 
 		// GLTFから読み込む場合は、外部の画像を読み込みすることになる.
 		// そのためのReaderを作成.
-		std::shared_ptr<BinStream> binStreamReader;
+		std::shared_ptr<BinStreamReader> binStreamReader;
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			try {
 				const std::string fileDir = sceneData->getFileDir();
-				binStreamReader.reset(new BinStream(fileDir));
+				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(*binStreamReader));
 			} catch (...) {
 				return;
@@ -598,11 +598,8 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 	sceneData->clear();
 
-	// ファイル名を格納.
-	{
-		sceneData->filePath = fileName;
-		sceneData->fileName = ::getFileNameFromFullPath(fileName);
-	}
+	// ファイル名(フルパス)を格納.
+	sceneData->filePath = fileName;
 
 	std::shared_ptr<GLBResourceReader> reader;
 	GLTFDocument gltfDoc;

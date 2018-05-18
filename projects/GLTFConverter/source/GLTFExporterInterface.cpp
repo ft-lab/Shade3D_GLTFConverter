@@ -254,13 +254,15 @@ void CGLTFExporterInterface::end_polymesh (void *)
 	if (m_skip) return;
 
 	// m_meshDataからGLTFの形式にコンバートして格納.
-	const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
-	const int meshIndex = (int)m_sceneData->meshes.size();
-	m_sceneData->meshes.push_back(CMeshData());
-	CMeshData& meshD = m_sceneData->meshes.back();
-	meshD.convert(m_meshData);
+	if (!m_meshData.triangleIndices.empty() && !m_meshData.vertices.empty()) {
+		const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
+		const int meshIndex = (int)m_sceneData->meshes.size();
+		m_sceneData->meshes.push_back(CMeshData());
+		CMeshData& meshD = m_sceneData->meshes.back();
+		meshD.convert(m_meshData);
 
-	m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
+		m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
+	}
 }
 
 /**

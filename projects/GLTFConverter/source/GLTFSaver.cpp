@@ -5,9 +5,8 @@
 
 #include <GLTFSDK/Deserialize.h>
 #include <GLTFSDK/Serialize.h>
-#include <GLTFSDK/GLTFResourceWriter.h>
-#include <GLTFSDK/GLBResourceReader.h>
-#include <GLTFSDK/GLTFResourceReader.h>
+#include <GLTFSDK/GLTFResourceWriter2.h>
+#include <GLTFSDK/IStreamWriter.h>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -16,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <memory>
 
 using namespace Microsoft::glTF;
 
@@ -24,6 +24,29 @@ using namespace Microsoft::glTF;
 #include "MathUtil.h"
 
 namespace {
+	/**
+	 * バイナリ出力用.
+	 */
+	class BinStreamWriter : public IStreamWriter
+	{
+	private:
+		std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
+		std::string m_fileName;		// 出力ファイル名.
+
+	public:
+		BinStreamWriter (std::string basePath, std::string fileName) : m_basePath(basePath), m_fileName(fileName)
+		{
+		}
+		virtual ~BinStreamWriter () {
+		}
+
+		virtual std::shared_ptr<std::ostream> GetOutputStream (const std::string& filename) const override
+		{
+			const std::string path = m_basePath + std::string("/") + m_fileName;
+			return std::make_shared<std::ofstream>(path, std::ios::binary | std::ios::out);
+		}
+	};
+
 	/**
 	 * ノード情報を指定.
 	 */
@@ -115,13 +138,31 @@ namespace {
 	}
 
 	/**
-	 * Accessor情報（メッシュから三角形の頂点インデックス、法線、UVバッファなどをパックしたもの）を格納.
+	 *   Accessor情報（メッシュから三角形の頂点インデックス、法線、UVバッファなどをパックしたもの）を格納.
 	 *   Accessor → bufferViews → buffers、と経由して情報をバッファに保持する。.
-	 *  バッファは外部のbinファイル.
+	 *   拡張子gltfの場合、バッファは外部のbinファイル。.
 	 */
-	void setAccessorBufferData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	void setBufferData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
+
+		const std::string fileName = sceneData->getFileName(false);		// 拡張子を除いたファイル名を取得.
+
+		// binの出力ファイル名.
+		const std::string binFileName = sceneData->getFileName(false) + std::string(".bin");
+
+		// 出力ディレクトリ.
+		const std::string fileDir = sceneData->getFileDir();
+
+		// ファイル拡張子 (gltf / glb).
+		const std::string fileExtension = sceneData->getFileExtension();
+
+		// binの出力バッファ.
+		std::shared_ptr<GLTFResourceWriter2> binWriter;
+		if (fileExtension == "gltf") {
+			auto binStreamWriter = std::make_unique<BinStreamWriter>(fileDir, binFileName);
+			binWriter.reset(new GLTFResourceWriter2(std::move(binStreamWriter), binFileName));
+		}
 
 		int accessorID = 0;
 		size_t byteOffset = 0;
@@ -150,8 +191,12 @@ namespace {
 				buffV.target     = ELEMENT_ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
 
+				// バッファ情報として格納.
+				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(meshD.triangleIndices[0]), gltfDoc.accessors[accessorID]);
+
 				byteOffset += buffV.byteLength;
 				accessorID++;
+
 			}
 
 			// normalsAccessor.
@@ -171,6 +216,9 @@ namespace {
 				buffV.byteLength = (sizeof(float) * 3) * meshD.normals.size();
 				buffV.target     = ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
+
+				// バッファ情報として格納.
+				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(meshD.normals[0]), gltfDoc.accessors[accessorID]);
 
 				byteOffset += buffV.byteLength;
 				accessorID++;
@@ -200,6 +248,9 @@ namespace {
 				buffV.target     = ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
 
+				// バッファ情報として格納.
+				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(meshD.vertices[0]), gltfDoc.accessors[accessorID]);
+
 				byteOffset += buffV.byteLength;
 				accessorID++;
 			}
@@ -221,6 +272,9 @@ namespace {
 				buffV.byteLength = (sizeof(float) * 2) * meshD.uv0.size();
 				buffV.target     = ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
+
+				// バッファ情報として格納.
+				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(meshD.uv0[0]), gltfDoc.accessors[accessorID]);
 
 				byteOffset += buffV.byteLength;
 				accessorID++;
@@ -244,6 +298,9 @@ namespace {
 				buffV.target     = ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
 
+				// バッファ情報として格納.
+				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(meshD.uv1[0]), gltfDoc.accessors[accessorID]);
+
 				byteOffset += buffV.byteLength;
 				accessorID++;
 			}
@@ -254,6 +311,9 @@ namespace {
 			Buffer buff;
 			buff.id         = std::string("0");
 			buff.byteLength = byteOffset;
+			if (fileExtension == "gltf") {
+				buff.uri = binFileName;
+			}
 			gltfDoc.buffers.Append(buff);
 		}
 	}
@@ -303,15 +363,21 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		::setMeshesData(gltfDoc, sceneData);
 
 		// バッファ情報を指定.
-		::setAccessorBufferData(gltfDoc, sceneData);
+		::setBufferData(gltfDoc, sceneData);
 
-		std::string gltfJson = Serialize(gltfDoc, SerializeFlags::Pretty);
-		std::ofstream outStream(fileName.c_str(), std::ios::trunc | std::ios::out);
-		outStream << gltfJson;
-		outStream.flush();
+		// gltfファイルを出力.
+		{
+			std::string gltfJson = Serialize(gltfDoc, SerializeFlags::Pretty);
+			std::ofstream outStream(fileName.c_str(), std::ios::trunc | std::ios::out);
+			outStream << gltfJson;
+			outStream.flush();
+		}
+
 		return true;
 
-	} catch (...) { }
+	} catch (GLTFException e) {
+		int i = 0;
+	}
 
 	return false;
 }
