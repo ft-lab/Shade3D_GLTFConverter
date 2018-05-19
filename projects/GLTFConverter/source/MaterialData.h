@@ -66,6 +66,12 @@ public:
     }
 
 	void clear ();
+
+	/**
+	 * マテリアルが同じかチェック (Shade3DからのGLTFエクスポートで使用).
+	 */
+	bool isSame (const CMaterialData& v) const;
+
 };
 
 #endif

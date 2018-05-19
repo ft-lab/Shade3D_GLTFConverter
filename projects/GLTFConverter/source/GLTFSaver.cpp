@@ -147,7 +147,7 @@ namespace {
 				gltfNode.scale = Vector3(nodeD.scale.x, nodeD.scale.y, nodeD.scale.z);
 			}
 			if (!MathUtil::IsZero(nodeD.rotation - sxsdk::quaternion_class::identity, fMin)) {
-				gltfNode.rotation = Quaternion(nodeD.rotation.x, nodeD.rotation.y, nodeD.rotation.z, nodeD.rotation.w);
+				gltfNode.rotation = Quaternion(nodeD.rotation.x, nodeD.rotation.y, nodeD.rotation.z, -nodeD.rotation.w);
 			}
 
 			// メッシュ情報を持つ場合.
@@ -168,19 +168,24 @@ namespace {
 	 * マテリアル情報を指定.
 	 */
 	void setMaterialsData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
-		// dummy.
-		Material material;
-		material.id          = std::to_string(0);
-		material.name        = "default";
-		material.doubleSided = false;
-		material.alphaMode   = ALPHA_OPAQUE;
-		material.emissiveFactor = Color3(0.0f, 0.0f, 0.0f);
+		const size_t mCou = sceneData->materials.size();
 
-		material.metallicRoughness.baseColorFactor = Color4(194.0f / 255.0f, 92.0f / 255.0f, 38.0f / 255.0f, 1.0f);
-		material.metallicRoughness.metallicFactor  = 0.0f;
-		material.metallicRoughness.roughnessFactor = 0.5f;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
 
-		gltfDoc.materials.Append(material);
+			Material material;
+			material.id          = std::to_string(i);
+			material.name        = materialD.name;
+			material.doubleSided = materialD.doubleSided;
+			material.alphaMode   = ALPHA_OPAQUE;
+			material.emissiveFactor = Color3(materialD.emissionFactor.red, materialD.emissionFactor.green, materialD.emissionFactor.blue);
+
+			material.metallicRoughness.baseColorFactor = Color4(materialD.baseColorFactor.red, materialD.baseColorFactor.green, materialD.baseColorFactor.blue, 1.0f);
+			material.metallicRoughness.metallicFactor  = materialD.metallicFactor;
+			material.metallicRoughness.roughnessFactor = materialD.roughnessFactor;
+
+			gltfDoc.materials.Append(material);
+		}
 	}
 
 	/**
@@ -206,10 +211,9 @@ namespace {
 			// attributes - TEXCOORD_1 : テクスチャのUV0.
 
 			MeshPrimitive meshPrimitive;
-			//if (meshD.materialIndex >= 0) {
-			//	meshPrimitive.materialId = std::to_string(meshD.materialIndex);
-			//}
-			meshPrimitive.materialId = std::string("0");
+			if (meshD.materialIndex >= 0) {
+				meshPrimitive.materialId = std::to_string(meshD.materialIndex);
+			}
 
 			meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
 			meshPrimitive.normalsAccessorId   = std::to_string(accessorID++);

@@ -12,6 +12,7 @@ namespace MathUtil {
 	 */
 	bool IsZero (const sxsdk::vec2& v, const float fMin = (float)(1e-3));
 	bool IsZero (const sxsdk::vec3& v, const float fMin = (float)(1e-3));
+	bool IsZero (const sxsdk::rgb_class& v, const float fMin = (float)(1e-3));
 	bool IsZero (const sxsdk::quaternion_class& v, const float fMin = (float)(1e-3));
 	bool IsZero (const float v, const float fMin = (float)(1e-3));
 

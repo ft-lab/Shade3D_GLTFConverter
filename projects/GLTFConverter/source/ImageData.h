@@ -55,6 +55,12 @@ public:
     }
 
 	void clear ();
+
+	/**
+	 * イメージが同じかチェック (Shade3DからのGLTFエクスポートで使用).
+	 */
+	bool isSame (const CImageData &v) const;
+
 };
 
 #endif

@@ -525,7 +525,7 @@ namespace {
 			} else {
 				dstNodeD.translation = sxsdk::vec3(node.translation.x, node.translation.y, node.translation.z);
 				dstNodeD.scale       = sxsdk::vec3(node.scale.x, node.scale.y, node.scale.z);
-				dstNodeD.rotation    = sxsdk::quaternion_class(node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
+				dstNodeD.rotation    = sxsdk::quaternion_class(-node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
 			}
 
 			if (node.meshId != "") {

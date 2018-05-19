@@ -134,6 +134,14 @@ public:
 	 * 現在処理中のカレントノード番号を取得.
 	 */
 	int getCurrentNodeIndex () const;
+
+	/**
+	 * 同一のマテリアルがあるか調べる.
+	 * @param[in] materialData  マテリアル情報.
+	 * @return 同一のマテリアルがある場合はマテリアルのインデックスを返す。.
+	 *         存在しない場合は-1を返す.
+	 */
+	int findSameMaterial (const CMaterialData& materialData);
 };
 
 #endif

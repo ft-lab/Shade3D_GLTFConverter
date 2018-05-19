@@ -8,6 +8,8 @@
 #include "GlobalHeader.h"
 #include "ShapeStack.h"
 #include "MeshData.h"
+#include "MaterialData.h"
+#include "ImageData.h"
 
 #include <iostream>
 #include <memory>
@@ -203,6 +205,20 @@ private:
 	 * フェイスグループごとの面列挙後に呼ばれる.
 	 */
 	virtual void end_polymesh_face_group (void *aux=0);
+
+private:
+	/**
+	 * Shade3Dのsurface情報をマテリアルとして格納.
+	 */
+	bool m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData);
+	bool m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData);
+
+	/**
+	 * 指定の形状に割り当てられているマテリアルを格納.
+	 * @param[in] shape  対象形状.
+	 * @return マテリアル番号.
+	 */
+	int m_setMaterialCurrentShape (sxsdk::shape_class* shape);
 
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);

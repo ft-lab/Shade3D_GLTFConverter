@@ -14,6 +14,11 @@ bool MathUtil::IsZero (const sxsdk::vec3& v, const float fMin)
 {
 	return (std::abs(v.x) < fMin && std::abs(v.y) < fMin && std::abs(v.z) < fMin);
 }
+bool MathUtil::IsZero (const sxsdk::rgb_class& v, const float fMin)
+{
+	return (std::abs(v.red) < fMin && std::abs(v.green) < fMin && std::abs(v.blue) < fMin);
+}
+
 bool MathUtil::IsZero (const sxsdk::quaternion_class& v, const float fMin)
 {
 	return (std::abs(v.x) < fMin && std::abs(v.y) < fMin && std::abs(v.z) < fMin && std::abs(v.w) < fMin);

@@ -180,7 +180,7 @@ int CSceneData::beginNode (const std::string& nodeName, const sxsdk::mat4 m)
 	{
 		sxsdk::vec3 scale ,shear, rotate, trans;
 		m.unmatrix(scale ,shear, rotate, trans);
-		nodeD.translation = trans;
+		nodeD.translation = trans * 0.001f;			// mm ==> m 変換.
 		nodeD.scale       = scale;
 		nodeD.rotation    = sxsdk::quaternion_class(rotate);
 	}
@@ -228,3 +228,21 @@ int CSceneData::getCurrentNodeIndex () const
 	return m_nodeStack.back();
 }
 
+/**
+ * 同一のマテリアルがあるか調べる.
+ * @param[in] materialData  マテリアル情報.
+ * @return 同一のマテリアルがある場合はマテリアルのインデックスを返す。.
+ *         存在しない場合は-1を返す.
+ */
+int CSceneData::findSameMaterial (const CMaterialData& materialData)
+{
+	const size_t mCou = materials.size();
+	int index = -1;
+	for (size_t i = 0; i < mCou; ++i) {
+		if (materials[i].isSame(materialData)) {
+			index = (int)i;
+			break;
+		}
+	}
+	return index;
+}
