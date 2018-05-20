@@ -43,6 +43,12 @@
     <ClCompile Include="..\source\MathUtil.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\Shade3DUtil.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\StringUtil.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -77,6 +83,12 @@
       <Filter>mysources</Filter>
     </ClInclude>
     <ClInclude Include="..\source\MathUtil.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\Shade3DUtil.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\StringUtil.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

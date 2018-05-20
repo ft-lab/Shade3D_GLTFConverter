@@ -142,6 +142,14 @@ public:
 	 *         存在しない場合は-1を返す.
 	 */
 	int findSameMaterial (const CMaterialData& materialData);
+
+	/**
+	 * 同一のイメージがあるか調べる.
+	 * @param[in] imageData  イメージ情報.
+	 * @return 同一のイメージがある場合はイメージのインデックスを返す。.
+	 *         存在しない場合は-1を返す.
+	 */
+	int findSameImage (const CImageData& imageData);
 };
 
 #endif

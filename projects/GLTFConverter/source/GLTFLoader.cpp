@@ -13,6 +13,7 @@
  */
 
 #include "GLTFLoader.h"
+#include "StringUtil.h"
 
 #include <GLTFSDK/Deserialize.h>
 #include <GLTFSDK/Serialize.h>
@@ -72,33 +73,6 @@ namespace {
 			return std::make_shared<std::ifstream>(path, std::ios::binary);
 		}
 	};
-
-	/**
-	 * 指定のファイル名の拡張子を取得.
-	 */
-	std::string getFileExtension (const std::string fileName) {
-		std::string fileName2 = fileName;
-		std::transform(fileName2.begin(), fileName2.end(), fileName2.begin(), ::tolower);
-
-		const int iPos = fileName2.find_last_of(".");
-		if (iPos == std::string::npos) return "";
-		return fileName2.substr(iPos + 1);
-	}
-
-	/**
-	 * 指定のパスより、ファイル名だけを取得.
-	 */
-	std::string getFileNameFromFullPath (const std::string fileName)  {
-		int iPos  = fileName.find_last_of("/");
-		int iPos2 = fileName.find_last_of("\\");
-		if (iPos == std::string::npos && iPos2 == std::string::npos) return fileName;
-		if (iPos != std::string::npos && iPos2 != std::string::npos) {
-			iPos = std::max(iPos, iPos2);
-		} else if (iPos == std::string::npos) iPos = iPos2;
-		if (iPos == std::string::npos) return fileName;
-
-		return fileName.substr(iPos + 1);
-	}
 
 	/**
 	 * GLTFのMesh情報を取得して格納.
@@ -470,13 +444,13 @@ namespace {
 			if (!reader) {
 				if (image.uri == "") continue;
 				// 画像ファイルの拡張子を取得.
-				const std::string extStr = ::getFileExtension(image.uri);
+				const std::string extStr = StringUtil::getFileExtension(image.uri);
 				if (extStr != "") {
-					dstImageData.name     = ::getFileNameFromFullPath(image.uri);
+					dstImageData.name     = StringUtil::getFileName(image.uri);
 					dstImageData.mimeType = std::string("image/") + extStr;
 				}
 			} else {
-				dstImageData.name     = ::getFileNameFromFullPath(image.name);
+				dstImageData.name     = StringUtil::getFileName(image.name);
 				dstImageData.mimeType = image.mimeType;
 			}
 
@@ -606,7 +580,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	std::string jsonStr = "";
 
 	// fileNameがglbファイルかどうか.
-	const bool glbFile = (::getFileExtension(fileName) == std::string("glb"));
+	const bool glbFile = (StringUtil::getFileExtension(fileName) == std::string("glb"));
 
 	// gltf/glbの拡張子より、読み込みを分岐.
 	if (glbFile) {

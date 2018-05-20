@@ -4,6 +4,8 @@
 #include "GLTFExporterInterface.h"
 #include "GLTFSaver.h"
 #include "SceneData.h"
+#include "MathUtil.h"
+#include "Shade3DUtil.h"
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
@@ -341,6 +343,64 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			}
 		}
 
+		// マッピングレイヤでイメージのテクスチャの指定がある場合.
+		std::vector< sx::vec<int,2> > diffuseMappingIndexList, reflectionMappingIndexList, roughnessMappingIndexList, normalMappingIndexList, emissionMappingIndexList;
+		const int mappingLayerCou = surface->get_number_of_mapping_layers();
+		for (int i = 0; i < mappingLayerCou; ++i) {
+			sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+			const float weight = mappingLayer.get_weight();
+			if (MathUtil::isZero(weight)) continue;
+
+			const int type = mappingLayer.get_type();
+			if (type != sxsdk::enums::diffuse_mapping && type != sxsdk::enums::reflection_mapping &&
+				type != sxsdk::enums::roughness_mapping && type != sxsdk::enums::normal_mapping &&
+				type != sxsdk::enums::glow_mapping) continue;
+
+			// master_imageクラスを取得.
+			compointer<sxsdk::image_interface> image(mappingLayer.get_image_interface());
+			sxsdk::master_image_class* masterImage = Shade3DUtil::getMasterImageFromImage(m_pScene, image);
+			if (!masterImage) continue;
+
+			int imageIndex = -1;
+			{
+				CImageData imageData;
+				imageData.m_shadeMasterImage = masterImage;
+				imageData.width  = image->get_size().x;
+				imageData.height = image->get_size().y;
+				imageData.name   = std::string(masterImage->get_name());
+				imageIndex = m_sceneData->findSameImage(imageData);
+				if (imageIndex < 0) {
+					imageIndex = (int)m_sceneData->images.size();
+					m_sceneData->images.push_back(imageData);
+				}
+			}
+
+			switch (type) {
+			case sxsdk::enums::diffuse_mapping:
+				diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				materialData.baseColorImageIndex = imageIndex;
+				break;
+
+			case sxsdk::enums::reflection_mapping:
+				reflectionMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				break;
+
+			case sxsdk::enums::roughness_mapping:
+				roughnessMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				break;
+
+			case sxsdk::enums::normal_mapping:
+				normalMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				materialData.normalImageIndex = imageIndex;
+				break;
+
+			case sxsdk::enums::glow_mapping:
+				emissionMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				break;
+			}
+		}
+
 		return true;
 
 	} catch (...) { }
@@ -360,6 +420,13 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 		materialData.name = std::string(master_surface->get_name());
 
 		materialData.shadeMasterSurface = master_surface;
+
+		// test.
+		// マスターサーフェス名に「doubleSided」が含まれる場合は、doubleSidedを有効化.
+		if (materialData.name.find_first_of("doubleSided") != std::string::npos) {
+			materialData.doubleSided = true;
+		}
+
 		return true;
 	} catch (...) { }
 
@@ -367,21 +434,24 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 }
 
 /**
- * 指定の形状に割り当てられているマテリアルを格納.
+ * 指定の形状に割り当てられているマテリアル/イメージを格納.
  * @param[in] shape  対象形状.
  * @return マテリアル番号.
  */
 int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape)
 {
+	// サーフェスを持つ親までたどる.
+	sxsdk::shape_class* shape2 = Shade3DUtil::getHasSurfaceParentShape(shape);
+
 	try {
-		sxsdk::master_surface_class* masterSurface = shape->get_master_surface();
+		sxsdk::master_surface_class* masterSurface = shape2->get_master_surface();
 		CMaterialData materialData;
 		bool ret = false;
 		if (masterSurface) {
 			ret = m_setMaterialData(masterSurface, materialData);
 		} else {
-			if (shape->get_has_surface_attributes()) {
-				ret = m_setMaterialData(shape->get_surface(), materialData);
+			if (shape2->get_has_surface_attributes()) {
+				ret = m_setMaterialData(shape2->get_surface(), materialData);
 			}
 		}
 		if (!ret) {

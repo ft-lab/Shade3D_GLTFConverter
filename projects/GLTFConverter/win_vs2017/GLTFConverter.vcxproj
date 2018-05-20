@@ -287,7 +287,9 @@
     <ClCompile Include="..\source\MeshData.cpp" />
     <ClCompile Include="..\source\SceneData.cpp" />
     <ClCompile Include="..\source\ImageData.cpp" />
+    <ClCompile Include="..\source\Shade3DUtil.cpp" />
     <ClCompile Include="..\source\ShapeStack.cpp" />
+    <ClCompile Include="..\source\StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\GlobalHeader.h" />
@@ -300,7 +302,9 @@
     <ClInclude Include="..\source\MeshData.h" />
     <ClInclude Include="..\source\SceneData.h" />
     <ClInclude Include="..\source\ImageData.h" />
+    <ClInclude Include="..\source\Shade3DUtil.h" />
     <ClInclude Include="..\source\ShapeStack.h" />
+    <ClInclude Include="..\source\StringUtil.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

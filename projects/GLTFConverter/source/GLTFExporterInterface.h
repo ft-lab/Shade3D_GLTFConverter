@@ -214,7 +214,7 @@ private:
 	bool m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData);
 
 	/**
-	 * 指定の形状に割り当てられているマテリアルを格納.
+	 * 指定の形状に割り当てられているマテリアル/イメージを格納.
 	 * @param[in] shape  対象形状.
 	 * @return マテリアル番号.
 	 */

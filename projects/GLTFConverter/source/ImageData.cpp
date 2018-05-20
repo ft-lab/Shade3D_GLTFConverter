@@ -38,3 +38,4 @@ bool CImageData::isSame (const CImageData &v) const
 
 	return false;
 }
+

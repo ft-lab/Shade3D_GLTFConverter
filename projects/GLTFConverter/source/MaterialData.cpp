@@ -44,14 +44,14 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 		if ((this->shadeMasterSurface->get_handle()) == v.shadeMasterSurface->get_handle()) return true;
 	}
 
-	if (!MathUtil::IsZero((this->alphaCutOff) - v.alphaCutOff)) return false;
+	if (!MathUtil::isZero((this->alphaCutOff) - v.alphaCutOff)) return false;
 	if ((this->alphaMode) != v.alphaMode) return false;
 	if ((this->doubleSided) != v.doubleSided) return false;
-	if (!MathUtil::IsZero((this->baseColorFactor) - v.baseColorFactor)) return false;
-	if (!MathUtil::IsZero((this->emissionFactor) - v.emissionFactor)) return false;
-	if (!MathUtil::IsZero((this->roughnessFactor) - v.roughnessFactor)) return false;
-	if (!MathUtil::IsZero((this->metallicFactor) - v.metallicFactor)) return false;
-	if (!MathUtil::IsZero((this->occlusionStrength) - v.occlusionStrength)) return false;
+	if (!MathUtil::isZero((this->baseColorFactor) - v.baseColorFactor)) return false;
+	if (!MathUtil::isZero((this->emissionFactor) - v.emissionFactor)) return false;
+	if (!MathUtil::isZero((this->roughnessFactor) - v.roughnessFactor)) return false;
+	if (!MathUtil::isZero((this->metallicFactor) - v.metallicFactor)) return false;
+	if (!MathUtil::isZero((this->occlusionStrength) - v.occlusionStrength)) return false;
 	if ((this->baseColorImageIndex) != v.baseColorImageIndex) return false;
 	if ((this->normalImageIndex) != v.normalImageIndex) return false;
 	if ((this->emissionImageIndex) != v.emissionImageIndex) return false;

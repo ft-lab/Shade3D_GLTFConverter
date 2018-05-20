@@ -2,9 +2,11 @@
  * GLTFをファイルに保存する.
  */
 #include "GLTFSaver.h"
+#include "StringUtil.h"
 
 #include <GLTFSDK/Deserialize.h>
 #include <GLTFSDK/Serialize.h>
+#include <GLTFSDK/GLTFResourceReader.h>
 #include <GLTFSDK/GLTFResourceWriter2.h>
 #include <GLTFSDK/GLBResourceWriter2.h>
 #include <GLTFSDK/IStreamWriter.h>
@@ -53,6 +55,26 @@ namespace {
 		}
 		return newData;
 	}
+
+	/**
+	 * バイナリ読み込み用.
+	 */
+	class BinStreamReader : public IStreamReader
+	{
+	private:
+		std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
+
+	public:
+		BinStreamReader (std::string basePath) : m_basePath(basePath)
+		{
+		}
+
+		virtual std::shared_ptr<std::istream> GetInputStream(const std::string& filename) const override
+		{
+			const std::string path = m_basePath + std::string("/") + filename;
+			return std::make_shared<std::ifstream>(path, std::ios::binary);
+		}
+	};
 
 	/**
 	 * GLTFのバイナリ出力用.
@@ -140,13 +162,13 @@ namespace {
 					gltfNode.children.push_back(std::to_string(j));
 				}
 			}
-			if (!MathUtil::IsZero(nodeD.translation, fMin)) {
+			if (!MathUtil::isZero(nodeD.translation, fMin)) {
 				gltfNode.translation = Vector3(nodeD.translation.x, nodeD.translation.y, nodeD.translation.z);
 			}
-			if (!MathUtil::IsZero(nodeD.scale - sxsdk::vec3(1, 1, 1), fMin)) {
+			if (!MathUtil::isZero(nodeD.scale - sxsdk::vec3(1, 1, 1), fMin)) {
 				gltfNode.scale = Vector3(nodeD.scale.x, nodeD.scale.y, nodeD.scale.z);
 			}
-			if (!MathUtil::IsZero(nodeD.rotation - sxsdk::quaternion_class::identity, fMin)) {
+			if (!MathUtil::isZero(nodeD.rotation - sxsdk::quaternion_class::identity, fMin)) {
 				gltfNode.rotation = Quaternion(nodeD.rotation.x, nodeD.rotation.y, nodeD.rotation.z, -nodeD.rotation.w);
 			}
 
@@ -183,6 +205,16 @@ namespace {
 			material.metallicRoughness.baseColorFactor = Color4(materialD.baseColorFactor.red, materialD.baseColorFactor.green, materialD.baseColorFactor.blue, 1.0f);
 			material.metallicRoughness.metallicFactor  = materialD.metallicFactor;
 			material.metallicRoughness.roughnessFactor = materialD.roughnessFactor;
+
+			// テクスチャを割り当て.
+			if (materialD.baseColorImageIndex >= 0) {
+				material.metallicRoughness.baseColorTexture.textureId = std::to_string(materialD.baseColorImageIndex);
+				material.metallicRoughness.baseColorTexture.texCoord  = 0;		// UV層番号 (0/1).
+			}
+			if (materialD.normalImageIndex >= 0) {
+				material.normalTexture.textureId = std::to_string(materialD.normalImageIndex);
+				material.normalTexture.texCoord  = 0;							// UV層番号 (0/1).
+			}
 
 			gltfDoc.materials.Append(material);
 		}
@@ -266,8 +298,9 @@ namespace {
 				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
 
 				if (storeUShort) {
+					// AddAccessorではalignmentの詰め物を意識する必要なし.
 					std::vector<unsigned short> shortData;
-					shortData.resize(meshD.triangleIndices.size());
+					shortData.resize(meshD.triangleIndices.size(), 0);
 					for (size_t i = 0; i < meshD.triangleIndices.size(); ++i) {
 						shortData[i] = (unsigned short)(meshD.triangleIndices[i]);
 					}
@@ -360,6 +393,7 @@ namespace {
 	 *   Accessor情報（メッシュから三角形の頂点インデックス、法線、UVバッファなどをパックしたもの）を格納.
 	 *   Accessor → bufferViews → buffers、と経由して情報をバッファに保持する。.
 	 *   拡張子gltfの場合、バッファは外部のbinファイル。.
+	 *   格納は、格納要素のOffsetごとに4バイト alignmentを考慮（そうしないとエラーになる）.
 	 */
 	void setBufferData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
 		const size_t meshCou = sceneData->meshes.size();
@@ -409,7 +443,11 @@ namespace {
 				buffV.id         = std::to_string(accessorID);
 				buffV.bufferId   = std::string("0");
 				buffV.byteOffset = byteOffset;
+
+				// 以下、4バイト alignmentを考慮 (shortの場合は2バイトであるため、4で割り切れない).
 				buffV.byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * meshD.triangleIndices.size();
+				if ((buffV.byteLength & 3) != 0) buffV.byteLength = (buffV.byteLength + 3) & 0xfffffffc;
+
 				buffV.target     = ELEMENT_ARRAY_BUFFER;
 				gltfDoc.bufferViews.Append(buffV);
 
@@ -417,7 +455,7 @@ namespace {
 				if (binWriter) {
 					if (storeUShort) {
 						std::vector<unsigned short> shortData;
-						shortData.resize(meshD.triangleIndices.size());
+						shortData.resize(buffV.byteLength / sizeof(unsigned short), 0);		// バイト alignmentを考慮して余分なバッファを確保.
 						for (size_t i = 0; i < meshD.triangleIndices.size(); ++i) {
 							shortData[i] = (unsigned short)(meshD.triangleIndices[i]);
 						}
@@ -555,7 +593,107 @@ namespace {
 		if (bufferBuilder) {
 			setBufferData_to_BufferBuilder(gltfDoc, sceneData, bufferBuilder);
 		}
+	}
 
+	/**
+	 *   Image/Textures情報を格納.
+	 */
+	void setImagesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
+		const size_t imagesCou = sceneData->images.size();
+
+
+		std::vector<std::string> imageFileNameList;
+		imageFileNameList.resize(imagesCou, "");
+
+		for (size_t i = 0; i < imagesCou; ++i) {
+			const CImageData& imageD = sceneData->images[i];
+			if (!imageD.m_shadeMasterImage) continue;
+			std::string fileName = StringUtil::getFileName(imageD.name);
+			if (fileName == "") fileName = std::string("image_") + std::to_string(i);
+
+			// 拡張子を取得.
+			std::string extStr = StringUtil::getFileExtension(fileName);
+			if (extStr == "jpeg") extStr = "jpg";
+			if (extStr != "jpg" && extStr != "png") {
+				extStr = "png";
+			}
+
+			// ファイル名を再構成.
+			fileName = StringUtil::getFileName(imageD.name, false) + std::string(".") + extStr;
+
+			try {
+				// 画像ファイルを指定の拡張子(jpg/png)で保存.
+				sxsdk::image_interface *image = imageD.m_shadeMasterImage->get_image();
+				if (!image) continue;
+				const std::string fileFullPath = (sceneData->getFileDir()) + std::string("/") + fileName;
+				image->save(fileFullPath.c_str());
+
+				imageFileNameList[i] = fileFullPath;
+
+				// GLTFにImage要素を追加.
+				Image img;
+				img.id       = std::to_string(i);
+				img.uri      = fileName;
+				gltfDoc.images.Append(img);
+
+				// GLTFにTexture要素を追加.
+				Texture tex;
+				tex.id        = std::to_string(i);
+				tex.imageId   = std::to_string(i);
+				tex.samplerId = std::to_string(i);
+				gltfDoc.textures.Append(tex);
+
+				// GLTFにSampler要素を追加.
+				Sampler sampl;
+				sampl.id        = std::to_string(i);
+				sampl.minFilter = MinFilter_LINEAR;
+				sampl.magFilter = MagFilter_LINEAR;
+				sampl.wrapS     = Wrap_REPEAT;
+				sampl.wrapT     = Wrap_REPEAT;
+				gltfDoc.samplers.Append(sampl);
+
+			} catch (...) {
+				continue;
+			}
+		}
+
+		// glb出力の場合.
+		if (bufferBuilder) {
+			for (size_t i = 0; i < imagesCou; ++i) {
+				// ファイル出力した画像をいったん読み込み、bufferBuilderに格納する.
+				const std::string fileName = imageFileNameList[i];
+
+				try {
+					std::shared_ptr<BinStreamReader> binStreamReader;
+					std::shared_ptr<GLTFResourceReader> binReader;
+
+					binStreamReader.reset(new BinStreamReader(StringUtil::getFileDir(fileName)));
+					binReader.reset(new GLTFResourceReader(*binStreamReader));
+
+					auto data = binReader->ReadBinaryData(gltfDoc, gltfDoc.images[i]);
+					auto imageBufferView = bufferBuilder->AddBufferView(data);
+
+					Image newImage(gltfDoc.images[i]);
+					newImage.bufferViewId = imageBufferView.id;
+
+					// mimeの指定 (image/jpeg , image/png).
+					const std::string extStr = StringUtil::getFileExtension(newImage.uri);
+					newImage.mimeType = std::string("image/");
+					if (extStr == "jpg" || extStr == "jpeg") newImage.mimeType += "jpeg";
+					else newImage.mimeType += "png";
+
+					newImage.uri.clear();
+					gltfDoc.images.Replace(newImage);
+
+					// 出力したイメージファイルを削除.
+
+
+				} catch (...) {
+					break;
+				}
+			}
+
+		}
 	}
 }
 
@@ -620,6 +758,9 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		// 拡張子がglbの場合、glbBuilderにバッファ情報を格納.
 		::setBufferData(gltfDoc, sceneData, glbBuilder);
 
+		// 画像情報を格納.
+		::setImagesData(gltfDoc, sceneData, glbBuilder);
+
 		if (glbBuilder) {
 			gltfDoc.buffers.Clear();
 			gltfDoc.bufferViews.Clear();
@@ -642,7 +783,9 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 
 		return true;
 
-	} catch (GLTFException e) { }
+	} catch (GLTFException e) {
+		const std::string errorStr(e.what());
+	}
 
 	return false;
 }

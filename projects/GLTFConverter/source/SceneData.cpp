@@ -3,6 +3,7 @@
  */
 
 #include "SceneData.h"
+#include "StringUtil.h"
 
 #include <iostream>
 #include <fstream>
@@ -57,15 +58,7 @@ void CSceneData::clear()
  */
 const std::string CSceneData::getFileDir () const
 {
-	int iPos  = filePath.find_last_of("/");
-	int iPos2 = filePath.find_last_of("\\");
-	if (iPos == std::string::npos && iPos2 == std::string::npos) return filePath;
-	if (iPos != std::string::npos && iPos2 != std::string::npos) {
-		iPos = std::max(iPos, iPos2);
-	} else if (iPos == std::string::npos) iPos = iPos2;
-	if (iPos == std::string::npos) return filePath;
-
-	return filePath.substr(0, iPos);
+	return StringUtil::getFileDir(filePath);
 }
 
 /**
@@ -74,23 +67,7 @@ const std::string CSceneData::getFileDir () const
  */
 const std::string CSceneData::getFileName (const bool hasExtension) const
 {
-	// ファイルパスからファイル名を取得.
-	std::string fileNameS = filePath;
-	int iPos  = filePath.find_last_of("/");
-	int iPos2 = filePath.find_last_of("\\");
-	if (iPos != std::string::npos || iPos2 != std::string::npos) {
-		if (iPos != std::string::npos && iPos2 != std::string::npos) {
-			iPos = std::max(iPos, iPos2);
-		} else if (iPos == std::string::npos) iPos = iPos2;
-		if (iPos != std::string::npos) fileNameS = fileNameS.substr(iPos + 1);
-	}
-	if (hasExtension) return fileNameS;
-
-	iPos = fileNameS.find_last_of(".");
-	if (iPos != std::string::npos) {
-		fileNameS = fileNameS.substr(0, iPos);
-	}
-	return fileNameS;
+	return StringUtil::getFileName(filePath, hasExtension);
 }
 
 /**
@@ -98,13 +75,7 @@ const std::string CSceneData::getFileName (const bool hasExtension) const
  */
 const std::string CSceneData::getFileExtension () const
 {
-	std::string fileNameS = getFileName();
-	const int iPos = fileNameS.find_last_of(".");
-	if (iPos == std::string::npos) return "";
-
-	std::transform(fileNameS.begin(), fileNameS.end(), fileNameS.begin(), ::tolower);
-
-	return fileNameS.substr(iPos + 1);
+	return StringUtil::getFileExtension(filePath);
 }
 
 /**
@@ -240,6 +211,25 @@ int CSceneData::findSameMaterial (const CMaterialData& materialData)
 	int index = -1;
 	for (size_t i = 0; i < mCou; ++i) {
 		if (materials[i].isSame(materialData)) {
+			index = (int)i;
+			break;
+		}
+	}
+	return index;
+}
+
+/**
+ * 同一のイメージがあるか調べる.
+ * @param[in] imageData  イメージ情報.
+ * @return 同一のイメージがある場合はイメージのインデックスを返す。.
+ *         存在しない場合は-1を返す.
+ */
+int CSceneData::findSameImage (const CImageData& imageData)
+{
+	const size_t iCou = images.size();
+	int index = -1;
+	for (size_t i = 0; i < iCou; ++i) {
+		if (images[i].isSame(imageData)) {
 			index = (int)i;
 			break;
 		}

@@ -107,7 +107,7 @@ void CMeshData::convert (const CTempMeshData& tempMeshData)
 				const sxsdk::vec2& uv0_2 = (tempMeshData.triangleUV0.empty()) ? sxsdk::vec2(0, 0) : tempMeshData.triangleUV0[iP2];
 				const sxsdk::vec2& uv1_2 = (tempMeshData.triangleUV1.empty()) ? sxsdk::vec2(0, 0) : tempMeshData.triangleUV1[iP2];
 
-				if (MathUtil::IsZero(n_1 - n_2) && MathUtil::IsZero(uv0_1 - uv0_2) && MathUtil::IsZero(uv1_1 - uv1_2)) {
+				if (MathUtil::isZero(n_1 - n_2) && MathUtil::isZero(uv0_1 - uv0_2) && MathUtil::isZero(uv1_1 - uv1_2)) {
 					sIndex = (int)j;
 					break;
 				}
