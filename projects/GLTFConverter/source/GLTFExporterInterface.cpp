@@ -7,8 +7,15 @@
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
 
+enum
+{
+	dlg_output_texture_id = 101,			// テクスチャ出力:|マスターサーフェス名の拡張子指定を参照|pngに置き換え|jpegに置き換え.
+};
+
+
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
+	m_dlgOK = false;
 }
 
 CGLTFExporterInterface::~CGLTFExporterInterface ()
@@ -55,6 +62,9 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 		m_sceneData->assetGenerator = "GLTF Converter for Shade3D";
 		m_sceneData->filePath       = std::string(m_pluginExporter->get_file_path());
 	}
+
+	// エクスポート時のパラメータ.
+	m_sceneData->exportParam = m_exportParam;
 
 	m_pScene = scene;
 
@@ -444,6 +454,51 @@ void CGLTFExporterInterface::end_polymesh_face_group (void *)
 {
 	if (m_skip) return;
 }
+
+/****************************************************************/
+/* ダイアログイベント											*/
+/****************************************************************/
+void CGLTFExporterInterface::initialize_dialog (sxsdk::dialog_interface& dialog, void*)
+{
+}
+
+void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *)
+{
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_texture_id));
+		item->set_selection((int)m_exportParam.outputTexture);
+	}
+
+}
+
+void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
+{
+
+}
+
+bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::dialog_item_class &item, int action, void *)
+{
+	const int id = item.get_id();
+
+	if (id == sx::iddefault) {
+		m_exportParam.clear();
+		load_dialog_data(dialog);
+		return true;
+	}
+
+	if (id == sx::idok) {
+		m_dlgOK = true;
+	}
+
+	if (id == dlg_output_texture_id) {
+		m_exportParam.outputTexture = (GLTFConverter::export_texture_type)(item.get_selection());
+		return true;
+	}
+
+	return false;
+}
+
 
 /***********************************************************************/
 

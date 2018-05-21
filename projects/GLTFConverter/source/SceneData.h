@@ -74,6 +74,8 @@ public:
 	std::vector<CMeshData> meshes;			// メッシュ情報の配列.
 	std::vector<CImageData> images;			// 画像情報の配列.
 
+	CExportDlgParam exportParam;			// エクスポート時のパラメータ.
+
 private:
 
 

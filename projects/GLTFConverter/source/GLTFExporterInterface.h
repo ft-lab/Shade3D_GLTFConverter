@@ -44,6 +44,9 @@ private:
 
 	CTempMeshData m_meshData;					// 1つのメッシュ情報の一時的な格納用.
 
+	CExportDlgParam m_exportParam;				// エクスポート時のパラメータ.
+	bool m_dlgOK;
+
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_EXPORTER_INTERFACE_ID; }
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }
 
@@ -95,9 +98,9 @@ private:
 	/**
 	 * リソースに埋め込むSXULを指定.
 	 */
-	//virtual const char *get_include_resource_name (const int index, void * aux = 0) {
-	//	return "export_dlg";
-	//}
+	virtual const char *get_include_resource_name (const int index, void * aux = 0) {
+		return "export_dlg";
+	}
 
 	/**
 	 * 受け付けることのできるポリゴンメッシュ面の頂点の最大数.
@@ -208,6 +211,14 @@ private:
 	 * フェイスグループごとの面列挙後に呼ばれる.
 	 */
 	virtual void end_polymesh_face_group (void *aux=0);
+
+	/****************************************************************/
+	/* ダイアログイベント											*/
+	/****************************************************************/
+	virtual void initialize_dialog (sxsdk::dialog_interface& dialog, void* aux = 0);
+	virtual void load_dialog_data (sxsdk::dialog_interface &d,void * = 0);
+	virtual void save_dialog_data (sxsdk::dialog_interface &dialog,void * = 0);
+	virtual bool respond (sxsdk::dialog_interface &dialog, sxsdk::dialog_item_class &item, int action, void *);
 
 private:
 	/**

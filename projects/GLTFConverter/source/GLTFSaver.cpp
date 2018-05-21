@@ -613,9 +613,15 @@ namespace {
 
 			// 拡張子を取得.
 			std::string extStr = StringUtil::getFileExtension(fileName);
-			if (extStr == "jpeg") extStr = "jpg";
-			if (extStr != "jpg" && extStr != "png") {
+			if ((sceneData->exportParam.outputTexture) == GLTFConverter::export_texture_name) {
+				if (extStr == "jpeg") extStr = "jpg";
+				if (extStr != "jpg" && extStr != "png") {
+					extStr = "png";
+				}
+			} else if ((sceneData->exportParam.outputTexture) == GLTFConverter::export_texture_png) {
 				extStr = "png";
+			} else if ((sceneData->exportParam.outputTexture) == GLTFConverter::export_texture_jpeg) {
+				extStr = "jpg";
 			}
 
 			// ファイル名を再構成.

@@ -29,6 +29,7 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 TEXT                    SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\text.sxul"
 STRINGS                 SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\strings.sxul"
+EXPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\export_dlg.sxul"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -52,12 +53,12 @@ BEGIN
     BEGIN
         BLOCK "041104b0"
         BEGIN
-            VALUE "CompanyName", "Shade3D Co., Ltd."
-            VALUE "FileDescription", "HelloShade"
+            VALUE "CompanyName", "ft-lab."
+            VALUE "FileDescription", "GLTF Converter (Importer/Exporter)"
             VALUE "FileVersion", "0, 0, 0, 1"
-            VALUE "InternalName", "HelloShade"
-            VALUE "LegalCopyright", "Copyright (C) 2015 Shade3D Co., Ltd."
-            VALUE "ProductName", "Shade plugin"
+            VALUE "InternalName", "GLTF Converter"
+            VALUE "LegalCopyright", "Copyright (C) 2018 ft-lab."
+            VALUE "ProductName", "GLTF Converter"
             VALUE "ProductVersion", "0, 0, 0, 1"
         END
     END
@@ -113,6 +114,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
 TEXT                    SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\text.sxul"
 STRINGS                 SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\strings.sxul"
+EXPORT_DLG              SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\export_dlg.sxul"
 
 #endif    // íÜçëåÍ (P.R.C.) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -133,6 +135,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 TEXT                    SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\text.sxul"
+EXPORT_DLG              SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\export_dlg.sxul"
 
 #endif    // âpåÍ (ïƒçë) resources
 /////////////////////////////////////////////////////////////////////////////
