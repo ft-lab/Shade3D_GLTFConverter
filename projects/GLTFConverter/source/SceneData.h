@@ -127,8 +127,14 @@ public:
 
 	/**
 	 * ノードの格納終了.
+	 * @param[in] removeF  ノードを削除する場合はtrue.
 	 */
-	void endNode ();
+	void endNode (const bool removeF = false);
+
+	/**
+	 * 末尾の2つのメッシュを1つにマージする.
+	 */
+	void mergeLastTwoMeshes ();
 
 	/**
 	 * 現在処理中のカレントノード番号を取得.

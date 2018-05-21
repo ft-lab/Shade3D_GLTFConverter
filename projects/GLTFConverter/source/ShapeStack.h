@@ -83,6 +83,11 @@ public:
 	 * カレントからルートまでの形状を配列で取得（リンク処理用）.
 	 */
 	int getShapes (std::vector<sxsdk::shape_class *> &shapes);
+
+	/**
+	 * 面反転を取得.
+	 */
+	bool isFlipFace ();
 };
 
 #endif

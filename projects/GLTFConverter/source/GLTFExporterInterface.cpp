@@ -101,16 +101,23 @@ void CGLTFExporterInterface::begin (void *)
 {
 	m_pCurrentShape = NULL;
 	m_skip = false;
+	m_meshData.clear();
 
 	// カレントの形状管理クラスのポインタを取得.
 	m_pCurrentShape        = m_pluginExporter->get_current_shape();
 	const sxsdk::mat4 gMat = m_pluginExporter->get_transformation();
+	const std::string name(m_pCurrentShape->get_name());
 
+	// レンダリング対象でない場合はスキップ.
 	if (m_pCurrentShape->get_render_flag() == 0) m_skip = true;
+	if (name != "" && name[0] == '#') m_skip = true;
+
+	// 形状により、スキップする形状を判断.
 	const int type = m_pCurrentShape->get_type();
 	if (type == sxsdk::enums::part) {
 		const int partType = m_pCurrentShape->get_part().get_part_type();
 		if (partType == sxsdk::enums::master_surface_part || partType == sxsdk::enums::master_image_part) m_skip = true;
+
 	} else {
 		if (type == sxsdk::enums::master_surface || type == sxsdk::enums::master_image) m_skip = true;
 
@@ -119,15 +126,24 @@ void CGLTFExporterInterface::begin (void *)
 			m_skip = true;
 		}
 		if (type == sxsdk::enums::line) {
+			// 面光源/線光源の場合.
 			sxsdk::line_class& lineC = m_pCurrentShape->get_line();
 			if (lineC.get_light_intensity() > 0.0f) m_skip = true;
 		}
 	}
 
-	// 面の反転フラグ.
-	m_flipFace = Shade3DUtil::isFaceFlip(m_pCurrentShape);
-
 	m_shapeStack.push(m_currentDepth, m_pCurrentShape, gMat);
+
+	// 面の反転フラグ.
+	m_flipFace = m_shapeStack.isFlipFace();
+
+	// 掃引体の場合は面が反転しているので、反転.
+	if (type == sxsdk::enums::line) {
+		sxsdk::line_class& lineC = m_pCurrentShape->get_line();
+		if (lineC.is_extruded()) {
+			m_flipFace = !m_flipFace;
+		}
+	}
 
 	m_spMat = sxsdk::mat4::identity;
 	m_currentLWMatrix = gMat;
@@ -147,6 +163,22 @@ void CGLTFExporterInterface::begin (void *)
  */
 void CGLTFExporterInterface::end (void *)
 {
+	if (!m_skip) {
+		if (m_meshData.vertices.empty() || m_meshData.triangleIndices.empty()) {
+			const int type = m_pCurrentShape->get_type();
+			if (type == sxsdk::enums::line) {
+				m_sceneData->endNode(true);		// 追加したノードは削除.
+				m_skip = true;
+			}
+			if (type == sxsdk::enums::part) {
+				if (m_pCurrentShape->get_part().get_part_type() == sxsdk::enums::surface_part) {	// 自由曲面.
+					m_sceneData->endNode(true);		// 追加したノードは削除.
+					m_skip = true;
+				}
+			}
+		}
+	}
+
 	m_shapeStack.pop();
 	m_pCurrentShape = NULL;
 
@@ -161,7 +193,7 @@ void CGLTFExporterInterface::end (void *)
 		m_currentLWMatrix = inv(pShape->get_transformation()) * m_shapeStack.getLocalToWorldMatrix();
 
 		// 面の反転フラグ.
-		m_flipFace = Shade3DUtil::isFaceFlip(m_pCurrentShape);
+		m_flipFace = m_shapeStack.isFlipFace();
 	}
 
 	if (!m_skip) {
@@ -177,6 +209,7 @@ void CGLTFExporterInterface::end (void *)
 void CGLTFExporterInterface::set_transformation (const sxsdk::mat4 &t, void *)
 {
 	m_spMat = t;
+	m_flipFace = !m_flipFace;	// 掃引体の場合、上ふたの面が反転するため面反転を行う.
 }
 
 /**
@@ -185,6 +218,7 @@ void CGLTFExporterInterface::set_transformation (const sxsdk::mat4 &t, void *)
 void CGLTFExporterInterface::clear_transformation (void *)
 {
 	m_spMat = sxsdk::mat4::identity;
+	m_flipFace = !m_flipFace;	// 面反転を戻す.
 }
 
 /**
@@ -223,7 +257,7 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 	//if (skin) pos = pos * (skin->get_skin_world_matrix());
 	pos = pos * m_LWMat;
 
-	m_meshData.vertices[i] = (v * 0.001f) * m_spMat;		// mm ==> m変換.
+	m_meshData.vertices[i] = (v * m_spMat) * 0.001f;		// mm ==> m変換.
 }
 
 /**
@@ -303,7 +337,13 @@ void CGLTFExporterInterface::end_polymesh (void *)
 		// マテリアル情報を格納.
 		meshD.materialIndex = m_setMaterialCurrentShape(m_pCurrentShape);
 
-		m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
+		if (m_sceneData->nodes[curNodeIndex].meshIndex >= 0) {
+			// 掃引体は1つで3つのメッシュを生成するため、マージ.
+			m_sceneData->mergeLastTwoMeshes();
+
+		} else {
+			m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
+		}
 	}
 }
 

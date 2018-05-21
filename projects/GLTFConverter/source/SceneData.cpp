@@ -183,11 +183,30 @@ int CSceneData::beginNode (const std::string& nodeName, const sxsdk::mat4 m)
 
 /**
  * ノードの格納終了.
+ * @param[in] removeF  ノードを削除する場合はtrue.
  */
-void CSceneData::endNode ()
+void CSceneData::endNode (const bool removeF)
 {
 	if (m_nodeStack.empty()) return;
 	m_nodeStack.pop_back();
+
+	if (removeF) {
+		const int nodeIndex = (int)nodes.size() - 1;
+		const int parentNodeIndex = nodes[nodeIndex].parentNodeIndex;
+		const int prevNodeIndex   = nodes[nodeIndex].prevNodeIndex;
+
+		if (parentNodeIndex >= 0) {
+			if (nodes[parentNodeIndex].childNodeIndex == nodeIndex) {
+				nodes[parentNodeIndex].childNodeIndex = -1;
+			}
+		}
+		if (prevNodeIndex >= 0) {
+			if (nodes[prevNodeIndex].nextNodeIndex == nodeIndex) {
+				nodes[prevNodeIndex].nextNodeIndex = -1;
+			}
+		}
+		nodes.pop_back();
+	}
 }
 
 /**
@@ -197,6 +216,75 @@ int CSceneData::getCurrentNodeIndex () const
 {
 	if (m_nodeStack.empty()) return -1;
 	return m_nodeStack.back();
+}
+
+/**
+ * 末尾の2つのメッシュを1つにマージする.
+ */
+void CSceneData::mergeLastTwoMeshes ()
+{
+	const size_t meshesCou = meshes.size();
+	if (meshesCou <= 1) return;
+
+	CMeshData& mesh1 = meshes[meshesCou - 2];
+	const CMeshData& mesh2 = meshes[meshesCou - 1];
+
+	const size_t vOffset = mesh1.vertices.size();
+	const size_t vCou    = mesh2.vertices.size();
+	const size_t triVCou = mesh2.triangleIndices.size();
+
+	for (size_t i = 0; i < vCou; ++i) {
+		mesh1.vertices.push_back(mesh2.vertices[i]);
+	}
+	if (mesh2.normals.size() == vCou) {
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.normals.push_back(mesh2.normals[i]);
+		}
+	}
+	if (mesh2.uv0.size() == vCou) {
+		if (mesh1.uv0.size() != vOffset) {
+			for (size_t i = mesh1.uv0.size(); i < vOffset; ++i) {
+				mesh1.uv0.push_back(sxsdk::vec2(0, 0));
+			}
+		}
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.uv0.push_back(mesh2.uv0[i]);
+		}
+	} else {
+		if (!mesh1.uv0.empty()) {
+			if (mesh1.uv0.size() != vOffset + vCou) {
+				for (size_t i = mesh1.uv0.size(); i < vOffset + vCou; ++i) {
+					mesh1.uv0.push_back(sxsdk::vec2(0, 0));
+				}
+			}
+		}
+	}
+
+	if (mesh2.uv1.size() == vCou) {
+		if (mesh1.uv1.size() != vOffset) {
+			for (size_t i = mesh1.uv1.size(); i < vOffset; ++i) {
+				mesh1.uv1.push_back(sxsdk::vec2(0, 0));
+			}
+		}
+
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.uv1.push_back(mesh2.uv1[i]);
+		}
+	} else {
+		if (!mesh1.uv1.empty()) {
+			if (mesh1.uv1.size() != vOffset + vCou) {
+				for (size_t i = mesh1.uv1.size(); i < vOffset + vCou; ++i) {
+					mesh1.uv1.push_back(sxsdk::vec2(0, 0));
+				}
+			}
+		}
+	}
+
+	for (size_t i = 0; i < triVCou; ++i) {
+		mesh1.triangleIndices.push_back(mesh2.triangleIndices[i] + vOffset);
+	}
+
+	meshes.pop_back();
 }
 
 /**

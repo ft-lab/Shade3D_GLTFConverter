@@ -108,3 +108,15 @@ int CShapeStack::getShapes (std::vector<sxsdk::shape_class *> &shapes)
 	return size;
 }
 
+/**
+ * 面反転を取得.
+ */
+bool CShapeStack::isFlipFace ()
+{
+	const int size = m_stackNode.size();
+	bool flipF = m_stackNode[size - 1].pShape->get_flip_face();
+	for (int i = size - 2; i >= 0; --i) {
+		flipF = (m_stackNode[i].pShape->get_flip_face()) ? !flipF : flipF;
+	}
+	return flipF;
+}
