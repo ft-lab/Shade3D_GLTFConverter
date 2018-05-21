@@ -144,6 +144,12 @@ void CGLTFExporterInterface::begin (void *)
 			m_flipFace = !m_flipFace;
 		}
 	}
+	if (type == sxsdk::enums::disk) {
+		sxsdk::disk_class& diskC = m_pCurrentShape->get_disk();
+		if (diskC.is_extruded()) {
+			m_flipFace = !m_flipFace;
+		}
+	}
 
 	m_spMat = sxsdk::mat4::identity;
 	m_currentLWMatrix = gMat;
@@ -163,7 +169,7 @@ void CGLTFExporterInterface::begin (void *)
  */
 void CGLTFExporterInterface::end (void *)
 {
-	if (!m_skip) {
+	if (!m_skip && m_pCurrentShape) {
 		if (m_meshData.vertices.empty() || m_meshData.triangleIndices.empty()) {
 			const int type = m_pCurrentShape->get_type();
 			if (type == sxsdk::enums::line) {
