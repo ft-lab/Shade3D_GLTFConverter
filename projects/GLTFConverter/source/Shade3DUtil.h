@@ -23,6 +23,11 @@ namespace Shade3DUtil
 	sxsdk::shape_class* getHasSurfaceParentShape (sxsdk::shape_class* shape);
 
 	/**
+	 * 面を反転するか。親をたどって調べる.
+	 */
+	bool isFaceFlip (sxsdk::shape_class* shape);
+
+	/**
 	 * 指定のイメージに対応するマスターイメージを取得.
 	 * @param[in] scene  シーンクラス.
 	 * @param[in] image  対象のイメージ.

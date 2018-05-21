@@ -9,12 +9,18 @@
 
 class CSceneData;
 
+namespace sxsdk
+{
+	class shade_interface;
+}
+
 class CGLTFSaver
 {
 private:
+	sxsdk::shade_interface* shade;
 
 public:
-	CGLTFSaver ();
+	CGLTFSaver (sxsdk::shade_interface* shade);
 
 	/**
 	 * 指定のGLTFファイルを出力.

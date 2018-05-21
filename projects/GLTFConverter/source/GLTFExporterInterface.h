@@ -36,6 +36,7 @@ private:
 	int m_currentFaceGroupIndex;				// カレントのフェイスグループ番号.
 
 	bool m_skip;								// 処理を飛ばす場合.
+	bool m_flipFace;							// 面を反転する場合.
 
 	std::shared_ptr<CSceneData> m_sceneData;	// シーン情報の格納用.
 

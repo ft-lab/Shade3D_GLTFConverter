@@ -24,6 +24,20 @@ sxsdk::shape_class* Shade3DUtil::getHasSurfaceParentShape (sxsdk::shape_class* s
 }
 
 /**
+ * 面を反転するか。親をたどって調べる.
+ */
+bool Shade3DUtil::isFaceFlip (sxsdk::shape_class* shape)
+{
+	bool flipF = shape->get_flip_face();
+	sxsdk::shape_class* shape2 = shape;
+	while (shape2->has_dad()) {
+		shape2 = shape2->get_dad();
+		flipF = (shape2->get_flip_face()) ? !flipF : flipF;
+	}
+	return flipF;
+}
+
+/**
  * マスターイメージパートを取得.
  */
 sxsdk::shape_class* Shade3DUtil::findMasteImagePart (sxsdk::scene_interface* scene)

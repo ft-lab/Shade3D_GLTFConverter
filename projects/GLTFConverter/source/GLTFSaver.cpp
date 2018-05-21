@@ -598,7 +598,7 @@ namespace {
 	/**
 	 *   Image/Textures情報を格納.
 	 */
-	void setImagesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
+	void setImagesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade) {
 		const size_t imagesCou = sceneData->images.size();
 
 
@@ -685,19 +685,23 @@ namespace {
 					newImage.uri.clear();
 					gltfDoc.images.Replace(newImage);
 
-					// 出力したイメージファイルを削除.
-
-
 				} catch (...) {
 					break;
 				}
 			}
 
+			// 出力したイメージファイルを削除.
+			for (size_t i = 0; i < imagesCou; ++i) {
+				try {
+					const std::string fileName = imageFileNameList[i];
+					shade->delete_file(fileName.c_str());
+				} catch (...) { }
+			}
 		}
 	}
 }
 
-CGLTFSaver::CGLTFSaver ()
+CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
 {
 }
 
@@ -759,16 +763,16 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		::setBufferData(gltfDoc, sceneData, glbBuilder);
 
 		// 画像情報を格納.
-		::setImagesData(gltfDoc, sceneData, glbBuilder);
+		::setImagesData(gltfDoc, sceneData, glbBuilder, shade);
 
 		if (glbBuilder) {
 			gltfDoc.buffers.Clear();
 			gltfDoc.bufferViews.Clear();
 			gltfDoc.accessors.Clear();
 
-			// glbファイルを出力.
 			glbBuilder->Output(gltfDoc);	// glbBuilderの情報をgltfDocに反映.
 
+			// glbファイルを出力.
 			auto manifest     = Serialize(gltfDoc);
 		    auto outputWriter = dynamic_cast<GLBResourceWriter2 *>(&glbBuilder->GetResourceWriter());
 			if (outputWriter) outputWriter->Flush(manifest, std::string(""));

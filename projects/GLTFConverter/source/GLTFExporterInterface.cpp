@@ -88,7 +88,7 @@ void CGLTFExporterInterface::clean_up (void *)
 {
 	if (!m_sceneData || (m_sceneData->filePath) == "") return;
 
-	CGLTFSaver gltfSaver;
+	CGLTFSaver gltfSaver(&shade);
 	if (gltfSaver.saveGLTF(m_sceneData->filePath, &(*m_sceneData))) {
 		shade.message("export success!");
 	}
@@ -113,7 +113,19 @@ void CGLTFExporterInterface::begin (void *)
 		if (partType == sxsdk::enums::master_surface_part || partType == sxsdk::enums::master_image_part) m_skip = true;
 	} else {
 		if (type == sxsdk::enums::master_surface || type == sxsdk::enums::master_image) m_skip = true;
+
+		// 光源の場合はスキップ.
+		if (type == sxsdk::enums::area_light || type == sxsdk::enums::directional_light || type == sxsdk::enums::point_light || type == sxsdk::enums::spotlight) {
+			m_skip = true;
+		}
+		if (type == sxsdk::enums::line) {
+			sxsdk::line_class& lineC = m_pCurrentShape->get_line();
+			if (lineC.get_light_intensity() > 0.0f) m_skip = true;
+		}
 	}
+
+	// 面の反転フラグ.
+	m_flipFace = Shade3DUtil::isFaceFlip(m_pCurrentShape);
 
 	m_shapeStack.push(m_currentDepth, m_pCurrentShape, gMat);
 
@@ -147,6 +159,9 @@ void CGLTFExporterInterface::end (void *)
 		m_pCurrentShape  = pShape;
 		m_currentDepth   = depth;
 		m_currentLWMatrix = inv(pShape->get_transformation()) * m_shapeStack.getLocalToWorldMatrix();
+
+		// 面の反転フラグ.
+		m_flipFace = Shade3DUtil::isFaceFlip(m_pCurrentShape);
 	}
 
 	if (!m_skip) {
@@ -243,6 +258,13 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 				iPos += n_uvs;
 			}
 		}
+	}
+
+	if (m_flipFace) {
+		std::reverse(indicesList.begin(), indicesList.end());
+		std::reverse(normalsList.begin(), normalsList.end());
+		std::reverse(uvs0List.begin(), uvs0List.end());
+		std::reverse(uvs1List.begin(), uvs1List.end());
 	}
 
 	if (n_list == 3) {
