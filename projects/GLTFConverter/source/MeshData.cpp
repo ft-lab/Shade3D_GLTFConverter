@@ -25,8 +25,41 @@ void CTempMeshData::clear ()
 	triangleNormals.clear();
 	triangleUV0.clear();
 	triangleUV1.clear();
+	faceGroupIndex.clear();
 
 	materialIndex = 0;
+}
+
+/**
+ * 最適化 (不要頂点の除去など).
+ */
+void CTempMeshData::optimize ()
+{
+	const size_t versCou = vertices.size();
+
+	std::vector<int> useVersList;
+	useVersList.resize(versCou, -1);
+
+	for (size_t i = 0; i < triangleIndices.size(); ++i) {
+		useVersList[ triangleIndices[i] ] = 1;
+	}
+	{
+		int iPos = 0;
+		for (size_t i = 0; i < versCou; ++i) {
+			if (useVersList[i] > 0) useVersList[i] = iPos++;
+		}
+	}
+
+	for (size_t i = 0; i < triangleIndices.size(); ++i) {
+		triangleIndices[i] = useVersList[ triangleIndices[i] ];
+	}
+
+	for (int i = (int)versCou - 1; i >= 0; --i) {
+		if (useVersList[i] < 0) {
+			useVersList.erase(useVersList.begin() + i);
+			vertices.erase(vertices.begin() + i);
+		}
+	}
 }
 
 //---------------------------------------------------------------.
@@ -177,3 +210,65 @@ void CMeshData::calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const
 	}
 }
 
+/**
+ * CTempMeshDataからコンバート(フェイスグループを考慮して分離).
+ * @param[in]  tempMeshData        作業用のメッシュ情報.
+ * @param[out] meshData            メッシュ情報が返る.
+ * @param[out] faceGroupIndexList  メッシュごとのフェイスグループ番号が返る.
+ * @return メッシュの数.
+ */
+int CMeshData::convert (const CTempMeshData& tempMeshData, std::vector<CMeshData>& meshData, std::vector<int>& faceGroupIndexList)
+{
+	// 使用しているフェイスグループ番号を取得.
+	faceGroupIndexList.clear();
+	const size_t triCou = tempMeshData.faceGroupIndex.size();
+	for (size_t i = 0; i < triCou; ++i) {
+		const int fgIndex = tempMeshData.faceGroupIndex[i];
+		if (std::find(faceGroupIndexList.begin(), faceGroupIndexList.end(), fgIndex) == faceGroupIndexList.end()) {
+			faceGroupIndexList.push_back(fgIndex);
+		}
+	}
+
+	meshData.clear();
+	for (size_t fgLoop = 0; fgLoop < faceGroupIndexList.size(); ++fgLoop) {
+		const int faceGroupIndex = faceGroupIndexList[fgLoop];
+
+		CTempMeshData tempMeshD;
+		tempMeshD.name     = tempMeshData.name;
+		tempMeshD.vertices = tempMeshData.vertices;
+
+		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+			const int fgIndex = tempMeshData.faceGroupIndex[i];
+			if (fgIndex != faceGroupIndex) continue;
+			{
+				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 0]);
+				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 1]);
+				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 2]);
+			}
+			if (!tempMeshData.triangleNormals.empty()) {
+				tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 0]);
+				tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 1]);
+				tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 2]);
+			}
+			if (!tempMeshData.triangleUV0.empty()) {
+				tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 0]);
+				tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 1]);
+				tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 2]);
+			}
+			if (!tempMeshData.triangleUV1.empty()) {
+				tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 0]);
+				tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 1]);
+				tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 2]);
+			}
+		}
+
+		// 不要頂点の除去.
+		tempMeshD.optimize();
+
+		meshData.push_back(CMeshData());
+		CMeshData& meshD = meshData.back();
+		meshD.convert(tempMeshD);
+	}
+
+	return (int)meshData.size();
+}

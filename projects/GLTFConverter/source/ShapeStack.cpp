@@ -120,3 +120,20 @@ bool CShapeStack::isFlipFace ()
 	}
 	return flipF;
 }
+
+/**
+ * 表面材質情報を持つ親までたどる.
+ */
+sxsdk::shape_class* CShapeStack::getHasSurfaceShape ()
+{
+	sxsdk::shape_class* pSurfaceShape = NULL;
+	const int size = m_stackNode.size();
+	for (int i = size - 1; i >= 0; --i) {
+		if (m_stackNode[i].pShape->get_has_surface_attributes()) {
+			pSurfaceShape = m_stackNode[i].pShape;
+			break;
+		}
+	}
+	return pSurfaceShape;
+}
+

@@ -88,6 +88,11 @@ public:
 	 * 面反転を取得.
 	 */
 	bool isFlipFace ();
+
+	/**
+	 * 表面材質情報を持つ親までたどる.
+	 */
+	sxsdk::shape_class* getHasSurfaceShape ();
 };
 
 #endif

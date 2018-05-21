@@ -33,7 +33,9 @@ private:
 	sxsdk::mat4 m_currentLWMatrix;				// カレントのローカルワールド変換行列.
 	sxsdk::mat4 m_LWMat;
 	sxsdk::mat4 m_spMat;						// 掃引体時の変換行列.
+
 	int m_currentFaceGroupIndex;				// カレントのフェイスグループ番号.
+	int m_faceGroupCount;						// 使用しているフェイスグループ数.
 
 	bool m_skip;								// 処理を飛ばす場合.
 	bool m_flipFace;							// 面を反転する場合.
@@ -216,15 +218,21 @@ private:
 
 	/**
 	 * 指定の形状に割り当てられているマテリアル/イメージを格納.
-	 * @param[in] shape  対象形状.
+	 * @param[in] shape           対象形状.
+	 * @param[in] faceGroupIndex  フェイスグループ番号.
 	 * @return マテリアル番号.
 	 */
-	int m_setMaterialCurrentShape (sxsdk::shape_class* shape);
+	int m_setMaterialCurrentShape (sxsdk::shape_class* shape, const int faceGroupIndex = -1);
 
 	/**
 	 * 指定の形状がスキップ対象か.
 	 */
 	bool m_checkSkipShape (sxsdk::shape_class* shape);
+
+	/**
+	 * ポリゴンメッシュのフェイスグループを使用している場合の格納.
+	 */
+	void m_storeMeshesWithFaceGroup ();
 
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);

@@ -58,6 +58,8 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 
 	m_pScene = scene;
 
+	shade.message("----- GLTF Exporter -----");
+
 	// エクスポートを開始.
 	plugin_exporter->do_export();
 }
@@ -250,6 +252,7 @@ void CGLTFExporterInterface::begin_polymesh (void *)
 {
 	if (m_skip) return;
 	m_currentFaceGroupIndex = -1;
+	m_faceGroupCount = 0;
 
 	m_LWMat = m_spMat * m_currentLWMatrix;
 
@@ -338,6 +341,7 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 				m_meshData.triangleUV1.push_back(uvs1List[i]);
 			}
 		}
+		m_meshData.faceGroupIndex.push_back(m_currentFaceGroupIndex);
 	}
 }
 
@@ -350,22 +354,67 @@ void CGLTFExporterInterface::end_polymesh (void *)
 
 	// m_meshDataからGLTFの形式にコンバートして格納.
 	if (!m_meshData.triangleIndices.empty() && !m_meshData.vertices.empty()) {
-		const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
-		const int meshIndex = (int)m_sceneData->meshes.size();
-		m_sceneData->meshes.push_back(CMeshData());
-		CMeshData& meshD = m_sceneData->meshes.back();
-		meshD.convert(m_meshData);
+		if (m_faceGroupCount == 0) {
+			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
+			const int meshIndex = (int)m_sceneData->meshes.size();
+			m_sceneData->meshes.push_back(CMeshData());
+			CMeshData& meshD = m_sceneData->meshes.back();
+			meshD.convert(m_meshData);
 
-		// マテリアル情報を格納.
-		meshD.materialIndex = m_setMaterialCurrentShape(m_pCurrentShape);
+			// マテリアル情報を格納.
+			meshD.materialIndex = m_setMaterialCurrentShape(m_pCurrentShape);
 
-		if (m_sceneData->nodes[curNodeIndex].meshIndex >= 0) {
-			// 掃引体は1つで3つのメッシュを生成するため、マージ.
-			m_sceneData->mergeLastTwoMeshes();
+			if (m_sceneData->nodes[curNodeIndex].meshIndex >= 0) {
+				// 掃引体は1つで3つのメッシュを生成するため、マージ.
+				m_sceneData->mergeLastTwoMeshes();
 
+			} else {
+				m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
+			}
 		} else {
+			// フェイスグループを死闘しているポリゴンメッシュの場合、ノードを作成してそれに分けて格納.
+			m_storeMeshesWithFaceGroup();
+		}
+	}
+}
+
+/**
+ * ポリゴンメッシュのフェイスグループを使用している場合の格納.
+ */
+void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
+{
+	const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
+	const int meshIndex = (int)m_sceneData->meshes.size();
+
+	// フェイスグループごとにメッシュを分離.
+	std::vector<CMeshData> meshDataList;
+	std::vector<int> faceGroupIndexList;
+	const int meshesCou = CMeshData::convert(m_meshData, meshDataList, faceGroupIndexList);
+	if (meshesCou == 0) return;
+
+	// マテリアル情報を格納.
+	for (int i = 0; i < meshesCou; ++i) {
+		const int faceGroupIndex = faceGroupIndexList[i];
+		// 形状に割り当てられているマテリアル情報を格納.
+		meshDataList[i].materialIndex = m_setMaterialCurrentShape(m_pCurrentShape, faceGroupIndex);
+	}
+
+	// noesではノードで分け、メッシュを格納.
+	for (int i = 0; i < meshesCou; ++i) {
+		CMeshData& meshD = meshDataList[i];
+
+		const std::string name = std::string(m_pCurrentShape->get_name()) + std::string("_") + std::to_string(i);
+		m_sceneData->beginNode(name);
+
+		{
+			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
+			const int meshIndex = (int)m_sceneData->meshes.size();
+			meshD.name = name;
+			m_sceneData->meshes.push_back(meshD);
 			m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
 		}
+
+		m_sceneData->endNode();
 	}
 }
 
@@ -375,6 +424,8 @@ void CGLTFExporterInterface::end_polymesh (void *)
 void CGLTFExporterInterface::begin_polymesh_face2 (int n, int number_of_face_groups, void *)
 {
 	if (m_skip) return;
+	m_currentFaceGroupIndex = -1;
+	m_faceGroupCount = number_of_face_groups;
 }
 
 /**
@@ -519,16 +570,33 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 
 /**
  * 指定の形状に割り当てられているマテリアル/イメージを格納.
- * @param[in] shape  対象形状.
+ * @param[in] shape           対象形状.
+ * @param[in] faceGroupIndex  フェイスグループ番号.
  * @return マテリアル番号.
  */
-int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape)
+int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape, const int faceGroupIndex)
 {
 	// サーフェスを持つ親までたどる.
-	sxsdk::shape_class* shape2 = Shade3DUtil::getHasSurfaceParentShape(shape);
+	sxsdk::shape_class* shape2 = m_shapeStack.getHasSurfaceShape();
+	if (shape2 == NULL) shape2 = shape;
+
+	sxsdk::master_surface_class* masterSurface = NULL;
 
 	try {
-		sxsdk::master_surface_class* masterSurface = shape2->get_master_surface();
+		if (faceGroupIndex < 0) {
+			masterSurface = shape2->get_master_surface();
+
+		} else {
+			// ポリゴンメッシュの場合、フェイスグループに割り当てられているマスターサーフェスを取得.
+			if (shape->get_type() == sxsdk::enums::polygon_mesh) {
+				sxsdk::polygon_mesh_class& pMesh = shape->get_polygon_mesh();
+				const int faceGroupCou = pMesh.get_number_of_face_groups();
+				if (faceGroupIndex < faceGroupCou) {
+					masterSurface = pMesh.get_face_group_surface(faceGroupIndex);
+				}
+			}
+		}
+
 		CMaterialData materialData;
 		bool ret = false;
 		if (masterSurface) {

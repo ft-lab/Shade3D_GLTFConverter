@@ -83,7 +83,7 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	CSceneData sceneData;
 	if (!gltfLoader.loadGLTF(fileName, &sceneData)) return;
 
-	shade.message("----- GLTF Loader -----");
+	shade.message("----- GLTF Importer -----");
 	shade.message(std::string("File : ") + fileName);
 	shade.message(std::string("Asset generator : ") + sceneData.assetGenerator);
 	shade.message(std::string("Asset version : ") + sceneData.assetVersion);
