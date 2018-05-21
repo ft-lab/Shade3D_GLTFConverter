@@ -95,6 +95,42 @@ void CGLTFExporterInterface::clean_up (void *)
 }
 
 /**
+ * 指定の形状がスキップ対象か.
+ */
+bool CGLTFExporterInterface::m_checkSkipShape (sxsdk::shape_class* shape)
+{
+	bool skipF = false;
+	if (!shape) return skipF;
+
+	// レンダリング対象でない場合はスキップ.
+	const std::string name(shape->get_name());
+	if (shape->get_render_flag() == 0) skipF = true;
+	if (name != "" && name[0] == '#') skipF = true;
+
+	// 形状により、スキップする形状を判断.
+	const int type = shape->get_type();
+	if (type == sxsdk::enums::part) {
+		const int partType = shape->get_part().get_part_type();
+		if (partType == sxsdk::enums::master_surface_part || partType == sxsdk::enums::master_image_part) skipF = true;
+
+	} else {
+		if (type == sxsdk::enums::master_surface || type == sxsdk::enums::master_image) skipF = true;
+
+		// 光源の場合はスキップ.
+		if (type == sxsdk::enums::area_light || type == sxsdk::enums::directional_light || type == sxsdk::enums::point_light || type == sxsdk::enums::spotlight) {
+			skipF = true;
+		}
+		if (type == sxsdk::enums::line) {
+			// 面光源/線光源の場合.
+			sxsdk::line_class& lineC = shape->get_line();
+			if (lineC.get_light_intensity() > 0.0f) skipF = true;
+		}
+	}
+
+	return skipF;
+}
+
+/**
  * カレント形状の処理の開始.
  */
 void CGLTFExporterInterface::begin (void *)
@@ -108,29 +144,9 @@ void CGLTFExporterInterface::begin (void *)
 	const sxsdk::mat4 gMat = m_pluginExporter->get_transformation();
 	const std::string name(m_pCurrentShape->get_name());
 
-	// レンダリング対象でない場合はスキップ.
-	if (m_pCurrentShape->get_render_flag() == 0) m_skip = true;
-	if (name != "" && name[0] == '#') m_skip = true;
-
 	// 形状により、スキップする形状を判断.
 	const int type = m_pCurrentShape->get_type();
-	if (type == sxsdk::enums::part) {
-		const int partType = m_pCurrentShape->get_part().get_part_type();
-		if (partType == sxsdk::enums::master_surface_part || partType == sxsdk::enums::master_image_part) m_skip = true;
-
-	} else {
-		if (type == sxsdk::enums::master_surface || type == sxsdk::enums::master_image) m_skip = true;
-
-		// 光源の場合はスキップ.
-		if (type == sxsdk::enums::area_light || type == sxsdk::enums::directional_light || type == sxsdk::enums::point_light || type == sxsdk::enums::spotlight) {
-			m_skip = true;
-		}
-		if (type == sxsdk::enums::line) {
-			// 面光源/線光源の場合.
-			sxsdk::line_class& lineC = m_pCurrentShape->get_line();
-			if (lineC.get_light_intensity() > 0.0f) m_skip = true;
-		}
-	}
+	m_skip = m_checkSkipShape(m_pCurrentShape);
 
 	m_shapeStack.push(m_currentDepth, m_pCurrentShape, gMat);
 
@@ -206,7 +222,7 @@ void CGLTFExporterInterface::end (void *)
 		m_sceneData->endNode();
 	}
 
-	m_skip = false;
+	m_skip = m_checkSkipShape(m_pCurrentShape);
 }
 
 /**

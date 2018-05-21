@@ -73,6 +73,7 @@ sxsdk::shape_class* Shade3DUtil::findMasteImagePart (sxsdk::scene_interface* sce
  */
 sxsdk::master_image_class* Shade3DUtil::getMasterImageFromImage (sxsdk::scene_interface* scene, sxsdk::image_interface* image)
 {
+	if (!image) return NULL;
 	if (!image->has_image()) return NULL;
 	const int width  = image->get_size().x;
 	const int height = image->get_size().y;

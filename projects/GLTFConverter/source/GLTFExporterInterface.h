@@ -221,6 +221,11 @@ private:
 	 */
 	int m_setMaterialCurrentShape (sxsdk::shape_class* shape);
 
+	/**
+	 * 指定の形状がスキップ対象か.
+	 */
+	bool m_checkSkipShape (sxsdk::shape_class* shape);
+
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);
 	~CGLTFExporterInterface ();
