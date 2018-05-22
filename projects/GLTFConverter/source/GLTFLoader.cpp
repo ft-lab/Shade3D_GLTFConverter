@@ -101,167 +101,172 @@ namespace {
 		}
 
 		for (size_t i = 0; i < meshesSize; ++i) {
-			sceneData->meshes.push_back(CMeshData());
-			CMeshData& dstMeshData = sceneData->meshes[i];
+			const int meshIndex = sceneData->appendNewMeshData();
+			CMeshData& dstMeshData = sceneData->getMeshData(meshIndex);
 
 			const Mesh& mesh = gltfDoc.meshes[i];
 			const size_t primitivesCou = mesh.primitives.size();
 			if (primitivesCou == 0) continue;
-			const int primitiveIndex = 0;		// TODO : 複数のprimitiveがある場合は追加処理が必要かも.
-			const MeshPrimitive& meshPrim = mesh.primitives[primitiveIndex];
 
-			// meshMode = MESH_TRIANGLES(4)の場合は、三角形.
-			MeshMode meshMode = meshPrim.mode;
+			for (size_t primLoop = 0; primLoop < primitivesCou; ++primLoop) {
+				dstMeshData.primitives.push_back(CPrimitiveData());
+				CPrimitiveData& dstPrimitiveData = dstMeshData.primitives.back();
 
-			// メッシュ名.
-			dstMeshData.name = mesh.name;
+				const MeshPrimitive& meshPrim = mesh.primitives[primLoop];
 
-			// マテリアル番号.
-			dstMeshData.materialIndex = std::stoi(meshPrim.materialId);
+				// meshMode = MESH_TRIANGLES(4)の場合は、三角形.
+				MeshMode meshMode = meshPrim.mode;
 
-			// 頂点座標を取得.
-			if (meshPrim.positionsAccessorId != "") {
-				// positionsAccessorIdを取得 → accessorsよりbufferViewIdを取得 → ResourceReaderよりバッファ情報を取得、とたどる.
-				const int positionID = std::stoi(meshPrim.positionsAccessorId);
-				const Accessor& acce = gltfDoc.accessors[positionID];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
+				// メッシュ名.
+				dstPrimitiveData.name = mesh.name;
 
-				// 頂点座標の配列を取得.
-				std::vector<Vector3> vers;
-				if (reader) vers = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-				else if (binReader) vers = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				// マテリアル番号.
+				dstPrimitiveData.materialIndex = std::stoi(meshPrim.materialId);
 
-				const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+				// 頂点座標を取得.
+				if (meshPrim.positionsAccessorId != "") {
+					// positionsAccessorIdを取得 → accessorsよりbufferViewIdを取得 → ResourceReaderよりバッファ情報を取得、とたどる.
+					const int positionID = std::stoi(meshPrim.positionsAccessorId);
+					const Accessor& acce = gltfDoc.accessors[positionID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				const size_t versCou = vers.size();
-				if (versCou > 0 && acce.count > 0) {
-					dstMeshData.vertices.resize(acce.count);
-					for (size_t j = 0; j < acce.count; ++j) {
-						dstMeshData.vertices[j] = sxsdk::vec3(vers[j + offsetI].x, vers[j + offsetI].y, vers[j + offsetI].z);
+					// 頂点座標の配列を取得.
+					std::vector<Vector3> vers;
+					if (reader) vers = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) vers = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+					const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+
+					const size_t versCou = vers.size();
+					if (versCou > 0 && acce.count > 0) {
+						dstPrimitiveData.vertices.resize(acce.count);
+						for (size_t j = 0; j < acce.count; ++j) {
+							dstPrimitiveData.vertices[j] = sxsdk::vec3(vers[j + offsetI].x, vers[j + offsetI].y, vers[j + offsetI].z);
+						}
 					}
 				}
-			}
 
-			// 法線を取得.
-			if (meshPrim.normalsAccessorId != "") {
-				const int normalID = std::stoi(meshPrim.normalsAccessorId);
-				const Accessor& acce = gltfDoc.accessors[normalID];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
+				// 法線を取得.
+				if (meshPrim.normalsAccessorId != "") {
+					const int normalID = std::stoi(meshPrim.normalsAccessorId);
+					const Accessor& acce = gltfDoc.accessors[normalID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				// 法線の配列を取得.
-				std::vector<Vector3> normals;
-				if (reader) normals = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-				else if (binReader) normals = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					// 法線の配列を取得.
+					std::vector<Vector3> normals;
+					if (reader) normals = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) normals = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-				const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+					const int offsetI = acce.byteOffset / (sizeof(float) * 3);
 
-				const size_t versCou = normals.size();
-				if (versCou > 0 && acce.count > 0) {
-					dstMeshData.normals.resize(acce.count);
-					for (size_t j = 0; j < acce.count; ++j) {
-						dstMeshData.normals[j] = sxsdk::vec3(normals[j + offsetI].x, normals[j + offsetI].y, normals[j + offsetI].z);
+					const size_t versCou = normals.size();
+					if (versCou > 0 && acce.count > 0) {
+						dstPrimitiveData.normals.resize(acce.count);
+						for (size_t j = 0; j < acce.count; ++j) {
+							dstPrimitiveData.normals[j] = sxsdk::vec3(normals[j + offsetI].x, normals[j + offsetI].y, normals[j + offsetI].z);
+						}
 					}
 				}
-			}
 
-			// UV0を取得.
-			if (meshPrim.uv0AccessorId != "") {
-				const int uv0ID = std::stoi(meshPrim.uv0AccessorId);
-				const Accessor& acce = gltfDoc.accessors[uv0ID];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
+				// UV0を取得.
+				if (meshPrim.uv0AccessorId != "") {
+					const int uv0ID = std::stoi(meshPrim.uv0AccessorId);
+					const Accessor& acce = gltfDoc.accessors[uv0ID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				// UV0の配列を取得.
-				// floatの配列で返るため、/2 がUV要素数.
-				std::vector<float> uvs;
-				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					// UV0の配列を取得.
+					// floatの配列で返るため、/2 がUV要素数.
+					std::vector<float> uvs;
+					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-				const int offsetI = acce.byteOffset / (sizeof(float));
+					const int offsetI = acce.byteOffset / (sizeof(float));
 
-				const size_t versCou = uvs.size();
-				if (versCou > 0 && acce.count > 0) {
-					dstMeshData.uv0.resize(acce.count);
+					const size_t versCou = uvs.size();
+					if (versCou > 0 && acce.count > 0) {
+						dstPrimitiveData.uv0.resize(acce.count);
 
-					for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
-						dstMeshData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
+							dstPrimitiveData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+						}
 					}
 				}
-			}
-			// UV1を取得.
-			if (meshPrim.uv1AccessorId != "") {
-				const int uv1ID = std::stoi(meshPrim.uv1AccessorId);
-				const Accessor& acce = gltfDoc.accessors[uv1ID];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
+				// UV1を取得.
+				if (meshPrim.uv1AccessorId != "") {
+					const int uv1ID = std::stoi(meshPrim.uv1AccessorId);
+					const Accessor& acce = gltfDoc.accessors[uv1ID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				// UV1の配列を取得.
-				// floatの配列で返るため、/2 がUV要素数.
-				std::vector<float> uvs;
-				if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-				else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					// UV1の配列を取得.
+					// floatの配列で返るため、/2 がUV要素数.
+					std::vector<float> uvs;
+					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-				const int offsetI = acce.byteOffset / (sizeof(float));
+					const int offsetI = acce.byteOffset / (sizeof(float));
 
-				const size_t versCou = uvs.size();
-				if (versCou > 0 && acce.count > 0) {
-					dstMeshData.uv1.resize(acce.count);
-					for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
-						dstMeshData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+					const size_t versCou = uvs.size();
+					if (versCou > 0 && acce.count > 0) {
+						dstPrimitiveData.uv1.resize(acce.count);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
+							dstPrimitiveData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+						}
 					}
 				}
-			}
 
-			// 三角形の頂点インデックスを取得.
-			if (meshPrim.indicesAccessorId != "") {
-				const int indicesID = std::stoi(meshPrim.indicesAccessorId);
-				const Accessor& acce = gltfDoc.accessors[indicesID];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
+				// 三角形の頂点インデックスを取得.
+				if (meshPrim.indicesAccessorId != "") {
+					const int indicesID = std::stoi(meshPrim.indicesAccessorId);
+					const Accessor& acce = gltfDoc.accessors[indicesID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
 
-				// COMPONENT_BYTE(5120) / COMPONENT_UNSIGNED_SHORT(5123) / COMPONENT_UNSIGNED_INT(5125) / COMPONENT_FLOAT(5126)など.
-				ComponentType compType = acce.componentType;
+					// COMPONENT_BYTE(5120) / COMPONENT_UNSIGNED_SHORT(5123) / COMPONENT_UNSIGNED_INT(5125) / COMPONENT_FLOAT(5126)など.
+					ComponentType compType = acce.componentType;
 
-				if (compType == COMPONENT_UNSIGNED_BYTE) {		// byteデータとして取得.
-					std::vector<unsigned char> indices;
-					if (reader) {
-						indices = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					} else if (binReader) {
-						indices = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					}
+					if (compType == COMPONENT_UNSIGNED_BYTE) {		// byteデータとして取得.
+						std::vector<unsigned char> indices;
+						if (reader) {
+							indices = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						} else if (binReader) {
+							indices = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						}
 
-					const int offsetI = acce.byteOffset / sizeof(unsigned char);
+						const int offsetI = acce.byteOffset / sizeof(unsigned char);
 
-					dstMeshData.triangleIndices.resize(acce.count);
-					for (size_t j = 0; j < acce.count; ++j) {
-						dstMeshData.triangleIndices[j] = (int)indices[j + offsetI];
-					}
+						dstPrimitiveData.triangleIndices.resize(acce.count);
+						for (size_t j = 0; j < acce.count; ++j) {
+							dstPrimitiveData.triangleIndices[j] = (int)indices[j + offsetI];
+						}
 
-				} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shortデータとして取得.
-					std::vector<unsigned short> indices;
-					if (reader) {
-						indices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					} else if (binReader) {
-						indices = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					}
+					} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shortデータとして取得.
+						std::vector<unsigned short> indices;
+						if (reader) {
+							indices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						} else if (binReader) {
+							indices = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						}
 
-					const int offsetI = acce.byteOffset / sizeof(unsigned short);
+						const int offsetI = acce.byteOffset / sizeof(unsigned short);
 
-					dstMeshData.triangleIndices.resize(acce.count);
-					for (size_t j = 0; j < acce.count; ++j) {
-						dstMeshData.triangleIndices[j] = (int)indices[j + offsetI];
-					}
+						dstPrimitiveData.triangleIndices.resize(acce.count);
+						for (size_t j = 0; j < acce.count; ++j) {
+							dstPrimitiveData.triangleIndices[j] = (int)indices[j + offsetI];
+						}
 
-				} else {			// intデータとして取得.
-					std::vector<int> indices;
-					if (reader) {
-						indices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					} else if (binReader) {
-						indices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					}
+					} else {			// intデータとして取得.
+						std::vector<int> indices;
+						if (reader) {
+							indices = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						} else if (binReader) {
+							indices = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						}
 
-					const int offsetI = acce.byteOffset / sizeof(int);
+						const int offsetI = acce.byteOffset / sizeof(int);
 
-					dstMeshData.triangleIndices.resize(acce.count);
-					for (size_t j = 0; j < acce.count; ++j) {
-						dstMeshData.triangleIndices[j] = indices[j + offsetI];
+						dstPrimitiveData.triangleIndices.resize(acce.count);
+						for (size_t j = 0; j < acce.count; ++j) {
+							dstPrimitiveData.triangleIndices[j] = indices[j + offsetI];
+						}
 					}
 				}
 			}
@@ -455,10 +460,15 @@ namespace {
 			}
 
 			// 画像バッファを取得.
+			try {
 			const std::vector<uint8_t> imageData = (reader) ? (reader->ReadBinaryData(gltfDoc, image)) : (binReader->ReadBinaryData(gltfDoc, image));
-			const size_t dCou = imageData.size();
-			dstImageData.imageDatas.resize(dCou);
-			for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
+				const size_t dCou = imageData.size();
+				dstImageData.imageDatas.resize(dCou);
+				for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
+			} catch (GLTFException e) {
+				const std::string errorStr(e.what());
+				dstImageData.clear();
+			}
 		}
 	}
 
@@ -791,7 +801,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
     doc.Accept(writer);
 
-#if 0
+#if 1
 	try {
 		std::ofstream outStream("E:\\Data\\User\\VCProgram\\GLTFConverter\\xxxx.gltf");
 		outStream << buf.GetString();

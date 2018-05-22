@@ -66,16 +66,16 @@ void CTempMeshData::optimize ()
 /**
  * 1つのメッシュ情報 (GLTFでの構成).
  */
-CMeshData::CMeshData ()
+CPrimitiveData::CPrimitiveData ()
 {
 	clear();
 }
 
-CMeshData::~CMeshData ()
+CPrimitiveData::~CPrimitiveData ()
 {
 }
 
-void CMeshData::clear ()
+void CPrimitiveData::clear ()
 {
 	name = "";
 	vertices.clear();
@@ -89,7 +89,7 @@ void CMeshData::clear ()
 /**
  * CTempMeshDataからコンバート.
  */
-void CMeshData::convert (const CTempMeshData& tempMeshData)
+void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 {
 	clear();
 
@@ -192,7 +192,7 @@ void CMeshData::convert (const CTempMeshData& tempMeshData)
 /**
  * 頂点座標のバウンディングボックスを計算.
  */
-void CMeshData::calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const
+void CPrimitiveData::calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const
 {
 	const size_t versCou = vertices.size();
 	bbMin = bbMax = sxsdk::vec3(0, 0, 0);
@@ -213,11 +213,11 @@ void CMeshData::calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const
 /**
  * CTempMeshDataからコンバート(フェイスグループを考慮して分離).
  * @param[in]  tempMeshData        作業用のメッシュ情報.
- * @param[out] meshData            メッシュ情報が返る.
- * @param[out] faceGroupIndexList  メッシュごとのフェイスグループ番号が返る.
+ * @param[out] primitiveData       プリミティブ情報が返る.
+ * @param[out] faceGroupIndexList  プリミティブごとのフェイスグループ番号が返る.
  * @return メッシュの数.
  */
-int CMeshData::convert (const CTempMeshData& tempMeshData, std::vector<CMeshData>& meshData, std::vector<int>& faceGroupIndexList)
+int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList)
 {
 	// 使用しているフェイスグループ番号を取得.
 	faceGroupIndexList.clear();
@@ -229,7 +229,7 @@ int CMeshData::convert (const CTempMeshData& tempMeshData, std::vector<CMeshData
 		}
 	}
 
-	meshData.clear();
+	primitivesData.clear();
 	for (size_t fgLoop = 0; fgLoop < faceGroupIndexList.size(); ++fgLoop) {
 		const int faceGroupIndex = faceGroupIndexList[fgLoop];
 
@@ -265,10 +265,25 @@ int CMeshData::convert (const CTempMeshData& tempMeshData, std::vector<CMeshData
 		// 不要頂点の除去.
 		tempMeshD.optimize();
 
-		meshData.push_back(CMeshData());
-		CMeshData& meshD = meshData.back();
-		meshD.convert(tempMeshD);
+		primitivesData.push_back(CPrimitiveData());
+		CPrimitiveData& primitiveD = primitivesData.back();
+		primitiveD.convert(tempMeshD);
 	}
 
-	return (int)meshData.size();
+	return (int)primitivesData.size();
+}
+
+//---------------------------------------------------------------.
+CMeshData::CMeshData ()
+{
+	clear();
+}
+
+CMeshData::~CMeshData ()
+{
+}
+
+void CMeshData::clear ()
+{
+	primitives.clear();
 }

@@ -366,13 +366,13 @@ void CGLTFExporterInterface::end_polymesh (void *)
 	if (!m_meshData.triangleIndices.empty() && !m_meshData.vertices.empty()) {
 		if (m_faceGroupCount == 0) {
 			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
-			const int meshIndex = (int)m_sceneData->meshes.size();
-			m_sceneData->meshes.push_back(CMeshData());
-			CMeshData& meshD = m_sceneData->meshes.back();
-			meshD.convert(m_meshData);
+			const int meshIndex = m_sceneData->appendNewMeshData();
+			m_sceneData->getMeshData(meshIndex).primitives.push_back(CPrimitiveData());
+			CPrimitiveData& primitiveD = m_sceneData->getMeshData(meshIndex).primitives[0];
+			primitiveD.convert(m_meshData);
 
 			// マテリアル情報を格納.
-			meshD.materialIndex = m_setMaterialCurrentShape(m_pCurrentShape);
+			primitiveD.materialIndex = m_setMaterialCurrentShape(m_pCurrentShape);
 
 			if (m_sceneData->nodes[curNodeIndex].meshIndex >= 0) {
 				// 掃引体は1つで3つのメッシュを生成するため、マージ.
@@ -397,21 +397,21 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 	const int meshIndex = (int)m_sceneData->meshes.size();
 
 	// フェイスグループごとにメッシュを分離.
-	std::vector<CMeshData> meshDataList;
+	std::vector<CPrimitiveData> primitivesDataList;
 	std::vector<int> faceGroupIndexList;
-	const int meshesCou = CMeshData::convert(m_meshData, meshDataList, faceGroupIndexList);
-	if (meshesCou == 0) return;
+	const int primitivesCou = CPrimitiveData::convert(m_meshData, primitivesDataList, faceGroupIndexList);
+	if (primitivesCou == 0) return;
 
 	// マテリアル情報を格納.
-	for (int i = 0; i < meshesCou; ++i) {
+	for (int i = 0; i < primitivesCou; ++i) {
 		const int faceGroupIndex = faceGroupIndexList[i];
 		// 形状に割り当てられているマテリアル情報を格納.
-		meshDataList[i].materialIndex = m_setMaterialCurrentShape(m_pCurrentShape, faceGroupIndex);
+		primitivesDataList[i].materialIndex = m_setMaterialCurrentShape(m_pCurrentShape, faceGroupIndex);
 	}
 
 	// noesではノードで分け、メッシュを格納.
-	for (int i = 0; i < meshesCou; ++i) {
-		CMeshData& meshD = meshDataList[i];
+	for (int i = 0; i < primitivesCou; ++i) {
+		CPrimitiveData& primitiveD = primitivesDataList[i];
 
 		const std::string name = std::string(m_pCurrentShape->get_name()) + std::string("_") + std::to_string(i);
 		m_sceneData->beginNode(name);
@@ -419,8 +419,9 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 		{
 			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
 			const int meshIndex = (int)m_sceneData->meshes.size();
-			meshD.name = name;
-			m_sceneData->meshes.push_back(meshD);
+			primitiveD.name = name;
+			const int meshIndex2 = m_sceneData->appendNewMeshData();
+			m_sceneData->getMeshData(meshIndex2).primitives.push_back(primitiveD);
 			m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
 		}
 

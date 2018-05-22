@@ -128,6 +128,32 @@ sxsdk::mat4 CSceneData::getNodeMatrix (const int nodeIndex, const bool unitMtoMM
 	return (mScale * mRot * mTrans);
 }
 
+/**
+ * 新しいメッシュデータを追加.
+ * @return メッシュ番号.
+ */
+int CSceneData::appendNewMeshData ()
+{
+	const int index = (int)meshes.size();
+	meshes.push_back(CMeshData());
+	return index;
+}
+
+/**
+ * メッシュデータを取得.
+ * @param[in] meshIndex  メッシュ番号.
+ * @return メッシュデータクラス.
+ */
+CMeshData& CSceneData::getMeshData (const int meshIndex)
+{
+	return meshes[meshIndex];
+}
+
+const CMeshData& CSceneData::getMeshData (const int meshIndex) const
+{
+	return meshes[meshIndex];
+}
+
 /* **************************************************************************** */
 /*   エクスポート時の、データ格納用.											*/
 /* **************************************************************************** */
@@ -226,8 +252,8 @@ void CSceneData::mergeLastTwoMeshes ()
 	const size_t meshesCou = meshes.size();
 	if (meshesCou <= 1) return;
 
-	CMeshData& mesh1 = meshes[meshesCou - 2];
-	const CMeshData& mesh2 = meshes[meshesCou - 1];
+	CPrimitiveData& mesh1 = meshes[meshesCou - 2].primitives[0];
+	const CPrimitiveData& mesh2 = meshes[meshesCou - 1].primitives[0];
 
 	const size_t vOffset = mesh1.vertices.size();
 	const size_t vCou    = mesh2.vertices.size();

@@ -71,7 +71,7 @@ public:
 	std::vector<CNodeData> nodes;			// ノード情報.
 
 	std::vector<CMaterialData> materials;	// マテリアル情報の配列.
-	std::vector<CMeshData> meshes;			// メッシュ情報の配列.
+	std::vector<CMeshData> meshes;			// メッシュ情報の配列 (GLTFのMesh).
 	std::vector<CImageData> images;			// 画像情報の配列.
 
 	CExportDlgParam exportParam;			// エクスポート時のパラメータ.
@@ -115,6 +115,20 @@ public:
 	 * @return 出力ファイル名. 
 	 */
 	std::string outputTempImage (const int imageIndex, const std::string& tempPath);
+
+	/**
+	 * 新しいメッシュを追加.
+	 * @return メッシュ番号.
+	 */
+	int appendNewMeshData ();
+
+	/**
+	 * メッシュデータを取得.
+	 * @param[in] meshIndex  メッシュ番号.
+	 * @return メッシュデータクラス.
+	 */
+	CMeshData& getMeshData (const int meshIndex);
+	const CMeshData& getMeshData (const int meshIndex) const;
 
 	/* **************************************************************************** */
 	/*   エクスポート時の、データ格納用.											*/

@@ -56,9 +56,9 @@ public:
 
 //---------------------------------------------------------------.
 /**
- * 1つのメッシュ情報 (GLTFでの構成).
+ * 1つのメッシュ情報 (GLTFでのPrimitiveの構成).
  */
-class CMeshData
+class CPrimitiveData
 {
 public:
 	std::string name;						// 形状名.
@@ -74,10 +74,10 @@ public:
 	int materialIndex;						// 対応するマテリアル番号.
 
 public:
-	CMeshData ();
-	~CMeshData ();
+	CPrimitiveData ();
+	~CPrimitiveData ();
 
-    CMeshData& operator = (const CMeshData &v) {
+    CPrimitiveData& operator = (const CPrimitiveData &v) {
 		this->name            = v.name;
 		this->vertices        = v.vertices;
 		this->normals         = v.normals;
@@ -99,16 +99,36 @@ public:
 	/**
 	 * CTempMeshDataからコンバート(フェイスグループを考慮して分離).
 	 * @param[in]  tempMeshData        作業用のメッシュ情報.
-	 * @param[out] meshData            メッシュ情報が返る.
-	 * @param[out] faceGroupIndexList  メッシュごとのフェイスグループ番号が返る.
+     * @param[out] primitivesData      プリミティブ情報が返る.
+	 * @param[out] faceGroupIndexList  プリミティブごとのフェイスグループ番号が返る.
 	 * @return メッシュの数.
 	 */
-	static int convert (const CTempMeshData& tempMeshData, std::vector<CMeshData>& meshData, std::vector<int>& faceGroupIndexList);
+	static int convert (const CTempMeshData& tempMeshData, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList);
 
 	/**
 	 * 頂点座標のバウンディングボックスを計算.
 	 */
 	void calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const;
+};
+
+/**
+ * 複数のメッシュを格納 (GLTFでは、Meshの中に複数のPrimitiveを配列で持つ構造になる).
+ */
+class CMeshData
+{
+public:
+	std::vector<CPrimitiveData> primitives;		// 複数のメッシュ(プリミティブ)情報保持用.
+
+public:
+	CMeshData ();
+	~CMeshData ();
+
+    CMeshData& operator = (const CMeshData &v) {
+		this->primitives = v.primitives;
+		return (*this);
+    }
+
+	void clear ();
 };
 
 #endif
