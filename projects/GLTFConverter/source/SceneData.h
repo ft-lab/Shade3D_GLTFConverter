@@ -172,6 +172,13 @@ public:
 	 *         存在しない場合は-1を返す.
 	 */
 	int findSameImage (const CImageData& imageData);
+
+	/**
+	 * 他とかぶらないユニークなマテリアル名を取得.
+	 * @param[in] name  格納したいマテリアル名.
+	 * @return 他とはかぶらないマテリアル名.
+	 */
+	std::string getUniqueMaterialName (const std::string& name);
 };
 
 #endif

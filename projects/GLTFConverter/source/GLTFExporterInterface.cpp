@@ -351,7 +351,7 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 				m_meshData.triangleUV1.push_back(uvs1List[i]);
 			}
 		}
-		m_meshData.faceGroupIndex.push_back(m_currentFaceGroupIndex);
+		m_meshData.triangleFaceGroupIndex.push_back(m_currentFaceGroupIndex);
 	}
 }
 
@@ -367,7 +367,9 @@ void CGLTFExporterInterface::end_polymesh (void *)
 		if (m_faceGroupCount == 0) {
 			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
 			const int meshIndex = m_sceneData->appendNewMeshData();
-			m_sceneData->getMeshData(meshIndex).primitives.push_back(CPrimitiveData());
+			CMeshData& meshD = m_sceneData->getMeshData(meshIndex);
+			meshD.name = m_meshData.name;
+			meshD.primitives.push_back(CPrimitiveData());
 			CPrimitiveData& primitiveD = m_sceneData->getMeshData(meshIndex).primitives[0];
 			primitiveD.convert(m_meshData);
 
@@ -393,9 +395,6 @@ void CGLTFExporterInterface::end_polymesh (void *)
  */
 void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 {
-	const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
-	const int meshIndex = (int)m_sceneData->meshes.size();
-
 	// フェイスグループごとにメッシュを分離.
 	std::vector<CPrimitiveData> primitivesDataList;
 	std::vector<int> faceGroupIndexList;
@@ -409,24 +408,18 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 		primitivesDataList[i].materialIndex = m_setMaterialCurrentShape(m_pCurrentShape, faceGroupIndex);
 	}
 
-	// noesではノードで分け、メッシュを格納.
+	// Mesh内にPrimitiveの配列として格納.
+	const int meshIndex = m_sceneData->appendNewMeshData();
+	CMeshData& meshD = m_sceneData->getMeshData(meshIndex);
+	meshD.name = m_meshData.name;
 	for (int i = 0; i < primitivesCou; ++i) {
 		CPrimitiveData& primitiveD = primitivesDataList[i];
-
-		const std::string name = std::string(m_pCurrentShape->get_name()) + std::string("_") + std::to_string(i);
-		m_sceneData->beginNode(name);
-
-		{
-			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
-			const int meshIndex = (int)m_sceneData->meshes.size();
-			primitiveD.name = name;
-			const int meshIndex2 = m_sceneData->appendNewMeshData();
-			m_sceneData->getMeshData(meshIndex2).primitives.push_back(primitiveD);
-			m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
-		}
-
-		m_sceneData->endNode();
+		primitiveD.materialIndex = primitivesDataList[i].materialIndex;
+		meshD.primitives.push_back(primitiveD);
 	}
+
+	const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
+	m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
 }
 
 /**
@@ -666,7 +659,7 @@ int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape
 			// デフォルトのサーフェス.
 			materialData.clear();
 		}
-		if (materialData.name == "") materialData.name = "material";
+		if (materialData.name == "") materialData.name = m_sceneData->getUniqueMaterialName("material");
 
 		int materialIndex = m_sceneData->findSameMaterial(materialData);
 		if (materialIndex < 0) {

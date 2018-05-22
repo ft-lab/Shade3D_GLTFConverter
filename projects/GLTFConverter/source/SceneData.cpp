@@ -350,3 +350,45 @@ int CSceneData::findSameImage (const CImageData& imageData)
 	}
 	return index;
 }
+
+/**
+ * 他とかぶらないユニークなマテリアル名を取得.
+ * @param[in] name  格納したいマテリアル名.
+ * @return 他とはかぶらないマテリアル名.
+ */
+std::string CSceneData::getUniqueMaterialName (const std::string& name)
+{
+	const size_t mCou = materials.size();
+
+	bool findF = false;
+	for (size_t i = 0; i < mCou; ++i) {
+		const CMaterialData& matD = materials[i];
+		if (matD.name == name) {
+			findF = true;
+			break;
+		}
+	}
+	if (!findF) return name;
+
+	std::string newName = "";
+	int iCou = 1;
+	while (true) {
+		findF = false;
+		const std::string name2 = name + std::string("_") + std::to_string(iCou);
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& matD = materials[i];
+			if (matD.name == name2) {
+				findF = true;
+				break;
+			}
+		}
+		if (!findF) {
+			newName = name2;
+			break;
+		}
+		iCou++;
+	}
+
+	return newName;
+}
+

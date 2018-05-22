@@ -21,12 +21,13 @@ public:
 	std::vector<sxsdk::vec3> vertices;		// 頂点座標.
 
 	std::vector<int> triangleIndices;				// 三角形の頂点インデックス.
-	std::vector<int> faceGroupIndex;				// 三角形ごとのフェイスグループ番号.
+	std::vector<int> triangleFaceGroupIndex;		// 三角形ごとのフェイスグループ番号.
 	std::vector<sxsdk::vec3> triangleNormals;		// 三角形ごとの法線.
 	std::vector<sxsdk::vec2> triangleUV0;			// 三角形ごとのUV0.
 	std::vector<sxsdk::vec2> triangleUV1;			// 三角形ごとのUV1.
 
-	int materialIndex;						// 対応するマテリアル番号.
+	int materialIndex;							// 対応するマテリアル番号.
+	std::vector<int> faceGroupMaterialIndex;	// フェイスグループごとのマテリアル番号リスト.
 
 public:
 	CTempMeshData ();
@@ -36,12 +37,13 @@ public:
 		this->name            = v.name;
 		this->vertices        = v.vertices;
 		this->triangleIndices = v.triangleIndices;
-		this->faceGroupIndex  = v.faceGroupIndex;
+		this->triangleFaceGroupIndex  = v.triangleFaceGroupIndex;
 		this->triangleNormals = v.triangleNormals;
 		this->triangleUV0     = v.triangleUV0;
 		this->triangleUV1     = v.triangleUV1;
 
 		this->materialIndex   = v.materialIndex;
+		this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;
 
 		return (*this);
     }
@@ -117,6 +119,7 @@ public:
 class CMeshData
 {
 public:
+	std::string name;							// Mesh名.
 	std::vector<CPrimitiveData> primitives;		// 複数のメッシュ(プリミティブ)情報保持用.
 
 public:
@@ -124,11 +127,19 @@ public:
 	~CMeshData ();
 
     CMeshData& operator = (const CMeshData &v) {
+		this->name       = v.name;
 		this->primitives = v.primitives;
 		return (*this);
     }
 
 	void clear ();
+
+	/**
+	 * 複数のPrimitiveを1つのメッシュにまとめる (Import時に使用).
+	 * Shade3Dのフェイスグループを使用する1つのポリゴンメッシュにする.
+	 * @param[out] tempMeshData  まとめたメッシュ情報を格納.
+	 */
+	bool mergePrimitives (CTempMeshData& tempMeshData) const;
 };
 
 #endif

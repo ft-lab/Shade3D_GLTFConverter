@@ -107,6 +107,7 @@ namespace {
 			const Mesh& mesh = gltfDoc.meshes[i];
 			const size_t primitivesCou = mesh.primitives.size();
 			if (primitivesCou == 0) continue;
+			dstMeshData.name = mesh.name;
 
 			for (size_t primLoop = 0; primLoop < primitivesCou; ++primLoop) {
 				dstMeshData.primitives.push_back(CPrimitiveData());

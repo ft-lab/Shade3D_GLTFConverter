@@ -163,13 +163,112 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 /**
  * 指定のメッシュを生成.
  */
-void CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
+bool CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
 {
 	const CMeshData& meshD = sceneData->getMeshData(meshIndex);
 	const size_t primitivesCou = meshD.primitives.size();
 
-	for (size_t meshLoop = 0; meshLoop < primitivesCou; ++meshLoop) {
-		const CPrimitiveData& primitiveD = meshD.primitives[meshLoop];
+	// プリミティブを1つにマージする.
+	CTempMeshData newMeshData;
+	if (!meshD.mergePrimitives(newMeshData)) return false;
+
+	const int faceGroupCou = (int)newMeshData.faceGroupMaterialIndex.size();
+
+	bool errF = false;
+	{
+		// ポリゴンメッシュ形状を作成.
+		sxsdk::polygon_mesh_class& pMesh = scene->begin_polygon_mesh(newMeshData.name.c_str());
+
+		// 頂点座標を格納。.
+		// GLTFではメートル単位であるので、Shade3Dのミリメートルに変換して渡している.
+		const size_t versCou = newMeshData.vertices.size();
+		const size_t triCou  = newMeshData.triangleIndices.size() / 3;
+		{
+			const float scale = 1000.0f;
+			for (size_t i = 0; i < versCou; ++i) {
+				const sxsdk::vec3 v =  (newMeshData.vertices[i] * scale) * matrix;
+				scene->append_polygon_mesh_point(v);
+			}
+		}
+
+		// 三角形の頂点インデックスを格納.
+		{
+			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				const int i0 = newMeshData.triangleIndices[iPos + 0];
+				const int i1 = newMeshData.triangleIndices[iPos + 1];
+				const int i2 = newMeshData.triangleIndices[iPos + 2];
+				if (i0 < 0 || i1 < 0 || i2 < 0 || i0 >= versCou || i1 >= versCou || i2 >= versCou) {
+					errF = true;
+					break;
+				}
+
+				scene->append_polygon_mesh_face(i0, i1, i2);
+			}
+		}
+
+		scene->end_polygon_mesh();
+		if (errF) return false;
+
+		// UV0を格納.
+		if (!newMeshData.triangleUV0.empty()) {
+			const int uvIndex = pMesh.append_uv_layer();
+
+			int triIndices[3];
+			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				sxsdk::face_class& f = pMesh.face(i);
+				for (int j = 0; j < 3; ++j) {
+					f.set_face_uv(uvIndex, j, newMeshData.triangleUV0[iPos + j]);
+				}
+			}
+		}
+
+		// UV1を格納.
+		if (!newMeshData.triangleUV1.empty()) {
+			const int uvIndex = pMesh.append_uv_layer();
+
+			int triIndices[3];
+			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				sxsdk::face_class& f = pMesh.face(i);
+				for (int j = 0; j < 3; ++j) {
+					f.set_face_uv(uvIndex, j, newMeshData.triangleUV1[iPos + j]);
+				}
+			}
+		}
+
+		// マテリアルを割り当て.
+		if (faceGroupCou == 1) {
+			const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[0]];
+			if (materialD.shadeMasterSurface) {
+				pMesh.set_master_surface(materialD.shadeMasterSurface);
+			}
+		} else {
+			// フェイスグループ情報を追加.
+			for (int i = 0; i < faceGroupCou; ++i) {
+				const int facegroupIndex = pMesh.append_face_group();
+				const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[i]];
+				if (materialD.shadeMasterSurface) {
+					pMesh.set_face_group_surface(facegroupIndex, materialD.shadeMasterSurface);
+				}
+			}
+
+			// 面ごとにフェイスグループを割り当て.
+			for (int i = 0; i < triCou; ++i) {
+				pMesh.set_face_group_index(i, newMeshData.triangleFaceGroupIndex[i]);
+			}
+		}
+
+		// 重複頂点のマージ.
+		pMesh.cleanup_redundant_vertices();
+
+		// 稜線を生成.
+		pMesh.make_edges();
+
+		return true;
+	}
+
+	//----------------------------------------.
+	for (size_t primitiveLoop = 0; primitiveLoop < primitivesCou; ++primitiveLoop) {
+		const CPrimitiveData& primitiveD = meshD.primitives[primitiveLoop];
 
 		// ポリゴンメッシュ形状を作成.
 		sxsdk::polygon_mesh_class& pMesh = scene->begin_polygon_mesh(primitiveD.name.c_str());

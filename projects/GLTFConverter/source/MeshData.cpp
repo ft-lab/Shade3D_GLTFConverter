@@ -25,9 +25,10 @@ void CTempMeshData::clear ()
 	triangleNormals.clear();
 	triangleUV0.clear();
 	triangleUV1.clear();
-	faceGroupIndex.clear();
+	triangleFaceGroupIndex.clear();
 
 	materialIndex = 0;
+	faceGroupMaterialIndex.clear();
 }
 
 /**
@@ -221,9 +222,9 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 {
 	// 使用しているフェイスグループ番号を取得.
 	faceGroupIndexList.clear();
-	const size_t triCou = tempMeshData.faceGroupIndex.size();
+	const size_t triCou = tempMeshData.triangleFaceGroupIndex.size();
 	for (size_t i = 0; i < triCou; ++i) {
-		const int fgIndex = tempMeshData.faceGroupIndex[i];
+		const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
 		if (std::find(faceGroupIndexList.begin(), faceGroupIndexList.end(), fgIndex) == faceGroupIndexList.end()) {
 			faceGroupIndexList.push_back(fgIndex);
 		}
@@ -238,7 +239,7 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 		tempMeshD.vertices = tempMeshData.vertices;
 
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-			const int fgIndex = tempMeshData.faceGroupIndex[i];
+			const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
 			if (fgIndex != faceGroupIndex) continue;
 			{
 				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 0]);
@@ -285,5 +286,113 @@ CMeshData::~CMeshData ()
 
 void CMeshData::clear ()
 {
+	name = "";
 	primitives.clear();
 }
+
+/**
+ * 複数のPrimitiveを1つのメッシュにまとめる (Import時に使用).
+ * Shade3Dのフェイスグループを使用する1つのポリゴンメッシュにする.
+ * @param[out] tempMeshData  まとめたメッシュ情報を格納.
+ */
+bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
+{
+	const size_t primitivesCou = primitives.size();
+	tempMeshData.clear();
+	if (primitivesCou == 0) return false;
+
+	tempMeshData.name = this->name;
+
+	// どの要素を使用するか.
+	bool useUV0, useUV1, useNormal;
+	useUV0 = useUV1 = useNormal = false;
+	for (size_t loop = 0; loop < primitivesCou; ++loop) {
+		const CPrimitiveData& primitiveD = primitives[loop];
+		if (!primitiveD.normals.empty()) useNormal = true;
+		if (!primitiveD.uv0.empty()) useUV0 = true;
+		if (!primitiveD.uv1.empty()) useUV1 = true;
+	}
+
+	size_t vOffset = 0;
+	tempMeshData.faceGroupMaterialIndex.resize(primitivesCou, -1);
+	for (size_t loop = 0; loop < primitivesCou; ++loop) {
+		const CPrimitiveData& primitiveD = primitives[loop];
+
+		const size_t versCou = primitiveD.vertices.size();
+		const size_t triCou  = primitiveD.triangleIndices.size() / 3;
+		for (size_t i = 0; i < versCou; ++i) {
+			tempMeshData.vertices.push_back(primitiveD.vertices[i]);
+		}
+		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+			const int i0 = primitiveD.triangleIndices[iPos + 0];
+			const int i1 = primitiveD.triangleIndices[iPos + 1];
+			const int i2 = primitiveD.triangleIndices[iPos + 2];
+			tempMeshData.triangleIndices.push_back(i0 + vOffset);
+			tempMeshData.triangleIndices.push_back(i1 + vOffset);
+			tempMeshData.triangleIndices.push_back(i2 + vOffset);
+
+			tempMeshData.triangleFaceGroupIndex.push_back(loop);
+		}
+
+		if (useNormal) {
+			if (!primitiveD.normals.empty()) {
+				for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					const int i0 = primitiveD.triangleIndices[iPos + 0];
+					const int i1 = primitiveD.triangleIndices[iPos + 1];
+					const int i2 = primitiveD.triangleIndices[iPos + 2];
+					tempMeshData.triangleNormals.push_back(primitiveD.normals[i0]);
+					tempMeshData.triangleNormals.push_back(primitiveD.normals[i1]);
+					tempMeshData.triangleNormals.push_back(primitiveD.normals[i2]);
+				}
+			} else {
+				for (size_t i = 0; i < triCou; ++i) {
+					tempMeshData.triangleNormals.push_back(sxsdk::vec3(0, 0, 0));
+					tempMeshData.triangleNormals.push_back(sxsdk::vec3(0, 0, 0));
+					tempMeshData.triangleNormals.push_back(sxsdk::vec3(0, 0, 0));
+				}
+			}
+		}
+		if (useUV0) {
+			if (!primitiveD.uv0.empty()) {
+				for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					const int i0 = primitiveD.triangleIndices[iPos + 0];
+					const int i1 = primitiveD.triangleIndices[iPos + 1];
+					const int i2 = primitiveD.triangleIndices[iPos + 2];
+					tempMeshData.triangleUV0.push_back(primitiveD.uv0[i0]);
+					tempMeshData.triangleUV0.push_back(primitiveD.uv0[i1]);
+					tempMeshData.triangleUV0.push_back(primitiveD.uv0[i2]);
+				}
+			} else {
+				for (size_t i = 0; i < triCou; ++i) {
+					tempMeshData.triangleUV0.push_back(sxsdk::vec2(0, 0));
+					tempMeshData.triangleUV0.push_back(sxsdk::vec2(0, 0));
+					tempMeshData.triangleUV0.push_back(sxsdk::vec2(0, 0));
+				}
+			}
+		}
+		if (useUV1) {
+			if (!primitiveD.uv1.empty()) {
+				for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					const int i0 = primitiveD.triangleIndices[iPos + 0];
+					const int i1 = primitiveD.triangleIndices[iPos + 1];
+					const int i2 = primitiveD.triangleIndices[iPos + 2];
+					tempMeshData.triangleUV1.push_back(primitiveD.uv1[i0]);
+					tempMeshData.triangleUV1.push_back(primitiveD.uv1[i1]);
+					tempMeshData.triangleUV1.push_back(primitiveD.uv1[i2]);
+				}
+			} else {
+				for (size_t i = 0; i < triCou; ++i) {
+					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
+					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
+					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
+				}
+			}
+		}
+		tempMeshData.faceGroupMaterialIndex[loop] = primitiveD.materialIndex;
+
+		vOffset += versCou;
+	}
+
+	return true;
+}
+

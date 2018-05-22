@@ -229,10 +229,11 @@ namespace {
 
 		int accessorID = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
-			const CPrimitiveData& primitiveD = sceneData->getMeshData(meshLoop).primitives[0];		// TODO : 複数処理.
-			Mesh mesh;
+			const CMeshData& meshD = sceneData->getMeshData(meshLoop);
+			const size_t primCou = meshD.primitives.size();
 
-			mesh.name = primitiveD.name;
+			Mesh mesh;
+			mesh.name = meshD.name;
 			mesh.id   = std::to_string(meshLoop);
 
 			// MeshPrimitiveに1つのメッシュの情報を格納。accessorのIDを指定していく.
@@ -241,25 +242,28 @@ namespace {
 			// attributes - POSITION   : 頂点位置.
 			// attributes - TEXCOORD_0 : テクスチャのUV0.
 			// attributes - TEXCOORD_1 : テクスチャのUV0.
+			for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+				const CPrimitiveData& primitiveD = meshD.primitives[primLoop];
 
-			MeshPrimitive meshPrimitive;
-			if (primitiveD.materialIndex >= 0) {
-				meshPrimitive.materialId = std::to_string(primitiveD.materialIndex);
+				MeshPrimitive meshPrimitive;
+				if (primitiveD.materialIndex >= 0) {
+					meshPrimitive.materialId = std::to_string(primitiveD.materialIndex);
+				}
+
+				meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
+				meshPrimitive.normalsAccessorId   = std::to_string(accessorID++);
+				meshPrimitive.positionsAccessorId = std::to_string(accessorID++);
+				if (!primitiveD.uv0.empty()) {
+					meshPrimitive.uv0AccessorId = std::to_string(accessorID++);
+				}
+				if (!primitiveD.uv1.empty()) {
+					meshPrimitive.uv1AccessorId = std::to_string(accessorID++);
+				}
+
+				meshPrimitive.mode = MESH_TRIANGLES;		// (4) 三角形情報として格納.
+
+				mesh.primitives.push_back(meshPrimitive);
 			}
-
-			meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
-			meshPrimitive.normalsAccessorId   = std::to_string(accessorID++);
-			meshPrimitive.positionsAccessorId = std::to_string(accessorID++);
-			if (!primitiveD.uv0.empty()) {
-				meshPrimitive.uv0AccessorId = std::to_string(accessorID++);
-			}
-			if (!primitiveD.uv1.empty()) {
-				meshPrimitive.uv1AccessorId = std::to_string(accessorID++);
-			}
-
-			meshPrimitive.mode = MESH_TRIANGLES;		// (4) 三角形情報として格納.
-
-			mesh.primitives.push_back(meshPrimitive);
 
 			// Mesh情報を追加.
 			gltfDoc.meshes.Append(mesh);
@@ -276,115 +280,120 @@ namespace {
 		int accessorID = 0;
 		size_t byteOffset = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
-			const CPrimitiveData& primitiveD = sceneData->getMeshData(meshLoop).primitives[0];		// TODO : 複数処理.
+			const CMeshData& meshD = sceneData->getMeshData(meshLoop);
+			const size_t primCou = meshD.primitives.size();
 
-			// 頂点のバウンディングボックスを計算.
-			sxsdk::vec3 bbMin, bbMax;
-			primitiveD.calcBoundingBox(bbMin, bbMax);
+			for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+				const CPrimitiveData& primitiveD = meshD.primitives[primLoop];
 
-			// indicesAccessor.
-			{
-				// short型で格納.
-				const bool storeUShort = (primitiveD.vertices.size() < 65530);
+				// 頂点のバウンディングボックスを計算.
+				sxsdk::vec3 bbMin, bbMax;
+				primitiveD.calcBoundingBox(bbMin, bbMax);
 
-				AccessorDesc acceDesc;
-				acceDesc.accessorType  = TYPE_SCALAR;
-				acceDesc.componentType = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
-				acceDesc.byteOffset    = byteOffset;
-				acceDesc.normalized    = false;
+				// indicesAccessor.
+				{
+					// short型で格納.
+					const bool storeUShort = (primitiveD.vertices.size() < 65530);
 
-				const size_t byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * primitiveD.triangleIndices.size();
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_SCALAR;
+					acceDesc.componentType = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
 
-				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					const size_t byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * primitiveD.triangleIndices.size();
 
-				if (storeUShort) {
-					// AddAccessorではalignmentの詰め物を意識する必要なし.
-					std::vector<unsigned short> shortData;
-					shortData.resize(primitiveD.triangleIndices.size(), 0);
-					for (size_t i = 0; i < primitiveD.triangleIndices.size(); ++i) {
-						shortData[i] = (unsigned short)(primitiveD.triangleIndices[i]);
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+
+					if (storeUShort) {
+						// AddAccessorではalignmentの詰め物を意識する必要なし.
+						std::vector<unsigned short> shortData;
+						shortData.resize(primitiveD.triangleIndices.size(), 0);
+						for (size_t i = 0; i < primitiveD.triangleIndices.size(); ++i) {
+							shortData[i] = (unsigned short)(primitiveD.triangleIndices[i]);
+						}
+						bufferBuilder->AddAccessor(shortData, acceDesc); 
+					} else {
+						bufferBuilder->AddAccessor(primitiveD.triangleIndices, acceDesc); 
 					}
-					bufferBuilder->AddAccessor(shortData, acceDesc); 
-				} else {
-					bufferBuilder->AddAccessor(primitiveD.triangleIndices, acceDesc); 
+
+					byteOffset += byteLength;
+					accessorID++;
 				}
 
-				byteOffset += byteLength;
-				accessorID++;
-			}
+				// normalsAccessor.
+				{
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC3;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
 
-			// normalsAccessor.
-			{
-				AccessorDesc acceDesc;
-				acceDesc.accessorType  = TYPE_VEC3;
-				acceDesc.componentType = COMPONENT_FLOAT;
-				acceDesc.byteOffset    = byteOffset;
-				acceDesc.normalized    = false;
+					const size_t byteLength = (sizeof(float) * 3) * primitiveD.normals.size();
 
-				const size_t byteLength = (sizeof(float) * 3) * primitiveD.normals.size();
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.normals), acceDesc); 
 
-				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-				bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.normals), acceDesc); 
+					byteOffset += byteLength;
+					accessorID++;
+				}
 
-				byteOffset += byteLength;
-				accessorID++;
-			}
+				// positionsAccessor.
+				{
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC3;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+					acceDesc.minValues.push_back(bbMin.x);
+					acceDesc.minValues.push_back(bbMin.y);
+					acceDesc.minValues.push_back(bbMin.z);
+					acceDesc.maxValues.push_back(bbMax.x);
+					acceDesc.maxValues.push_back(bbMax.y);
+					acceDesc.maxValues.push_back(bbMax.z);
 
-			// positionsAccessor.
-			{
-				AccessorDesc acceDesc;
-				acceDesc.accessorType  = TYPE_VEC3;
-				acceDesc.componentType = COMPONENT_FLOAT;
-				acceDesc.byteOffset    = byteOffset;
-				acceDesc.normalized    = false;
-				acceDesc.minValues.push_back(bbMin.x);
-				acceDesc.minValues.push_back(bbMin.y);
-				acceDesc.minValues.push_back(bbMin.z);
-				acceDesc.maxValues.push_back(bbMax.x);
-				acceDesc.maxValues.push_back(bbMax.y);
-				acceDesc.maxValues.push_back(bbMax.z);
+					const size_t byteLength = (sizeof(float) * 3) * primitiveD.vertices.size();
 
-				const size_t byteLength = (sizeof(float) * 3) * primitiveD.vertices.size();
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.vertices), acceDesc); 
 
-				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-				bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.vertices), acceDesc); 
+					byteOffset += byteLength;
+					accessorID++;
+				}
 
-				byteOffset += byteLength;
-				accessorID++;
-			}
+				// uv0Accessor.
+				if (!primitiveD.uv0.empty()) {
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC2;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
 
-			// uv0Accessor.
-			if (!primitiveD.uv0.empty()) {
-				AccessorDesc acceDesc;
-				acceDesc.accessorType  = TYPE_VEC2;
-				acceDesc.componentType = COMPONENT_FLOAT;
-				acceDesc.byteOffset    = byteOffset;
-				acceDesc.normalized    = false;
+					const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv0.size();
 
-				const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv0.size();
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv0), acceDesc); 
 
-				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-				bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv0), acceDesc); 
+					byteOffset += byteLength;
+					accessorID++;
+				}
 
-				byteOffset += byteLength;
-				accessorID++;
-			}
+				// uv1Accessor.
+				if (!primitiveD.uv1.empty()) {
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC2;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
 
-			// uv1Accessor.
-			if (!primitiveD.uv1.empty()) {
-				AccessorDesc acceDesc;
-				acceDesc.accessorType  = TYPE_VEC2;
-				acceDesc.componentType = COMPONENT_FLOAT;
-				acceDesc.byteOffset    = byteOffset;
-				acceDesc.normalized    = false;
+					const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv1.size();
 
-				const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv1.size();
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv1), acceDesc); 
 
-				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-				bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv1), acceDesc); 
-
-				byteOffset += byteLength;
-				accessorID++;
+					byteOffset += byteLength;
+					accessorID++;
+				}
 			}
 		}
 	}
@@ -420,161 +429,166 @@ namespace {
 		int accessorID = 0;
 		size_t byteOffset = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
-			const CPrimitiveData& primitiveD = sceneData->getMeshData(meshLoop).primitives[0];		// TODO : 複数処理.
+			const CMeshData& meshD = sceneData->getMeshData(meshLoop);
+			const size_t primCou = meshD.primitives.size();
 
-			// 頂点のバウンディングボックスを計算.
-			sxsdk::vec3 bbMin, bbMax;
-			primitiveD.calcBoundingBox(bbMin, bbMax);
+			for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+				const CPrimitiveData& primitiveD = meshD.primitives[primLoop];
 
-			// indicesAccessor.
-			{
-				// short型で格納.
-				const bool storeUShort = (primitiveD.vertices.size() < 65530);
+				// 頂点のバウンディングボックスを計算.
+				sxsdk::vec3 bbMin, bbMax;
+				primitiveD.calcBoundingBox(bbMin, bbMax);
 
-				Accessor acce;
-				acce.id             = std::to_string(accessorID);
-				acce.bufferViewId   = std::to_string(accessorID);
-				acce.type           = TYPE_SCALAR;
-				acce.componentType  = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
-				acce.count          = primitiveD.triangleIndices.size();
-				gltfDoc.accessors.Append(acce);
+				// indicesAccessor.
+				{
+					// short型で格納.
+					const bool storeUShort = (primitiveD.vertices.size() < 65530);
 
-				BufferView buffV;
-				buffV.id         = std::to_string(accessorID);
-				buffV.bufferId   = std::string("0");
-				buffV.byteOffset = byteOffset;
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_SCALAR;
+					acce.componentType  = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
+					acce.count          = primitiveD.triangleIndices.size();
+					gltfDoc.accessors.Append(acce);
 
-				// 以下、4バイト alignmentを考慮 (shortの場合は2バイトであるため、4で割り切れない).
-				buffV.byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * primitiveD.triangleIndices.size();
-				if ((buffV.byteLength & 3) != 0) buffV.byteLength = (buffV.byteLength + 3) & 0xfffffffc;
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
 
-				buffV.target     = ELEMENT_ARRAY_BUFFER;
-				gltfDoc.bufferViews.Append(buffV);
+					// 以下、4バイト alignmentを考慮 (shortの場合は2バイトであるため、4で割り切れない).
+					buffV.byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * primitiveD.triangleIndices.size();
+					if ((buffV.byteLength & 3) != 0) buffV.byteLength = (buffV.byteLength + 3) & 0xfffffffc;
 
-				// バッファ情報として格納.
-				if (binWriter) {
-					if (storeUShort) {
-						std::vector<unsigned short> shortData;
-						shortData.resize(buffV.byteLength / sizeof(unsigned short), 0);		// バイト alignmentを考慮して余分なバッファを確保.
-						for (size_t i = 0; i < primitiveD.triangleIndices.size(); ++i) {
-							shortData[i] = (unsigned short)(primitiveD.triangleIndices[i]);
+					buffV.target     = ELEMENT_ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) {
+						if (storeUShort) {
+							std::vector<unsigned short> shortData;
+							shortData.resize(buffV.byteLength / sizeof(unsigned short), 0);		// バイト alignmentを考慮して余分なバッファを確保.
+							for (size_t i = 0; i < primitiveD.triangleIndices.size(); ++i) {
+								shortData[i] = (unsigned short)(primitiveD.triangleIndices[i]);
+							}
+							binWriter->Write(gltfDoc.bufferViews[accessorID], &(shortData[0]), gltfDoc.accessors[accessorID]);
+
+						} else {
+							binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.triangleIndices[0]), gltfDoc.accessors[accessorID]);
 						}
-						binWriter->Write(gltfDoc.bufferViews[accessorID], &(shortData[0]), gltfDoc.accessors[accessorID]);
-
-					} else {
-						binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.triangleIndices[0]), gltfDoc.accessors[accessorID]);
 					}
+
+					byteOffset += buffV.byteLength;
+					accessorID++;
+
 				}
 
-				byteOffset += buffV.byteLength;
-				accessorID++;
+				// normalsAccessor.
+				{
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC3;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.normals.size();
+					gltfDoc.accessors.Append(acce);
 
-			}
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (sizeof(float) * 3) * primitiveD.normals.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
 
-			// normalsAccessor.
-			{
-				Accessor acce;
-				acce.id             = std::to_string(accessorID);
-				acce.bufferViewId   = std::to_string(accessorID);
-				acce.type           = TYPE_VEC3;
-				acce.componentType  = COMPONENT_FLOAT;
-				acce.count          = primitiveD.normals.size();
-				gltfDoc.accessors.Append(acce);
+					// バッファ情報として格納.
+					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.normals[0]), gltfDoc.accessors[accessorID]);
 
-				BufferView buffV;
-				buffV.id         = std::to_string(accessorID);
-				buffV.bufferId   = std::string("0");
-				buffV.byteOffset = byteOffset;
-				buffV.byteLength = (sizeof(float) * 3) * primitiveD.normals.size();
-				buffV.target     = ARRAY_BUFFER;
-				gltfDoc.bufferViews.Append(buffV);
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
 
-				// バッファ情報として格納.
-				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.normals[0]), gltfDoc.accessors[accessorID]);
+				// positionsAccessor.
+				{
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC3;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.vertices.size();
+					acce.min.push_back(bbMin.x);
+					acce.min.push_back(bbMin.y);
+					acce.min.push_back(bbMin.z);
+					acce.max.push_back(bbMax.x);
+					acce.max.push_back(bbMax.y);
+					acce.max.push_back(bbMax.z);
+					gltfDoc.accessors.Append(acce);
 
-				byteOffset += buffV.byteLength;
-				accessorID++;
-			}
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (sizeof(float) * 3) * primitiveD.vertices.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
 
-			// positionsAccessor.
-			{
-				Accessor acce;
-				acce.id             = std::to_string(accessorID);
-				acce.bufferViewId   = std::to_string(accessorID);
-				acce.type           = TYPE_VEC3;
-				acce.componentType  = COMPONENT_FLOAT;
-				acce.count          = primitiveD.vertices.size();
-				acce.min.push_back(bbMin.x);
-				acce.min.push_back(bbMin.y);
-				acce.min.push_back(bbMin.z);
-				acce.max.push_back(bbMax.x);
-				acce.max.push_back(bbMax.y);
-				acce.max.push_back(bbMax.z);
-				gltfDoc.accessors.Append(acce);
+					// バッファ情報として格納.
+					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.vertices[0]), gltfDoc.accessors[accessorID]);
 
-				BufferView buffV;
-				buffV.id         = std::to_string(accessorID);
-				buffV.bufferId   = std::string("0");
-				buffV.byteOffset = byteOffset;
-				buffV.byteLength = (sizeof(float) * 3) * primitiveD.vertices.size();
-				buffV.target     = ARRAY_BUFFER;
-				gltfDoc.bufferViews.Append(buffV);
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
 
-				// バッファ情報として格納.
-				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.vertices[0]), gltfDoc.accessors[accessorID]);
+				// uv0Accessor.
+				if (!primitiveD.uv0.empty()) {
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC2;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.uv0.size();
+					gltfDoc.accessors.Append(acce);
 
-				byteOffset += buffV.byteLength;
-				accessorID++;
-			}
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (sizeof(float) * 2) * primitiveD.uv0.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
 
-			// uv0Accessor.
-			if (!primitiveD.uv0.empty()) {
-				Accessor acce;
-				acce.id             = std::to_string(accessorID);
-				acce.bufferViewId   = std::to_string(accessorID);
-				acce.type           = TYPE_VEC2;
-				acce.componentType  = COMPONENT_FLOAT;
-				acce.count          = primitiveD.uv0.size();
-				gltfDoc.accessors.Append(acce);
+					// バッファ情報として格納.
+					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.uv0[0]), gltfDoc.accessors[accessorID]);
 
-				BufferView buffV;
-				buffV.id         = std::to_string(accessorID);
-				buffV.bufferId   = std::string("0");
-				buffV.byteOffset = byteOffset;
-				buffV.byteLength = (sizeof(float) * 2) * primitiveD.uv0.size();
-				buffV.target     = ARRAY_BUFFER;
-				gltfDoc.bufferViews.Append(buffV);
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
 
-				// バッファ情報として格納.
-				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.uv0[0]), gltfDoc.accessors[accessorID]);
+				// uv1Accessor.
+				if (!primitiveD.uv1.empty()) {
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC2;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.uv1.size();
+					gltfDoc.accessors.Append(acce);
 
-				byteOffset += buffV.byteLength;
-				accessorID++;
-			}
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (sizeof(float) * 2) * primitiveD.uv1.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
 
-			// uv1Accessor.
-			if (!primitiveD.uv1.empty()) {
-				Accessor acce;
-				acce.id             = std::to_string(accessorID);
-				acce.bufferViewId   = std::to_string(accessorID);
-				acce.type           = TYPE_VEC2;
-				acce.componentType  = COMPONENT_FLOAT;
-				acce.count          = primitiveD.uv1.size();
-				gltfDoc.accessors.Append(acce);
+					// バッファ情報として格納.
+					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.uv1[0]), gltfDoc.accessors[accessorID]);
 
-				BufferView buffV;
-				buffV.id         = std::to_string(accessorID);
-				buffV.bufferId   = std::string("0");
-				buffV.byteOffset = byteOffset;
-				buffV.byteLength = (sizeof(float) * 2) * primitiveD.uv1.size();
-				buffV.target     = ARRAY_BUFFER;
-				gltfDoc.bufferViews.Append(buffV);
-
-				// バッファ情報として格納.
-				if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.uv1[0]), gltfDoc.accessors[accessorID]);
-
-				byteOffset += buffV.byteLength;
-				accessorID++;
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
 			}
 		}
 
