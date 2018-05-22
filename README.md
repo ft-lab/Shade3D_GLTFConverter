@@ -48,6 +48,12 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
+## 制限事項
+
+* ボーンやスキンの入出力には対応していません (ver.1.0では対応予定)。  
+* アニメーション情報の入出力には対応していません。  
+* カメラ情報の入出力には対応していません。  
+
 ## ビルド方法 (開発者向け)
 
 Shade3DプラグインSDK( https://github.com/shadedev/pluginsdk )をダウンロードします。  
@@ -67,12 +73,6 @@ Shade3D_GLTFConverter/projects/GLTFConverterフォルダをShade3Dのプラグ�
 
 GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドします。  
 
-## 制限事項
-
-* ボーンやスキンの入出力には対応していません。  
-* アニメーション情報の入出力には対応していません。  
-* カメラ情報の入出力には対応していません。  
-
 ## 使用しているモジュール (開発者向け)
 
 * Microsoft.glTF.CPP ( https://www.nuget.org/packages/Microsoft.glTF.CPP/ )
@@ -80,6 +80,9 @@ GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドしま�
 
 rapidjsonは、Microsoft.glTF.CPP内で使用されています。   
 
+## ライセンス  
+
+This software is released under the MIT License, see [LICENSE.txt](./LICENSE).  
 
 ## 更新履歴
 
