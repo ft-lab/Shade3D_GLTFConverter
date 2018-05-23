@@ -81,9 +81,15 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	// GLTFファイルを読み込み.
 	CGLTFLoader gltfLoader;
 	CSceneData sceneData;
-	if (!gltfLoader.loadGLTF(fileName, &sceneData)) return;
 
 	shade.message("----- GLTF Importer -----");
+
+	if (!gltfLoader.loadGLTF(fileName, &sceneData)) {
+		const std::string errorMessage = std::string("Error : ") + gltfLoader.getErrorString();
+		shade.message(errorMessage);
+		return;
+	}
+
 	shade.message(std::string("File : ") + fileName);
 	shade.message(std::string("Asset generator : ") + sceneData.assetGenerator);
 	shade.message(std::string("Asset version : ") + sceneData.assetVersion);

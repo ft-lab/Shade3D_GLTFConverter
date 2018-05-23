@@ -12,6 +12,8 @@ class CSceneData;
 class CGLTFLoader
 {
 private:
+
+private:
 	/**
 	 * DeserializeJson()を呼ぶ前に、Deserializeに失敗する要素を削除しておく.
 	 * @param[in]  jsonStr           gltfのjsonテキスト.
@@ -28,6 +30,11 @@ public:
 	 * @param[out] sceneData   読み込んだGLTFのシーン情報が返る.
 	 */
 	bool loadGLTF (const std::string& fileName, CSceneData* sceneData);
+
+	/**
+	 * エラー時の文字列取得.
+	 */
+	std::string getErrorString () const;
 };
 
 #endif

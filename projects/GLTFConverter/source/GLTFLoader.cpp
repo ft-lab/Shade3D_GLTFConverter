@@ -35,6 +35,8 @@ using namespace Microsoft::glTF;
 #include "SceneData.h"
 
 namespace {
+	std::string g_errorMessage = "";		// エラーメッセージの保持用.
+
 	/**
 	 * リソース読み込み用.
 	 */
@@ -93,9 +95,11 @@ namespace {
 						binReader.reset(new GLTFResourceReader(*binStreamReader));
 					}
 				} catch (...) {
+					g_errorMessage = std::string("Bin file could not be loaded.");
 					return;
 				}
 			} else {
+				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
 			}
 		}
@@ -467,7 +471,7 @@ namespace {
 				dstImageData.imageDatas.resize(dCou);
 				for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
 			} catch (GLTFException e) {
-				const std::string errorStr(e.what());
+				//g_errorMessage = std::string(e.what());
 				dstImageData.clear();
 			}
 		}
@@ -573,6 +577,14 @@ CGLTFLoader::CGLTFLoader ()
 }
 
 /**
+ * エラー時の文字列取得.
+ */
+std::string CGLTFLoader::getErrorString () const
+{
+	return g_errorMessage;
+}
+
+/**
  * 指定のGLTFファイルを読み込み.
  * @param[in]  fileName    読み込み形状名 (gltfまたはglb).
  * @param[out] sceneData   読み込んだGLTFのシーン情報が返る.
@@ -581,6 +593,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 {
 	if (!sceneData) return false;
 
+	g_errorMessage = "";
 	sceneData->clear();
 
 	// ファイル名(フルパス)を格納.
@@ -604,9 +617,14 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 			// glbファイルからjson部を取得.
 			jsonStr = reader->GetJson();
 		
+		} catch (GLTFException e) {
+			g_errorMessage = std::string(e.what());
+			return false;
 		} catch (...) {
+			g_errorMessage = std::string("glb file could not be loaded.");
 			return false;
 		}
+
 	} else {				// gltfファイルを読み込み.
 		// 拡張子gltfを読み込んだ場合は、.
 		// 読み込んだgltfファイル(json)からbuffers/imagesのuriを使ってbinや画像を別途読み込む必要がある.
@@ -624,6 +642,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				}
 			}
 		} catch (...) {
+			g_errorMessage = std::string("gltf file could not be loaded.");
 			return false;
 		}
 	}
@@ -640,11 +659,12 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	// jsonデータより、不要なデータを削除.
 	if (!m_checkPreDeserializeJson(jsonStr, jsonStr)) return false;
 
-	{
+	try {
 		// jsonデータをパース.
 		try {
 			gltfDoc = DeserializeJson(jsonStr);
-		} catch (...) {
+		} catch (GLTFException e) {
+			g_errorMessage = std::string(e.what());
 			return false;
 		}
 
@@ -673,8 +693,15 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		// ノード階層を取得.
 		::storeGLTFNodes(gltfDoc, reader, sceneData);
 
+		if (g_errorMessage != "") return false;
 		return true;
+
+	} catch (GLTFException e) {
+		g_errorMessage = std::string(e.what());
+		return false;
 	}
+
+	return false;
 }
 
 /**
@@ -711,7 +738,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 			for (rapidjson::SizeType j = 0; j < numP; ++j) {
 				rapidjson::Value& prV = primitives[j];
 
-				// [meshes] - [primitives] 内の要素を列挙し、数値で値がマイナスのものを削除.
+				// [meshes] - [primitives] 内の要素を列挙し、数値で値がマイナスのもの(WEIGHTS_0/TEXCOORD_0/JOINTS_0)を削除.
 				if (prV.HasMember("attributes")) {
 					rapidjson::Value& attributes = prV["attributes"];
 					std::vector<std::string> removeKeyList;
@@ -730,14 +757,14 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 					}
 				}
 
-				// [meshes] - [primitives] 内の要素を列挙し、配列でサイズが0のものとtargetsを削除.
+				// [meshes] - [primitives] 内の要素を列挙し、配列でサイズが0のものを削除.
 				{
 					std::vector<std::string> removeKeyList;
 					for(rapidjson::Value::MemberIterator itr = prV.MemberBegin(); itr != prV.MemberEnd(); itr++) {
 						const std::string name = itr->name.GetString();
 						const rapidjson::Type type = itr->value.GetType();
 						if (type == rapidjson::kArrayType) {		// 配列の場合.
-							if (itr->value.Size() == 0 || name == "targets") {
+							if (itr->value.Size() == 0) {
 								removeKeyList.push_back(name);
 							}
 						}
@@ -746,32 +773,39 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
 						prV.RemoveMember(removeKeyList[j].c_str());		// 指定のキーの要素を削除.
 					}
 				}
+
+				// [meshes] - [primitives] - [targets]内の要素を列挙し、"extra"と数値がマイナスのもの(WEIGHTS_0/TEXCOORD_0/JOINTS_0)を削除.
+				{
+					for(rapidjson::Value::MemberIterator itr = prV.MemberBegin(); itr != prV.MemberEnd(); itr++) {
+						const std::string name0 = itr->name.GetString();
+						const rapidjson::Type type0 = itr->value.GetType();
+						if (name0 == "targets" && type0 == rapidjson::kArrayType) {		// targetsの場合 (配列).
+							rapidjson::Value& targets = itr->value;
+
+							rapidjson::SizeType numT = targets.Size();			// targetsは配列.
+							for (rapidjson::SizeType k = 0; k < numT; ++k) {
+								rapidjson::Value& targetV = targets[k];
+
+								std::vector<std::string> removeKeyList;
+								for(rapidjson::Value::MemberIterator itr2 = targetV.MemberBegin(); itr2 != targetV.MemberEnd(); itr2++) {
+									const std::string name     = itr2->name.GetString();
+									const rapidjson::Type type = itr2->value.GetType();
+									if (name == "extra" || (type == rapidjson::kNumberType && (itr2->value.GetInt()) < 0)) {
+										removeKeyList.push_back(name);
+									}
+								}
+								for (size_t j = 0; j < removeKeyList.size(); ++j) {
+									targetV.RemoveMember(removeKeyList[j].c_str());		// 指定のキーの要素を削除.
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	} catch (...) {
 		return false;
 	}
-
-	// [nodes]内のskinを削除.
-	try {
-		rapidjson::Value& nodesV = doc["nodes"];
-		rapidjson::SizeType num = nodesV.Size();			// nodesは配列.
-		for (rapidjson::SizeType i = 0; i < num; ++i) {
-			rapidjson::Value& nodeD = nodesV[i];
-
-			if (!nodeD.HasMember("skin")) continue;
-			rapidjson::Value::MemberIterator itr = nodeD.FindMember("skin");
-			const std::string name = itr->name.GetString();
-			nodeD.RemoveMember(name.c_str());	
-		}
-	} catch (...) { }
-
-	// [skins]内の削除.
-	try {
-		if (doc.HasMember("skins")) {
-			doc.RemoveMember("skins");	
-		}
-	} catch (...) { }
 
 #if 1
 	// [bufferViews]の要素をチェック.
@@ -802,7 +836,7 @@ bool CGLTFLoader::m_checkPreDeserializeJson (const std::string jsonStr, std::str
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buf);
     doc.Accept(writer);
 
-#if 1
+#if 0
 	try {
 		std::ofstream outStream("E:\\Data\\User\\VCProgram\\GLTFConverter\\xxxx.gltf");
 		outStream << buf.GetString();
