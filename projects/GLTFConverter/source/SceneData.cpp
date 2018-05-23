@@ -23,6 +23,7 @@ void CNodeData::clear ()
 {
 	name = "";
 	meshIndex = -1;
+	skinIndex = -1;
 	prevNodeIndex = -1;
 	nextNodeIndex = -1;
 	childNodeIndex = -1;

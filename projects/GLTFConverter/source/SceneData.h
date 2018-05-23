@@ -21,6 +21,7 @@ class CNodeData
 public:
 	std::string name;		// 名前.
 	int meshIndex;			// 参照するメッシュ番号.
+	int skinIndex;			// 参照するスキン番号.
 
 	int prevNodeIndex;			// 1つ前のノード番号.
 	int nextNodeIndex;			// 1つ次のノード番号.
@@ -31,6 +32,7 @@ public:
 	sxsdk::vec3 scale;					// スケール.
 	sxsdk::quaternion_class rotation;	// 回転.
 
+
 public:
 	CNodeData ();
 	~CNodeData ();
@@ -38,6 +40,7 @@ public:
     CNodeData& operator = (const CNodeData &v) {
 		this->name            = v.name;
 		this->meshIndex       = v.meshIndex;
+		this->skinIndex       = v.skinIndex;
 		this->prevNodeIndex   = v.prevNodeIndex;
 		this->nextNodeIndex   = v.nextNodeIndex;
 		this->childNodeIndex  = v.childNodeIndex;

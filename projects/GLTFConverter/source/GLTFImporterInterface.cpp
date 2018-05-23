@@ -139,7 +139,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
 		// メッシュを生成.
 		const sxsdk::mat4 m = (nodeD.childNodeIndex >= 0) ? sxsdk::mat4::identity : (sceneData->getNodeMatrix(nodeIndex));
-		m_createGLTFMesh(scene, sceneData, nodeD.meshIndex, m);
+		m_createGLTFMesh(nodeD.name, scene, sceneData, nodeD.meshIndex, m);
 	}
 
 	std::vector<int> childNodeIndexList;
@@ -169,7 +169,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 /**
  * 指定のメッシュを生成.
  */
-bool CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
+bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
 {
 	const CMeshData& meshD = sceneData->getMeshData(meshIndex);
 	const size_t primitivesCou = meshD.primitives.size();
@@ -177,6 +177,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (sxsdk::scene_interface *scene, CS
 	// プリミティブを1つにマージする.
 	CTempMeshData newMeshData;
 	if (!meshD.mergePrimitives(newMeshData)) return false;
+	newMeshData.name = name;
 
 	const int faceGroupCou = (int)newMeshData.faceGroupMaterialIndex.size();
 
