@@ -75,6 +75,17 @@ private:
 	 */
 	void m_createGLTFMaterials (sxsdk::scene_interface *scene, CSceneData* sceneData);
 
+	/**
+	 * 指定のMesh形状に対して、スキン情報を割り当て.
+	 */
+	void m_setMeshSkins (sxsdk::scene_interface *scene, CSceneData* sceneData);
+
+	/**
+	 * メッシュ番号を参照しているノードを取得.
+	 * @return ノード番号.
+	 */
+	int m_findNodeFromMeshIndex (CSceneData* sceneData, const int meshIndex);
+
 public:
 	CGLTFImporterInterface (sxsdk::shade_interface &shade);
 

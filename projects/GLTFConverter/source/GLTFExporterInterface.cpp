@@ -102,7 +102,10 @@ void CGLTFExporterInterface::clean_up (void *)
 
 	CGLTFSaver gltfSaver(&shade);
 	if (gltfSaver.saveGLTF(m_sceneData->filePath, &(*m_sceneData))) {
-		shade.message("export success!");
+		shade.message("Export success!");
+	} else {
+		const std::string errorMessage = std::string("Error : ") + gltfSaver.getErrorString();
+		shade.message(errorMessage);
 	}
 }
 

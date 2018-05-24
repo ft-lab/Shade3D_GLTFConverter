@@ -18,7 +18,9 @@ class CTempMeshData
 public:
 	std::string name;						// 形状名.
 
-	std::vector<sxsdk::vec3> vertices;		// 頂点座標.
+	std::vector<sxsdk::vec3> vertices;			// 頂点座標.
+	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキンのウエイト値.
+	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキンのジョイントインデックス値.
 
 	std::vector<int> triangleIndices;				// 三角形の頂点インデックス.
 	std::vector<int> triangleFaceGroupIndex;		// 三角形ごとのフェイスグループ番号.
@@ -36,6 +38,8 @@ public:
     CTempMeshData& operator = (const CTempMeshData &v) {
 		this->name            = v.name;
 		this->vertices        = v.vertices;
+		this->skinWeights     = v.skinWeights;
+		this->skinJoints      = v.skinJoints;
 		this->triangleIndices = v.triangleIndices;
 		this->triangleFaceGroupIndex  = v.triangleFaceGroupIndex;
 		this->triangleNormals = v.triangleNormals;
@@ -65,11 +69,13 @@ class CPrimitiveData
 public:
 	std::string name;						// 形状名.
 
-	// vertices/normals/uv0/uv1 の要素数は同じ。.
+	// vertices/normals/uv0/uv1/skinWeights/skinJoints の要素数は同じ。.
 	std::vector<sxsdk::vec3> vertices;		// 頂点座標.
 	std::vector<sxsdk::vec3> normals;		// 頂点ごとの法線.
 	std::vector<sxsdk::vec2> uv0;			// 頂点ごとのUV0.
 	std::vector<sxsdk::vec2> uv1;			// 頂点ごとのUV1.
+	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキン時のウエイト (最大4つ分).
+	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキン時に参照するジョイントインデックスリスト (最大4つ分).
 
 	std::vector<int> triangleIndices;		// 三角形の頂点インデックス.
 
@@ -87,6 +93,8 @@ public:
 		this->uv1             = v.uv1;
 		this->triangleIndices = v.triangleIndices;
 		this->materialIndex   = v.materialIndex;
+		this->skinWeights     = v.skinWeights;
+		this->skinJoints      = v.skinJoints;
 
 		return (*this);
     }
@@ -122,13 +130,16 @@ public:
 	std::string name;							// Mesh名.
 	std::vector<CPrimitiveData> primitives;		// 複数のメッシュ(プリミティブ)情報保持用.
 
+	void* pMeshHandle;							// Shade3Dのポリゴンメッシュクラスのハンドル (Import時に一時使用).
+
 public:
 	CMeshData ();
 	~CMeshData ();
 
     CMeshData& operator = (const CMeshData &v) {
-		this->name       = v.name;
-		this->primitives = v.primitives;
+		this->name        = v.name;
+		this->primitives  = v.primitives;
+		this->pMeshHandle = v.pMeshHandle;
 		return (*this);
     }
 

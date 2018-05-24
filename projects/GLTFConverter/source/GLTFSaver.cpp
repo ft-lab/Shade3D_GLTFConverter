@@ -29,6 +29,8 @@ using namespace Microsoft::glTF;
 #include "MathUtil.h"
 
 namespace {
+	std::string g_errorMessage = "";		// エラーメッセージの保持用.
+
 	/**
 	 * sxsdk::vec3をfoatの配列に置き換え.
 	 */
@@ -726,6 +728,14 @@ CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
 }
 
 /**
+ * エラー時の文字列取得.
+ */
+std::string CGLTFSaver::getErrorString () const
+{
+	return g_errorMessage;
+}
+
+/**
  * 指定のGLTFファイルを出力.
  * @param[in]  fileName    出力ファイル名 (gltf/glb).
  * @param[in]  sceneData   GLTFのシーン情報.
@@ -733,6 +743,7 @@ CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
 bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneData)
 {
 	std::string json = "";
+	g_errorMessage = "";
 
 	try {
 		GLTFDocument gltfDoc;
@@ -809,6 +820,7 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 
 	} catch (GLTFException e) {
 		const std::string errorStr(e.what());
+		g_errorMessage = errorStr;
 	}
 
 	return false;

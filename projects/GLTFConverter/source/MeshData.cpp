@@ -21,6 +21,8 @@ void CTempMeshData::clear ()
 {
 	name = "";
 	vertices.clear();
+	skinWeights.clear();
+	skinJoints.clear();
 	triangleIndices.clear();
 	triangleNormals.clear();
 	triangleUV0.clear();
@@ -85,6 +87,8 @@ void CPrimitiveData::clear ()
 	uv1.clear();
 	triangleIndices.clear();
 	materialIndex = 0;
+	skinWeights.clear();
+	skinJoints.clear();
 }
 
 /**
@@ -288,6 +292,7 @@ void CMeshData::clear ()
 {
 	name = "";
 	primitives.clear();
+	pMeshHandle = NULL;
 }
 
 /**
@@ -304,13 +309,15 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 	tempMeshData.name = this->name;
 
 	// どの要素を使用するか.
-	bool useUV0, useUV1, useNormal;
-	useUV0 = useUV1 = useNormal = false;
+	bool useUV0, useUV1, useNormal, useSkinWeights, useSkinJoints;
+	useUV0 = useUV1 = useNormal = useSkinWeights = useSkinJoints = false;
 	for (size_t loop = 0; loop < primitivesCou; ++loop) {
 		const CPrimitiveData& primitiveD = primitives[loop];
 		if (!primitiveD.normals.empty()) useNormal = true;
 		if (!primitiveD.uv0.empty()) useUV0 = true;
 		if (!primitiveD.uv1.empty()) useUV1 = true;
+		if (!primitiveD.skinJoints.empty()) useSkinJoints = true;
+		if (!primitiveD.skinWeights.empty()) useSkinWeights = true;
 	}
 
 	size_t vOffset = 0;
@@ -388,6 +395,31 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 				}
 			}
 		}
+
+		// スキンの情報は頂点ごとに持つ.
+		if (useSkinWeights) {
+			if (!primitiveD.skinWeights.empty()) {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinWeights.push_back(primitiveD.skinWeights[i]);
+				}
+			} else {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinWeights.push_back(sxsdk::vec4(0, 0, 0, 0));
+				}
+			}
+		}
+		if (useSkinJoints) {
+			if (!primitiveD.skinJoints.empty()) {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinJoints.push_back(primitiveD.skinJoints[i]);
+				}
+			} else {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinJoints.push_back(sx::vec<int,4>(0, 0, 0, 0));
+				}
+			}
+		}
+
 		tempMeshData.faceGroupMaterialIndex[loop] = primitiveD.materialIndex;
 
 		vOffset += versCou;

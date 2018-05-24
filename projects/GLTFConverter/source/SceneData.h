@@ -8,6 +8,7 @@
 #include "MeshData.h"
 #include "MaterialData.h"
 #include "ImageData.h"
+#include "SkinData.h"
 
 #include <vector>
 #include <string>
@@ -32,6 +33,8 @@ public:
 	sxsdk::vec3 scale;					// スケール.
 	sxsdk::quaternion_class rotation;	// 回転.
 
+	bool isBone;					// ボーンノードとして使用している場合はtrue (skinsのjoints要素で参照されているかで判別).
+	void* pShapeHandle;				// Import時のShade3Dでの形状のhandleの参照 (パートまたはボーン).
 
 public:
 	CNodeData ();
@@ -48,6 +51,8 @@ public:
 		this->translation     = v.translation;
 		this->scale           = v.scale;
 		this->rotation        = v.rotation;
+		this->isBone          = v.isBone;
+		this->pShapeHandle    = v.pShapeHandle;
 
 		return (*this);
     }
@@ -76,6 +81,7 @@ public:
 	std::vector<CMaterialData> materials;	// マテリアル情報の配列.
 	std::vector<CMeshData> meshes;			// メッシュ情報の配列 (GLTFのMesh).
 	std::vector<CImageData> images;			// 画像情報の配列.
+	std::vector<CSkinData> skins;			// スキン情報の配列.
 
 	CExportDlgParam exportParam;			// エクスポート時のパラメータ.
 

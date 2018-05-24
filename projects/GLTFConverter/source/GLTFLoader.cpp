@@ -86,19 +86,11 @@ namespace {
 		std::shared_ptr<BinStreamReader> binStreamReader;
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
-			const size_t size = gltfDoc.buffers.Size();
-			if (size > 0 && gltfDoc.buffers[0].uri != "") {
-				try {
-					const std::string fileDir = sceneData->getFileDir();
-					if (size > 0) {
-						binStreamReader.reset(new BinStreamReader(fileDir));
-						binReader.reset(new GLTFResourceReader(*binStreamReader));
-					}
-				} catch (...) {
-					g_errorMessage = std::string("Bin file could not be loaded.");
-					return;
-				}
-			} else {
+			try {
+				const std::string fileDir = sceneData->getFileDir();
+				binStreamReader.reset(new BinStreamReader(fileDir));
+				binReader.reset(new GLTFResourceReader(*binStreamReader));
+			} catch (...) {
 				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
 			}
@@ -196,6 +188,7 @@ namespace {
 						}
 					}
 				}
+
 				// UV1を取得.
 				if (meshPrim.uv1AccessorId != "") {
 					const int uv1ID = std::stoi(meshPrim.uv1AccessorId);
@@ -271,6 +264,59 @@ namespace {
 						dstPrimitiveData.triangleIndices.resize(acce.count);
 						for (size_t j = 0; j < acce.count; ++j) {
 							dstPrimitiveData.triangleIndices[j] = indices[j + offsetI];
+						}
+					}
+				}
+
+				// スキンのWeightを取得.
+				if (meshPrim.weights0AccessorId != "") {
+					const int weightsID = std::stoi(meshPrim.weights0AccessorId);
+					const Accessor& acce = gltfDoc.accessors[weightsID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
+
+					// Weightの配列を取得.
+					// VEC4として入る。xyzwに対してウエイト値が入り、合計すると1.0となる.
+					std::vector<float> weights;
+					if (acce.componentType == COMPONENT_FLOAT) {
+						if (reader) weights = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) weights = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
+
+					const size_t vCou = weights.size() / 4;
+					if (vCou > 0 && vCou == acce.count) {
+						dstPrimitiveData.skinWeights.resize(vCou);
+						for (size_t j = 0, iPos = 0; j < vCou; ++j, iPos += 4) {
+							dstPrimitiveData.skinWeights[j] = sxsdk::vec4(weights[iPos + 0], weights[iPos + 1], weights[iPos + 2], weights[iPos + 3]);
+						}
+					}
+				}
+
+				// スキンのJointsを取得.
+				if (meshPrim.joints0AccessorId != "") {
+					const int jointsID = std::stoi(meshPrim.joints0AccessorId);
+					const Accessor& acce = gltfDoc.accessors[jointsID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
+
+					// Jointsの配列を取得.
+					// VEC4として入る。xyzwに対してJointインデックスが入る.
+					std::vector<int> joints;
+					if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
+						std::vector<unsigned short> joints2;
+						if (reader) joints2 = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) joints2 = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						joints.resize(joints2.size());
+						for (size_t j = 0; j < joints2.size(); ++j) joints[j] = (int)joints2[j];
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_INT) {
+						if (reader) joints = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) joints = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					}
+
+					const size_t vCou = joints.size() / 4;
+					if (vCou > 0 && vCou == acce.count) {
+						dstPrimitiveData.skinJoints.resize(vCou);
+						for (size_t j = 0, iPos = 0; j < vCou; ++j, iPos += 4) {
+							dstPrimitiveData.skinJoints[j] = sx::vec<int,4>(joints[iPos + 0], joints[iPos + 1], joints[iPos + 2], joints[iPos + 3]);
 						}
 					}
 				}
@@ -442,6 +488,7 @@ namespace {
 				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(*binStreamReader));
 			} catch (...) {
+				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
 			}
 		}
@@ -517,9 +564,8 @@ namespace {
 				dstNodeD.rotation    = sxsdk::quaternion_class(-node.rotation.w, node.rotation.x, node.rotation.y, node.rotation.z);
 			}
 
-			if (node.meshId != "") {
-				dstNodeD.meshIndex = std::stoi(node.meshId);
-			}
+			if (node.meshId != "") dstNodeD.meshIndex = std::stoi(node.meshId);
+			if (node.skinId != "") dstNodeD.skinIndex = std::stoi(node.skinId);
 
 			// 子の数.
 			const size_t childCou = node.children.size();
@@ -569,6 +615,107 @@ namespace {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 指定のノードの子をボーンにする再帰.
+	 */
+	void setNodeBoneLoop (CSceneData* sceneData, const int nodeIndex, const bool setBone) {
+		CNodeData& nodeD = sceneData->nodes[nodeIndex];
+
+		const bool setBone2 = setBone || nodeD.isBone;
+		if (!nodeD.isBone && nodeD.meshIndex < 0) nodeD.isBone = setBone2;
+
+		if (nodeD.childNodeIndex >= 0) {
+			int nodeIndex2 = nodeD.childNodeIndex;
+			while (nodeIndex2 >= 0) {
+				setNodeBoneLoop(sceneData, nodeIndex2, setBone2);
+				nodeIndex2 = sceneData->nodes[nodeIndex2].nextNodeIndex;
+			}
+		}
+	}
+
+	/**
+	 * skins要素のjointsで参照されているノードについては、ノードにボーンフラグ(isBone=true)を立てる.
+	 */
+	void checkNodesBone (CSceneData* sceneData) {
+		const size_t nodesCou = sceneData->nodes.size();
+		const size_t skinsCou = sceneData->skins.size();
+		if (skinsCou == 0) return;
+
+		for (size_t i = 0; i < skinsCou; ++i) {
+			const CSkinData& skinD = sceneData->skins[i];
+			const size_t jointsCou = skinD.joints.size();
+			for (size_t j = 0; j < jointsCou; ++j) {
+				const int index = skinD.joints[j];
+				if (index >= 0 && index < nodesCou) {
+					sceneData->nodes[index].isBone = true;
+				}
+			}
+		}
+
+		// ボーン対象のノードの子は、すべてボーンとして扱う.
+		setNodeBoneLoop(sceneData, 0, false);
+	}
+
+	/**
+	 * Skin情報を格納.
+	 */
+	void storeGLTFSkins (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		const size_t skinsCou = gltfDoc.skins.Size();
+
+		sceneData->skins.clear();
+		if (skinsCou == 0) return;
+
+		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
+		std::shared_ptr<BinStreamReader> binStreamReader;
+		std::shared_ptr<GLTFResourceReader> binReader;
+		if (!reader) {
+			try {
+				const std::string fileDir = sceneData->getFileDir();
+				binStreamReader.reset(new BinStreamReader(fileDir));
+				binReader.reset(new GLTFResourceReader(*binStreamReader));
+			} catch (...) {
+				g_errorMessage = std::string("Bin file could not be loaded.");
+				return;
+			}
+		}
+
+		sceneData->skins.resize(skinsCou);
+
+		for (size_t i = 0; i < skinsCou; ++i) {
+			const Skin& skin = gltfDoc.skins[i];
+
+			CSkinData& skinD = sceneData->skins[i];
+			skinD.clear();
+			skinD.name = skin.name;
+			if (skin.skeletonId != "") skinD.skeletonID = std::stoi(skin.skeletonId);
+			if (skin.inverseBindMatricesAccessorId != "") {
+				skinD.inverseBindMatrices = std::stoi(skin.inverseBindMatricesAccessorId);
+
+				// TODO.
+				const Accessor& acce = gltfDoc.accessors[skinD.inverseBindMatrices];
+				const int bufferViewID = std::stoi(acce.bufferViewId);
+
+				if (acce.componentType == COMPONENT_FLOAT) {
+					if (acce.type == TYPE_MAT4) {		// 4x4行列のバッファを取得.
+					}
+				}
+			}
+			
+			const size_t jointsCou = skin.jointIds.size();
+			if (jointsCou > 0) {
+				skinD.joints.resize(jointsCou);
+				for (size_t j = 0; j < jointsCou; ++j) {
+					skinD.joints[j] = std::stoi(skin.jointIds[j]);
+				}
+			}
+
+
+		}
+
+		// skin情報より、nodesのノードがボーンになりうるかチェック.
+		checkNodesBone(sceneData);
 	}
 }
 
@@ -692,6 +839,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 		// ノード階層を取得.
 		::storeGLTFNodes(gltfDoc, reader, sceneData);
+
+		// スキン情報を取得.
+		::storeGLTFSkins(gltfDoc, reader, sceneData);
 
 		if (g_errorMessage != "") return false;
 		return true;

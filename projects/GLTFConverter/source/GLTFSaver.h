@@ -28,6 +28,11 @@ public:
 	 * @param[in]  sceneData   GLTFのシーン情報.
 	 */
 	bool saveGLTF (const std::string& fileName, const CSceneData* sceneData);
+
+	/**
+	 * エラー時の文字列取得.
+	 */
+	std::string getErrorString () const;
 };
 
 #endif

@@ -49,6 +49,9 @@
     <ClCompile Include="..\source\StringUtil.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\SkinData.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -89,6 +92,9 @@
       <Filter>mysources</Filter>
     </ClInclude>
     <ClInclude Include="..\source\StringUtil.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\SkinData.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

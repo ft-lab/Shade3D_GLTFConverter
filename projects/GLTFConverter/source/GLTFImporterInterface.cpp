@@ -123,6 +123,9 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 
 	scene->end_part();
 	scene->end_creating();
+
+	// スキンを割り当て.
+	m_setMeshSkins(scene, sceneData);
 }
 
 /**
@@ -130,10 +133,21 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
  */
 void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *scene, CSceneData* sceneData, const int nodeIndex)
 {
-	const CNodeData& nodeD = sceneData->nodes[nodeIndex];
+	CNodeData& nodeD = sceneData->nodes[nodeIndex];
+
+	// パートもしくはボーンとして開始.
 	sxsdk::part_class* part = NULL;
-	if (nodeIndex > 0 && (nodeD.meshIndex < 0 || nodeD.childNodeIndex >= 0)) {
-		part = &(scene->begin_part(nodeD.name.c_str()));
+	nodeD.pShapeHandle = NULL;
+	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
+		if (nodeD.isBone) {
+			const float bone_r = 10.0f;
+			const sxsdk::vec3 bonePos(0, 0, 0);
+			const sxsdk::vec3 boneAxisDir(1, 0, 0);
+			part = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
+		} else {
+			part = &(scene->begin_part(nodeD.name.c_str()));
+		}
+		nodeD.pShapeHandle = part->get_handle();
 	}
 
 	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
@@ -154,15 +168,23 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 		m_createGLTFNodeHierarchy(scene, sceneData, childNodeIndexList[i]);
 	}
 
-	if (nodeIndex > 0 && (nodeD.meshIndex < 0 || nodeD.childNodeIndex >= 0)) {
+	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
 		// nodeIndexでの変換行列を取得.
 		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex, true);
 
-		// パートの行列を指定.
-		part->reset_transformation();
-		part->set_transformation_matrix(m);
+		if (nodeD.isBone) {
+			// ボーンの行列を指定.
+			compointer<sxsdk::bone_joint_interface> bone(part->get_bone_joint_interface());
+			bone->set_matrix(m);
 
-		scene->end_part();
+			scene->end_bone_joint();
+		} else {
+			// パートの行列を指定.
+			part->reset_transformation();
+			part->set_transformation_matrix(m);
+
+			scene->end_part();
+		}
 	}
 }
 
@@ -171,7 +193,8 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
  */
 bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex, const sxsdk::mat4& matrix)
 {
-	const CMeshData& meshD = sceneData->getMeshData(meshIndex);
+	CMeshData& meshD = sceneData->getMeshData(meshIndex);
+	meshD.pMeshHandle = NULL;
 	const size_t primitivesCou = meshD.primitives.size();
 
 	// プリミティブを1つにマージする.
@@ -185,6 +208,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 	{
 		// ポリゴンメッシュ形状を作成.
 		sxsdk::polygon_mesh_class& pMesh = scene->begin_polygon_mesh(newMeshData.name.c_str());
+		meshD.pMeshHandle = pMesh.get_handle();
 
 		// 頂点座標を格納。.
 		// GLTFではメートル単位であるので、Shade3Dのミリメートルに変換して渡している.
@@ -264,95 +288,16 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			}
 		}
 
-		// 重複頂点のマージ.
-		pMesh.cleanup_redundant_vertices();
+		if (newMeshData.skinJoints.empty() && newMeshData.skinWeights.empty()) {
+			// 重複頂点のマージ.
+			pMesh.cleanup_redundant_vertices();
 
-		// 稜線を生成.
-		pMesh.make_edges();
+			// 稜線を生成.
+			pMesh.make_edges();
+		}
 
 		return true;
 	}
-
-	//----------------------------------------.
-	for (size_t primitiveLoop = 0; primitiveLoop < primitivesCou; ++primitiveLoop) {
-		const CPrimitiveData& primitiveD = meshD.primitives[primitiveLoop];
-
-		// ポリゴンメッシュ形状を作成.
-		sxsdk::polygon_mesh_class& pMesh = scene->begin_polygon_mesh(primitiveD.name.c_str());
-
-		// 頂点座標を格納。.
-		// GLTFではメートル単位であるので、Shade3Dのミリメートルに変換して渡している.
-		const size_t versCou = primitiveD.vertices.size();
-		{
-			const float scale = 1000.0f;
-			for (size_t i = 0; i < versCou; ++i) {
-				const sxsdk::vec3 v =  (primitiveD.vertices[i] * scale) * matrix;
-				scene->append_polygon_mesh_point(v);
-			}
-		}
-
-		// 三角形の頂点インデックスを格納.
-		{
-			const size_t triCou = primitiveD.triangleIndices.size() / 3;
-			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				const int i0 = primitiveD.triangleIndices[iPos + 0];
-				const int i1 = primitiveD.triangleIndices[iPos + 1];
-				const int i2 = primitiveD.triangleIndices[iPos + 2];
-				if (i0 < 0 || i1 < 0 || i2 < 0 || i0 >= versCou || i1 >= versCou || i2 >= versCou) {
-					continue;
-				}
-
-				scene->append_polygon_mesh_face(i0, i1, i2);
-			}
-		}
-
-		scene->end_polygon_mesh();
-
-		// UVを格納.
-		// UVは面の頂点ごとに格納することになる.
-		if (!primitiveD.uv0.empty()) {
-			const int uvIndex = pMesh.append_uv_layer();
-
-			const int triCou = pMesh.get_number_of_faces();
-			int triIndices[3];
-			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				sxsdk::face_class& f = pMesh.face(i);
-				f.get_vertex_indices(triIndices);
-				for (int j = 0; j < 3; ++j) {
-					f.set_face_uv(uvIndex, j, primitiveD.uv0[ triIndices[j] ]);
-				}
-			}
-		}
-		if (!primitiveD.uv1.empty()) {
-			const int uvIndex = pMesh.append_uv_layer();
-
-			const int triCou = pMesh.get_number_of_faces();
-			int triIndices[3];
-			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				sxsdk::face_class& f = pMesh.face(i);
-				f.get_vertex_indices(triIndices);
-				for (int j = 0; j < 3; ++j) {
-					f.set_face_uv(uvIndex, j, primitiveD.uv1[ triIndices[j] ]);
-				}
-			}
-		}
-
-		// マテリアルを割り当て.
-		if (primitiveD.materialIndex >= 0) {
-			const CMaterialData& materialD = sceneData->materials[primitiveD.materialIndex];
-			if (materialD.shadeMasterSurface) {
-				pMesh.set_master_surface(materialD.shadeMasterSurface);
-			}
-		}
-
-		// 重複頂点のマージ.
-		pMesh.cleanup_redundant_vertices();
-
-		// 稜線を生成.
-		pMesh.make_edges();
-
-	}
-
 }
 
 /**
@@ -610,4 +555,98 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 		}
 
 	} catch (...) { }
+}
+
+/**
+ * 指定のMesh形状に対して、スキン情報を割り当て.
+ */
+void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSceneData* sceneData)
+{
+	const size_t skinsCou = sceneData->skins.size();
+	const size_t meshsCou = sceneData->meshes.size();
+	if (skinsCou == 0) return;
+
+	for (size_t meshLoop = 0; meshLoop < meshsCou; ++meshLoop) {
+		const CMeshData& meshD = sceneData->meshes[meshLoop];
+		if (!meshD.pMeshHandle) continue;
+		sxsdk::shape_class* meshShape = scene->get_shape_by_handle(meshD.pMeshHandle);
+		if (!meshShape) continue;
+		if (meshShape->get_type() != sxsdk::enums::polygon_mesh) continue;
+		sxsdk::polygon_mesh_class& pMesh = meshShape->get_polygon_mesh();
+
+		// meshLoopに対応するノード番号を取得.
+		const int nodeIndex = m_findNodeFromMeshIndex(sceneData, (int)meshLoop);
+		if (nodeIndex < 0) continue;
+
+		const CNodeData& nodeD = sceneData->nodes[nodeIndex];
+		if (nodeD.skinIndex < 0) continue;
+
+		const CSkinData& skinD = sceneData->skins[nodeD.skinIndex];
+
+		// meshD.pMeshのポリゴンメッシュで使用しているスキンを登録.
+		pMesh.set_skin_type(1);		// 頂点ブレンドの指定.
+		std::vector<sxsdk::shape_class *> jointParts;
+		std::vector<std::string> jointNames;
+		jointParts.resize(skinD.joints.size(), NULL);
+		jointNames.resize(skinD.joints.size(), "");
+		for (size_t i = 0; i < skinD.joints.size(); ++i) {
+			const int jointNodeIndex = skinD.joints[i];
+			const CNodeData& jointNodeD = sceneData->nodes[jointNodeIndex + 1];		// ノードの0番目はルートとして新たに追加した要素なので、+1している.
+			if (jointNodeD.pShapeHandle) {
+				jointParts[i] = scene->get_shape_by_handle(jointNodeD.pShapeHandle);
+				jointNames[i] = jointParts[i]->get_name();
+				pMesh.append_skin(jointParts[i]->get_part());
+			}
+		}
+
+		// プリミティブを1つにマージする.
+		CTempMeshData newMeshData;
+		if (!meshD.mergePrimitives(newMeshData)) continue;
+		if (newMeshData.skinJoints.empty() || newMeshData.skinWeights.empty()) continue;
+
+		// meshD.pMeshのポリゴンメッシュに対してスキンのバインドとウエイト値を指定.
+		const size_t versCou = newMeshData.vertices.size();
+		for (size_t i = 0; i < versCou; ++i) {
+			const sxsdk::vec4& skinWeight   = newMeshData.skinWeights[i];
+			const sx::vec<int,4>& skinJoint = newMeshData.skinJoints[i];
+
+			sxsdk::vertex_class& verC = pMesh.vertex(i);
+			sxsdk::skin_class& skinC  = verC.get_skin();
+			int sCou = 0;
+			for (int j = 0; j < 4; ++j) {
+				if (skinWeight[j] > 0.0f) sCou++;
+			}
+			for (int j = 0; j < sCou; ++j) {
+				skinC.append_bind();
+				sxsdk::skin_bind_class& skinBindC = skinC.get_bind(j);
+				skinBindC.set_shape(jointParts[ skinJoint[j] ]);
+				skinBindC.set_weight(skinWeight[j]);
+			}
+		}
+		pMesh.update_skin_bindings();
+
+		// 重複頂点のマージ.
+		pMesh.cleanup_redundant_vertices();
+
+		// 稜線を生成.
+		pMesh.make_edges();
+	}
+}
+
+/**
+ * メッシュ番号を参照しているノードを取得.
+ * @return ノード番号.
+ */
+int CGLTFImporterInterface::m_findNodeFromMeshIndex (CSceneData* sceneData, const int meshIndex)
+{
+	int nodeIndex = -1;
+	const size_t nodesCou = sceneData->nodes.size();
+	for (size_t i = 0; i < nodesCou; ++i) {
+		const CNodeData& nodeD = sceneData->nodes[i];
+		if (nodeD.meshIndex == meshIndex) {
+			nodeIndex = (int)i;
+			break;
+		}
+	}
+	return nodeIndex;
 }

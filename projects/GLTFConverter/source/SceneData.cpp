@@ -28,6 +28,8 @@ void CNodeData::clear ()
 	nextNodeIndex = -1;
 	childNodeIndex = -1;
 	parentNodeIndex = -1;
+	isBone = false;
+	pShapeHandle = NULL;
 
 	translation = sxsdk::vec3(0, 0, 0);
 	scale       = sxsdk::vec3(1, 1, 1);
@@ -51,6 +53,7 @@ void CSceneData::clear()
 	materials.clear();
 	meshes.clear();
 	images.clear();
+	skins.clear();
 	m_nodeStack.clear();
 }
 
