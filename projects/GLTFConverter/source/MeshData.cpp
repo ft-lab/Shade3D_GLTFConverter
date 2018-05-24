@@ -23,6 +23,7 @@ void CTempMeshData::clear ()
 	vertices.clear();
 	skinWeights.clear();
 	skinJoints.clear();
+	skinJointsHandle.clear();
 	triangleIndices.clear();
 	triangleNormals.clear();
 	triangleUV0.clear();
@@ -61,6 +62,8 @@ void CTempMeshData::optimize ()
 		if (useVersList[i] < 0) {
 			useVersList.erase(useVersList.begin() + i);
 			vertices.erase(vertices.begin() + i);
+			skinWeights.erase(skinWeights.begin() + i);
+			skinJointsHandle.erase(skinJointsHandle.begin() + i);
 		}
 	}
 }
@@ -89,6 +92,7 @@ void CPrimitiveData::clear ()
 	materialIndex = 0;
 	skinWeights.clear();
 	skinJoints.clear();
+	skinJointsHandle.clear();
 }
 
 /**
@@ -98,10 +102,12 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 {
 	clear();
 
-	name            = tempMeshData.name;
-	materialIndex   = tempMeshData.materialIndex;
-	vertices        = tempMeshData.vertices;
-	triangleIndices = tempMeshData.triangleIndices;
+	name             = tempMeshData.name;
+	materialIndex    = tempMeshData.materialIndex;
+	vertices         = tempMeshData.vertices;
+	triangleIndices  = tempMeshData.triangleIndices;
+	skinWeights      = tempMeshData.skinWeights;
+	skinJointsHandle = tempMeshData.skinJointsHandle;
 
 	//---------------------------------------------------------.
 	// 法線やUVは、三角形ごとの頂点から頂点数分の配列に格納するようにコンバート.
@@ -129,7 +135,6 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 		const std::vector< sx::vec<int,2> >& facesList = faceIndexInVertexList[vLoop];
 		const size_t vtCou = facesList.size();
 		if (vtCou <= 1) continue;
-		const sxsdk::vec3 v = vertices[vLoop];
 
 		// 法線/UVをチェック.
 		for (size_t i = 1; i < vtCou; ++i) {
@@ -154,7 +159,18 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 			// 新しく頂点を追加して対応.
 			if (sIndex < 0) {
 				const size_t vIndex = vertices.size();
-				vertices.push_back(v);
+				{
+					const sxsdk::vec3 v = vertices[vLoop];
+					vertices.push_back(v);
+				}
+				if (!skinWeights.empty()) {
+					const sxsdk::vec4 v = skinWeights[vLoop];
+					skinWeights.push_back(v);
+				}
+				if (!skinJointsHandle.empty()) {
+					const sx::vec<void*,4> v = skinJointsHandle[vLoop];
+					skinJointsHandle.push_back(v);
+				}
 
 				triangleIndices[iP1] = vIndex;
 			} else {
@@ -239,8 +255,10 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 		const int faceGroupIndex = faceGroupIndexList[fgLoop];
 
 		CTempMeshData tempMeshD;
-		tempMeshD.name     = tempMeshData.name;
-		tempMeshD.vertices = tempMeshData.vertices;
+		tempMeshD.name             = tempMeshData.name;
+		tempMeshD.vertices         = tempMeshData.vertices;
+		tempMeshD.skinWeights      = tempMeshData.skinWeights;
+		tempMeshD.skinJointsHandle = tempMeshData.skinJointsHandle;
 
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 			const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];

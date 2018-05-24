@@ -6,6 +6,7 @@
 
 CSkinData::CSkinData ()
 {
+	clear();
 }
 
 void CSkinData::clear ()

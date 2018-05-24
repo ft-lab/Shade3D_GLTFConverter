@@ -647,7 +647,7 @@ namespace {
 			const CSkinData& skinD = sceneData->skins[i];
 			const size_t jointsCou = skinD.joints.size();
 			for (size_t j = 0; j < jointsCou; ++j) {
-				const int index = skinD.joints[j];
+				const int index = skinD.joints[j] + 1;		// nodesの0番目はルートとして追加しているため、jointsの参照インデックスは+1.
 				if (index >= 0 && index < nodesCou) {
 					sceneData->nodes[index].isBone = true;
 				}

@@ -31,7 +31,7 @@ private:
 	int m_currentDepth;							// カレントの深度.
 	sxsdk::shape_class* m_pCurrentShape;		// カレントの形状クラスのポインタ.
 	sxsdk::mat4 m_currentLWMatrix;				// カレントのローカルワールド変換行列.
-	sxsdk::mat4 m_LWMat;
+	sxsdk::mat4 m_LWMat, m_WLMat;
 	sxsdk::mat4 m_spMat;						// 掃引体時の変換行列.
 
 	int m_currentFaceGroupIndex;				// カレントのフェイスグループ番号.
@@ -244,6 +244,16 @@ private:
 	 * ポリゴンメッシュのフェイスグループを使用している場合の格納.
 	 */
 	void m_storeMeshesWithFaceGroup ();
+
+	/**
+	 * ポリゴンメッシュに格納したスキン情報より、スキン情報をm_sceneDataに格納する.
+	 */
+	void m_setSkinsFromMeshes ();
+
+	/**
+	 * 形状のハンドルに対応するノード番号を取得.
+	 */
+	int m_findNodeIndexFromShapeHandle (void* handle);
 
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);

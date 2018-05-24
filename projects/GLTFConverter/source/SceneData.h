@@ -34,7 +34,7 @@ public:
 	sxsdk::quaternion_class rotation;	// 回転.
 
 	bool isBone;					// ボーンノードとして使用している場合はtrue (skinsのjoints要素で参照されているかで判別).
-	void* pShapeHandle;				// Import時のShade3Dでの形状のhandleの参照 (パートまたはボーン).
+	void* pShapeHandle;				// Import/Export時のShade3Dでの形状のhandleの参照 (パートまたはボーン).
 
 public:
 	CNodeData ();

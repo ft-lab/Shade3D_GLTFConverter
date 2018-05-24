@@ -7,6 +7,9 @@
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
 
+#include <iostream>
+#include <map>
+
 enum
 {
 	dlg_output_texture_id = 101,			// テクスチャ出力:|マスターサーフェス名の拡張子指定を参照|pngに置き換え|jpegに置き換え.
@@ -70,8 +73,22 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 
 	shade.message("----- GLTF Exporter -----");
 
+	// シーケンスモード時は、出力時にシーケンスOffにして出す.
+	// シーンの変更フラグは後で元に戻す.
+	const bool oldSequenceMode = m_pScene->get_sequence_mode();
+	const bool oldDirty = m_pScene->get_dirty();
+	if (oldSequenceMode) {
+		m_pScene->set_sequence_mode(false);
+	}
+
 	// エクスポートを開始.
 	plugin_exporter->do_export();
+
+	// 元のシーケンスモードに戻す.
+	if (oldSequenceMode) {
+		m_pScene->set_sequence_mode(oldSequenceMode);
+		m_pScene->set_dirty(oldDirty);
+	}
 }
 
 /********************************************************************/
@@ -99,6 +116,9 @@ void CGLTFExporterInterface::finish (void *)
 void CGLTFExporterInterface::clean_up (void *)
 {
 	if (!m_sceneData || (m_sceneData->filePath) == "") return;
+
+	// ポリゴンメッシュのスキン情報より、スキン情報を格納.
+	m_setSkinsFromMeshes();
 
 	CGLTFSaver gltfSaver(&shade);
 	if (gltfSaver.saveGLTF(m_sceneData->filePath, &(*m_sceneData))) {
@@ -191,7 +211,10 @@ void CGLTFExporterInterface::begin (void *)
 		if (type == sxsdk::enums::polygon_mesh) m = sxsdk::mat4::identity;
 
 		const std::string name = std::string(m_pCurrentShape->get_name());
-		m_sceneData->beginNode(name, m);
+		const int nodeIndex = m_sceneData->beginNode(name, m);
+
+		// 形状に対応するハンドルを保持 (出力前に、スキンでのノード番号取得で使用).
+		m_sceneData->nodes[nodeIndex].pShapeHandle = m_pCurrentShape->get_handle();
 	}
 }
 
@@ -268,6 +291,7 @@ void CGLTFExporterInterface::begin_polymesh (void *)
 	m_faceGroupCount = 0;
 
 	m_LWMat = m_spMat * m_currentLWMatrix;
+	m_WLMat = inv(m_LWMat);
 
 	m_meshData.clear();
 	m_meshData.name = std::string(m_pCurrentShape->get_name());
@@ -281,6 +305,8 @@ void CGLTFExporterInterface::begin_polymesh_vertex (int n, void *)
 	if (m_skip) return;
 
 	m_meshData.vertices.resize(n);
+	m_meshData.skinJointsHandle.clear();
+	m_meshData.skinWeights.clear();
 }
 
 /**
@@ -290,12 +316,30 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 {
 	if (m_skip) return;
 
-	// 座標値をワールド座標変換する.
 	sxsdk::vec3 pos = v;
-	//if (skin) pos = pos * (skin->get_skin_world_matrix());
-	pos = pos * m_LWMat;
+	if (skin) {
+#if 1
+		// スキン変換前の座標値を計算.
+		const sxsdk::mat4 skin_m = skin->get_skin_world_matrix();
+		sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * inv(skin_m);
+		pos = sxsdk::vec3(v4.x, v4.y, v4.z);
+#endif
+	}
 
-	m_meshData.vertices[i] = (v * m_spMat) * 0.001f;		// mm ==> m変換.
+	m_meshData.vertices[i] = (pos * m_spMat) * 0.001f;		// mm ==> m変換.
+
+	if (skin && m_pCurrentShape->get_skin_type() == 1) {		// スキンを持っており、頂点ブレンドで格納されている場合.
+		const int bindsCou = skin->get_number_of_binds();
+		if (bindsCou > 0) {
+			m_meshData.skinJointsHandle.push_back(sx::vec<void*,4>(NULL, NULL, NULL, NULL));
+			m_meshData.skinWeights.push_back(sxsdk::vec4(0, 0, 0, 0));
+			for (int j = 0; j < bindsCou && j < 4; ++j) {
+				const sxsdk::skin_bind_class& skinBind = skin->get_bind(j);
+				m_meshData.skinJointsHandle[i][j] = skinBind.get_shape()->get_handle();
+				m_meshData.skinWeights[i][j]      = skinBind.get_weight();
+			}
+		}
+	}
 }
 
 /**
@@ -371,7 +415,8 @@ void CGLTFExporterInterface::end_polymesh (void *)
 			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
 			const int meshIndex = m_sceneData->appendNewMeshData();
 			CMeshData& meshD = m_sceneData->getMeshData(meshIndex);
-			meshD.name = m_meshData.name;
+			meshD.name        = m_meshData.name;
+			meshD.pMeshHandle = m_pCurrentShape->get_handle();
 			meshD.primitives.push_back(CPrimitiveData());
 			CPrimitiveData& primitiveD = m_sceneData->getMeshData(meshIndex).primitives[0];
 			primitiveD.convert(m_meshData);
@@ -414,7 +459,9 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 	// Mesh内にPrimitiveの配列として格納.
 	const int meshIndex = m_sceneData->appendNewMeshData();
 	CMeshData& meshD = m_sceneData->getMeshData(meshIndex);
-	meshD.name = m_meshData.name;
+	meshD.name        = m_meshData.name;
+	meshD.pMeshHandle = m_pCurrentShape->get_handle();
+
 	for (int i = 0; i < primitivesCou; ++i) {
 		CPrimitiveData& primitiveD = primitivesDataList[i];
 		primitiveD.materialIndex = primitivesDataList[i].materialIndex;
@@ -676,3 +723,111 @@ int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape
 	return -1;
 }
 
+/**
+ * 形状のハンドルに対応するノード番号を取得.
+ */
+int CGLTFExporterInterface::m_findNodeIndexFromShapeHandle (void* handle)
+{
+	const size_t nodesCou = m_sceneData->nodes.size();
+	int nodeIndex = -1;
+
+	for (size_t i = 0; i < nodesCou; ++i) {
+		CNodeData& nodeD = m_sceneData->nodes[i];
+		if (nodeD.pShapeHandle == handle) {
+			nodeIndex = i;
+			break;
+		}
+	}
+	return nodeIndex;
+}
+
+/**
+ * ポリゴンメッシュに格納したスキン情報より、スキン情報をm_sceneDataに格納する.
+ */
+void CGLTFExporterInterface::m_setSkinsFromMeshes ()
+{
+	const size_t meshsCou = m_sceneData->meshes.size();
+	if (meshsCou == 0) return;
+	m_sceneData->skins.clear();
+
+	for (size_t meshLoop = 0; meshLoop < meshsCou; ++meshLoop) {
+		CMeshData& meshD = m_sceneData->meshes[meshLoop];
+		const size_t primCou = meshD.primitives.size();
+		if (primCou <= 0 || meshD.primitives[0].skinJointsHandle.empty()) continue;
+
+		// メッシュに対応するノード番号を取得.
+		const int meshNodeIndex = m_findNodeIndexFromShapeHandle(meshD.pMeshHandle);
+
+		std::map<void *, int> shapeHandleMap;
+
+		bool errF = false;
+		for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+			CPrimitiveData& primD = meshD.primitives[primLoop];
+			const size_t versCou = primD.vertices.size();
+			if (versCou != primD.skinJointsHandle.size() || versCou != primD.skinWeights.size()) {
+				errF = true;
+				break;
+			}
+
+			// 形状のハンドルのmapを作成.
+			for (size_t i = 0; i < versCou; ++i) {
+				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
+				for (int j = 0; j < 4; ++j) {
+					if (hD[j] != NULL) {
+						if (shapeHandleMap.count(hD[j]) == 0) {
+							shapeHandleMap[hD[j]] = 0;
+						} else {
+							shapeHandleMap[hD[j]]++;
+						}
+					}
+				}
+			}
+		}
+
+		const size_t jointsCou = shapeHandleMap.size();
+
+		// スキン情報を破棄する.
+		if (errF || jointsCou == 0) {
+			for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+				CPrimitiveData& primD = meshD.primitives[primLoop];
+				primD.skinJointsHandle.clear();
+				primD.skinWeights.clear();
+				primD.skinJoints.clear();
+			}
+			continue;
+		}
+
+		// Skinとして採用するノード番号を取得し、skin情報として格納.
+		const size_t skinIndex = m_sceneData->skins.size();
+		CSkinData skinData;
+		skinData.joints.resize(jointsCou);
+		auto iter = shapeHandleMap.begin();
+		for (size_t i = 0; i < jointsCou; ++i) {
+			const int nodeIndex = m_findNodeIndexFromShapeHandle(iter->first);
+			skinData.joints[i] = nodeIndex;
+			shapeHandleMap[iter->first] = i;
+			iter++;
+		}
+		m_sceneData->skins.push_back(skinData);
+
+		// skinで参照しているインデックスに置きかえる.
+		for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
+			CPrimitiveData& primD = meshD.primitives[primLoop];
+			const size_t versCou = primD.vertices.size();
+
+			primD.skinJoints.resize(versCou, sx::vec<int,4>(0, 0, 0, 0));
+			for (size_t i = 0; i < versCou; ++i) {
+				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
+				for (int j = 0; j < 4; ++j) {
+					if (hD[j] != NULL) {
+						primD.skinJoints[i][j] = shapeHandleMap[ hD[j] ];
+					}
+				}
+			}
+		}
+
+		if (meshNodeIndex >= 0) {
+			m_sceneData->nodes[meshNodeIndex].skinIndex = skinIndex;
+		}
+	}
+}

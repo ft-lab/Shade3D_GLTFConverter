@@ -20,7 +20,8 @@ public:
 
 	std::vector<sxsdk::vec3> vertices;			// 頂点座標.
 	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキンのウエイト値.
-	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキンのジョイントインデックス値.
+	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキンのジョイントインデックス値 (Import時に使用).
+	std::vector< sx::vec<void *,4> > skinJointsHandle;	// 頂点ごとのスキンのジョイントのハンドル (Export時に使用).
 
 	std::vector<int> triangleIndices;				// 三角形の頂点インデックス.
 	std::vector<int> triangleFaceGroupIndex;		// 三角形ごとのフェイスグループ番号.
@@ -40,6 +41,7 @@ public:
 		this->vertices        = v.vertices;
 		this->skinWeights     = v.skinWeights;
 		this->skinJoints      = v.skinJoints;
+		this->skinJointsHandle = v.skinJointsHandle;
 		this->triangleIndices = v.triangleIndices;
 		this->triangleFaceGroupIndex  = v.triangleFaceGroupIndex;
 		this->triangleNormals = v.triangleNormals;
@@ -76,6 +78,7 @@ public:
 	std::vector<sxsdk::vec2> uv1;			// 頂点ごとのUV1.
 	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキン時のウエイト (最大4つ分).
 	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキン時に参照するジョイントインデックスリスト (最大4つ分).
+	std::vector< sx::vec<void *,4> > skinJointsHandle;	// 頂点ごとのスキンのジョイントのハンドル (Export時に使用).
 
 	std::vector<int> triangleIndices;		// 三角形の頂点インデックス.
 
@@ -95,6 +98,7 @@ public:
 		this->materialIndex   = v.materialIndex;
 		this->skinWeights     = v.skinWeights;
 		this->skinJoints      = v.skinJoints;
+		this->skinJointsHandle = v.skinJointsHandle;
 
 		return (*this);
     }

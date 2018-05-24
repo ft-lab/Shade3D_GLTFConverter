@@ -98,6 +98,7 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	shade.message(std::string("Meshes : ") + std::to_string(sceneData.meshes.size()));
 	shade.message(std::string("Materials : ") + std::to_string(sceneData.materials.size()));
 	shade.message(std::string("Images : ") + std::to_string(sceneData.images.size()));
+	shade.message(std::string("Skins : ") + std::to_string(sceneData.skins.size()));
 
 	// シーン情報を構築.
 	m_createGLTFScene(scene, &sceneData);
@@ -613,8 +614,11 @@ void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSce
 			sxsdk::vertex_class& verC = pMesh.vertex(i);
 			sxsdk::skin_class& skinC  = verC.get_skin();
 			int sCou = 0;
-			for (int j = 0; j < 4; ++j) {
-				if (skinWeight[j] > 0.0f) sCou++;
+			for (int j = 3; j >= 0; --j) {
+				if (skinWeight[j] > 0.0f) {
+					sCou = j + 1;
+					break;
+				}
 			}
 			for (int j = 0; j < sCou; ++j) {
 				skinC.append_bind();

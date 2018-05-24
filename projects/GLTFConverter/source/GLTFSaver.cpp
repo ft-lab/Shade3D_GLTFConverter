@@ -32,6 +32,21 @@ namespace {
 	std::string g_errorMessage = "";		// エラーメッセージの保持用.
 
 	/**
+	 * sxsdk::vec4をfoatの配列に置き換え.
+	 */
+	std::vector<float> convert_vec4_to_float (const std::vector<sxsdk::vec4>& vList)
+	{
+		std::vector<float> newData = std::vector<float>(vList.size() * 4);
+		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += 4) {
+			newData[iPos + 0] = vList[i].x;
+			newData[iPos + 1] = vList[i].y;
+			newData[iPos + 2] = vList[i].z;
+			newData[iPos + 3] = vList[i].w;
+		}
+		return newData;
+	}
+
+	/**
 	 * sxsdk::vec3をfoatの配列に置き換え.
 	 */
 	std::vector<float> convert_vec3_to_float (const std::vector<sxsdk::vec3>& vList)
@@ -175,9 +190,10 @@ namespace {
 			}
 
 			// メッシュ情報を持つ場合.
-			if (nodeD.meshIndex >= 0) {
-				gltfNode.meshId = std::to_string(nodeD.meshIndex);
-			}
+			if (nodeD.meshIndex >= 0) gltfNode.meshId = std::to_string(nodeD.meshIndex);
+
+			// スキン情報を持つ場合.
+			if (nodeD.skinIndex >= 0) gltfNode.skinId = std::to_string(nodeD.skinIndex);
 
 			try {
 				gltfDoc.nodes.Append(gltfNode);
@@ -260,6 +276,12 @@ namespace {
 				}
 				if (!primitiveD.uv1.empty()) {
 					meshPrimitive.uv1AccessorId = std::to_string(accessorID++);
+				}
+				if (!primitiveD.skinJoints.empty()) {
+					meshPrimitive.joints0AccessorId = std::to_string(accessorID++);
+				}
+				if (!primitiveD.skinWeights.empty()) {
+					meshPrimitive.weights0AccessorId = std::to_string(accessorID++);
 				}
 
 				meshPrimitive.mode = MESH_TRIANGLES;		// (4) 三角形情報として格納.
@@ -392,6 +414,65 @@ namespace {
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
 					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv1), acceDesc); 
+
+					byteOffset += byteLength;
+					accessorID++;
+				}
+
+				// SkinのJoints.
+				if (!primitiveD.skinJoints.empty()) {
+					// short型で格納.
+					const bool storeUShort = (primitiveD.skinJoints.size() < 65530);
+
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC4;
+					acceDesc.componentType = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+
+					const size_t byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * 4 * primitiveD.skinJoints.size();
+
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+
+					if (storeUShort) {
+						// AddAccessorではalignmentの詰め物を意識する必要なし.
+						std::vector<unsigned short> shortData;
+						shortData.resize(primitiveD.skinJoints.size() * 4, 0);
+						for (size_t i = 0, iPos = 0; i < primitiveD.skinJoints.size(); ++i, iPos += 4) {
+							shortData[iPos + 0] = (unsigned short)(primitiveD.skinJoints[i][0]);
+							shortData[iPos + 1] = (unsigned short)(primitiveD.skinJoints[i][1]);
+							shortData[iPos + 2] = (unsigned short)(primitiveD.skinJoints[i][2]);
+							shortData[iPos + 3] = (unsigned short)(primitiveD.skinJoints[i][3]);
+						}
+						bufferBuilder->AddAccessor(shortData, acceDesc); 
+					} else {
+						std::vector<unsigned int> intData;
+						intData.resize(primitiveD.skinJoints.size() * 4, 0);
+						for (size_t i = 0, iPos = 0; i < primitiveD.skinJoints.size(); ++i, iPos += 4) {
+							intData[iPos + 0] = (unsigned int)(primitiveD.skinJoints[i][0]);
+							intData[iPos + 1] = (unsigned int)(primitiveD.skinJoints[i][1]);
+							intData[iPos + 2] = (unsigned int)(primitiveD.skinJoints[i][2]);
+							intData[iPos + 3] = (unsigned int)(primitiveD.skinJoints[i][3]);
+						}
+						bufferBuilder->AddAccessor(intData, acceDesc); 
+					}
+
+					byteOffset += byteLength;
+					accessorID++;
+				}
+
+				// SkinのWeights.
+				if (!primitiveD.skinWeights.empty()) {
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC4;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+
+					const size_t byteLength = (sizeof(float) * 4) * primitiveD.skinWeights.size();
+
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec4_to_float(primitiveD.skinWeights), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -591,6 +672,90 @@ namespace {
 					byteOffset += buffV.byteLength;
 					accessorID++;
 				}
+
+				// SkinのJoints.
+				if (!primitiveD.skinJoints.empty()) {
+					// short型で格納.
+					const bool storeUShort = (primitiveD.skinJoints.size() < 65530);
+
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC4;
+					acce.componentType  = storeUShort ? COMPONENT_UNSIGNED_SHORT : COMPONENT_UNSIGNED_INT;
+					acce.count          = primitiveD.skinJoints.size();
+					gltfDoc.accessors.Append(acce);
+
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (storeUShort ? sizeof(unsigned short) : sizeof(int)) * 4 * primitiveD.skinJoints.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) {
+						if (storeUShort) {
+							std::vector<unsigned short> shortData;
+							shortData.resize(buffV.byteLength / sizeof(unsigned short), 0);
+							for (size_t i = 0, iPos = 0; i < primitiveD.skinJoints.size(); ++i, iPos += 4) {
+								shortData[iPos + 0] = (unsigned short)(primitiveD.skinJoints[i][0]);
+								shortData[iPos + 1] = (unsigned short)(primitiveD.skinJoints[i][1]);
+								shortData[iPos + 2] = (unsigned short)(primitiveD.skinJoints[i][2]);
+								shortData[iPos + 3] = (unsigned short)(primitiveD.skinJoints[i][3]);
+							}
+							binWriter->Write(gltfDoc.bufferViews[accessorID], &(shortData[0]), gltfDoc.accessors[accessorID]);
+						} else {
+							std::vector<unsigned int> intData;
+							intData.resize(buffV.byteLength / sizeof(unsigned int), 0);
+							for (size_t i = 0, iPos = 0; i < primitiveD.skinJoints.size(); ++i, iPos += 4) {
+								intData[iPos + 0] = (unsigned int)(primitiveD.skinJoints[i][0]);
+								intData[iPos + 1] = (unsigned int)(primitiveD.skinJoints[i][1]);
+								intData[iPos + 2] = (unsigned int)(primitiveD.skinJoints[i][2]);
+								intData[iPos + 3] = (unsigned int)(primitiveD.skinJoints[i][3]);
+							}
+							binWriter->Write(gltfDoc.bufferViews[accessorID], &(intData[0]), gltfDoc.accessors[accessorID]);
+						}
+					}
+
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
+
+				// SkinのWeights.
+				if (!primitiveD.skinWeights.empty()) {
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC4;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.skinWeights.size();
+					gltfDoc.accessors.Append(acce);
+
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = sizeof(float) * 4 * primitiveD.skinWeights.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) {
+						std::vector<float> fData;
+						fData.resize(buffV.byteLength / sizeof(float), 0.0f);
+						for (size_t i = 0, iPos = 0; i < primitiveD.skinWeights.size(); ++i, iPos += 4) {
+							fData[iPos + 0] = primitiveD.skinWeights[i][0];
+							fData[iPos + 1] = primitiveD.skinWeights[i][1];
+							fData[iPos + 2] = primitiveD.skinWeights[i][2];
+							fData[iPos + 3] = primitiveD.skinWeights[i][3];
+						}
+						binWriter->Write(gltfDoc.bufferViews[accessorID], &(fData[0]), gltfDoc.accessors[accessorID]);
+					}
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
 			}
 		}
 
@@ -721,6 +886,26 @@ namespace {
 			}
 		}
 	}
+
+	/**
+	 * スキン情報を格納.
+	 */
+	void setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+		const size_t skinsCou = sceneData->skins.size();
+		if (skinsCou == 0) return;
+
+		for (size_t loop = 0; loop < skinsCou; ++loop) {
+			const CSkinData& skinD = sceneData->skins[loop];
+			const size_t joinsCou = skinD.joints.size();
+			Skin dstSkin;
+			dstSkin.name = skinD.name;
+			dstSkin.id   = std::to_string(loop);
+			if (skinD.inverseBindMatrices >= 0) dstSkin.inverseBindMatricesAccessorId = std::to_string(skinD.inverseBindMatrices);
+			if (skinD.skeletonID >= 0) dstSkin.skeletonId = std::to_string(skinD.skeletonID);
+			for (size_t j = 0; j < joinsCou; ++j) dstSkin.jointIds.push_back(std::to_string(skinD.joints[j]));
+			gltfDoc.skins.Append(dstSkin);
+		}
+	}
 }
 
 CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
@@ -787,6 +972,9 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 
 		// メッシュ情報を指定.
 		::setMeshesData(gltfDoc, sceneData);
+
+		// スキン情報を指定.
+		::setSkinData(gltfDoc, sceneData);
 
 		// バッファ情報を指定.
 		// 拡張子がgltfの場合、binファイルもここで出力.
