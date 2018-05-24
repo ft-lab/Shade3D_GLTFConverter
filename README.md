@@ -45,12 +45,12 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * シーンの階層構造の入出力
 * マテリアルとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を入出力
 * テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を入出力
+* ボーンやスキン情報の入出力
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
 ## 制限事項
 
-* ボーンやスキンの入出力には対応していません (ver.1.0では対応予定)。  
 * アニメーション情報の入出力には対応していません。  
 * カメラ情報の入出力には対応していません。  
 
