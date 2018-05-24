@@ -331,12 +331,33 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 	if (skin && m_pCurrentShape->get_skin_type() == 1) {		// スキンを持っており、頂点ブレンドで格納されている場合.
 		const int bindsCou = skin->get_number_of_binds();
 		if (bindsCou > 0) {
+			// スキンの影響ジョイント(bone/ball)とweight値を格納.
 			m_meshData.skinJointsHandle.push_back(sx::vec<void*,4>(NULL, NULL, NULL, NULL));
 			m_meshData.skinWeights.push_back(sxsdk::vec4(0, 0, 0, 0));
 			for (int j = 0; j < bindsCou && j < 4; ++j) {
 				const sxsdk::skin_bind_class& skinBind = skin->get_bind(j);
 				m_meshData.skinJointsHandle[i][j] = skinBind.get_shape()->get_handle();
 				m_meshData.skinWeights[i][j]      = skinBind.get_weight();
+			}
+			if (bindsCou < 4) {
+				// ボーンの親をたどり、skinのweight 0(スキンの影響なし)として割り当てる.
+				// これは、gltf出力時にスキン対象とするボーン(node)を認識しやすくするため.
+				std::vector<sxsdk::shape_class *> shapeList;
+				const sxsdk::skin_bind_class& skinBind = skin->get_bind(bindsCou - 1);
+				sxsdk::shape_class* pS = skinBind.get_shape();
+				if (pS->has_dad()) {
+					pS = pS->get_dad();
+					while ((pS->get_part().get_part_type()) == sxsdk::enums::bone_joint || (pS->get_part().get_part_type()) == sxsdk::enums::ball_joint) {
+						shapeList.push_back(pS);
+						if (shapeList.size() > 3) break;
+						if (!pS->has_dad()) break;
+						pS = pS->get_dad();
+					}
+				}
+				for (int j = 0; j + bindsCou < 4 && j < shapeList.size(); ++j) {
+					m_meshData.skinJointsHandle[i][j + bindsCou] = shapeList[j];
+					m_meshData.skinWeights[i][j + bindsCou]      = 0.0f;
+				}
 			}
 		}
 	}
