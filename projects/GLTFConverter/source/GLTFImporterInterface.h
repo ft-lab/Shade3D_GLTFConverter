@@ -86,6 +86,11 @@ private:
 	 */
 	int m_findNodeFromMeshIndex (CSceneData* sceneData, const int meshIndex);
 
+	/**
+	 * 読み込んだ形状のルートから調べて、ボーンの場合に向きとボーンサイズを自動調整.
+	 */
+	void m_adjustBones (sxsdk::shape_class* shape);
+
 public:
 	CGLTFImporterInterface (sxsdk::shade_interface &shade);
 

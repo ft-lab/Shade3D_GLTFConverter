@@ -7,6 +7,8 @@
 
 #include "GlobalHeader.h"
 
+#include <vector>
+
 namespace Shade3DUtil
 {
 	/**
@@ -34,6 +36,36 @@ namespace Shade3DUtil
 	 * @return マスターイメージが存在する場合はそのポインタ.
 	 */
 	sxsdk::master_image_class* getMasterImageFromImage (sxsdk::scene_interface* scene, sxsdk::image_interface* image);
+
+	/**
+	 * ボーンのルートを取得.
+	 * @param[in]  rootShape     検索を開始するルート.
+	 * @param[out] bontRootList  ルートボーンが返る.
+	 * @return ルートボーン数.
+	 */
+	int findBoneRoot (sxsdk::shape_class* rootShape, std::vector<sxsdk::shape_class*>& boneRootList);
+
+	/**
+	 * 指定の形状がボーンかどうか.
+	 */
+	bool isBone (sxsdk::shape_class& shape);
+
+	/**
+	 * ボーンのワールド座標での中心位置とボーンサイズを取得.
+	 */
+	sxsdk::vec3 getBoneCenter (sxsdk::shape_class& shape, float *size);
+
+	/**
+	 * ボーンの向きをそろえる.
+	 * @param[in] boneRoot  対象のボーンルート.
+	 */
+	void adjustBonesDirection (sxsdk::shape_class* boneRoot);
+
+	/**
+	 * ボーンサイズの自動調整.
+	 * @param[in] boneRoot  対象のボーンルート.
+	 */
+	void resizeBones (sxsdk::shape_class* boneRoot);
 }
 
 #endif

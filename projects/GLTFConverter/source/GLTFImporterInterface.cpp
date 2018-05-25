@@ -4,6 +4,7 @@
 #include "GLTFImporterInterface.h"
 #include "GLTFLoader.h"
 #include "SceneData.h"
+#include "Shade3DUtil.h"
 
 CGLTFImporterInterface::CGLTFImporterInterface (sxsdk::shade_interface &shade) : shade(shade)
 {
@@ -117,7 +118,7 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 	// マテリアル情報から、マスターサーフェスを作成.
 	m_createGLTFMaterials(scene, sceneData);
 
-	scene->begin_part(sceneData->getFileName().c_str());
+	sxsdk::part_class& rootPart = scene->begin_part(sceneData->getFileName().c_str());
 
 	// シーン階層をたどってノードとメッシュ作成.
 	m_createGLTFNodeHierarchy(scene, sceneData, 0);
@@ -127,6 +128,9 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 
 	// スキンを割り当て.
 	m_setMeshSkins(scene, sceneData);
+
+	// ボーン調整.
+	m_adjustBones(&rootPart);
 }
 
 /**
@@ -653,4 +657,22 @@ int CGLTFImporterInterface::m_findNodeFromMeshIndex (CSceneData* sceneData, cons
 		}
 	}
 	return nodeIndex;
+}
+
+/**
+ * 読み込んだ形状のルートから調べて、ボーンの場合に向きとボーンサイズを自動調整.
+ */
+void CGLTFImporterInterface::m_adjustBones (sxsdk::shape_class* shape)
+{
+	// ルートボーンを取得.
+	std::vector<sxsdk::shape_class *> rootBones;
+	const int rootShapesCou = Shade3DUtil::findBoneRoot(shape, rootBones);
+
+	for (int i = 0; i < rootShapesCou; ++i) {
+		// ボーンの向きをそろえる.
+		Shade3DUtil::adjustBonesDirection(rootBones[i]);
+
+		// ボーンサイズを自動調整.
+		Shade3DUtil::resizeBones(rootBones[i]);
+	}
 }
