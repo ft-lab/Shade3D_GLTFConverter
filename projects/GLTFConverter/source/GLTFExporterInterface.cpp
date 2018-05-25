@@ -13,6 +13,7 @@
 enum
 {
 	dlg_output_texture_id = 101,			// テクスチャ出力:|マスターサーフェス名の拡張子指定を参照|pngに置き換え|jpegに置き換え.
+	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
 };
 
 
@@ -77,17 +78,21 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 	// シーンの変更フラグは後で元に戻す.
 	const bool oldSequenceMode = m_pScene->get_sequence_mode();
 	const bool oldDirty = m_pScene->get_dirty();
-	if (oldSequenceMode) {
-		m_pScene->set_sequence_mode(false);
+	if (m_exportParam.outputBonesAndSkins) {
+		if (oldSequenceMode) {
+			m_pScene->set_sequence_mode(false);
+		}
 	}
 
 	// エクスポートを開始.
 	plugin_exporter->do_export();
 
 	// 元のシーケンスモードに戻す.
-	if (oldSequenceMode) {
-		m_pScene->set_sequence_mode(oldSequenceMode);
-		m_pScene->set_dirty(oldDirty);
+	if (m_exportParam.outputBonesAndSkins) {
+		if (oldSequenceMode) {
+			m_pScene->set_sequence_mode(oldSequenceMode);
+			m_pScene->set_dirty(oldDirty);
+		}
 	}
 }
 
@@ -318,45 +323,47 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 
 	sxsdk::vec3 pos = v;
 	if (skin) {
-#if 1
 		// スキン変換前の座標値を計算.
-		const sxsdk::mat4 skin_m = skin->get_skin_world_matrix();
-		sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * inv(skin_m);
-		pos = sxsdk::vec3(v4.x, v4.y, v4.z);
-#endif
+		if (m_exportParam.outputBonesAndSkins) {
+			const sxsdk::mat4 skin_m = skin->get_skin_world_matrix();
+			sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * inv(skin_m);
+			pos = sxsdk::vec3(v4.x, v4.y, v4.z);
+		}
 	}
 
 	m_meshData.vertices[i] = (pos * m_spMat) * 0.001f;		// mm ==> m変換.
 
-	if (skin && m_pCurrentShape->get_skin_type() == 1) {		// スキンを持っており、頂点ブレンドで格納されている場合.
-		const int bindsCou = skin->get_number_of_binds();
-		if (bindsCou > 0) {
-			// スキンの影響ジョイント(bone/ball)とweight値を格納.
-			m_meshData.skinJointsHandle.push_back(sx::vec<void*,4>(NULL, NULL, NULL, NULL));
-			m_meshData.skinWeights.push_back(sxsdk::vec4(0, 0, 0, 0));
-			for (int j = 0; j < bindsCou && j < 4; ++j) {
-				const sxsdk::skin_bind_class& skinBind = skin->get_bind(j);
-				m_meshData.skinJointsHandle[i][j] = skinBind.get_shape()->get_handle();
-				m_meshData.skinWeights[i][j]      = skinBind.get_weight();
-			}
-			if (bindsCou < 4) {
-				// ボーンの親をたどり、skinのweight 0(スキンの影響なし)として割り当てる.
-				// これは、gltf出力時にスキン対象とするボーン(node)を認識しやすくするため.
-				std::vector<sxsdk::shape_class *> shapeList;
-				const sxsdk::skin_bind_class& skinBind = skin->get_bind(bindsCou - 1);
-				sxsdk::shape_class* pS = skinBind.get_shape();
-				if (pS->has_dad()) {
-					pS = pS->get_dad();
-					while ((pS->get_part().get_part_type()) == sxsdk::enums::bone_joint || (pS->get_part().get_part_type()) == sxsdk::enums::ball_joint) {
-						shapeList.push_back(pS);
-						if (shapeList.size() > 3) break;
-						if (!pS->has_dad()) break;
-						pS = pS->get_dad();
-					}
+	if (m_exportParam.outputBonesAndSkins) {
+		if (skin && m_pCurrentShape->get_skin_type() == 1) {		// スキンを持っており、頂点ブレンドで格納されている場合.
+			const int bindsCou = skin->get_number_of_binds();
+			if (bindsCou > 0) {
+				// スキンの影響ジョイント(bone/ball)とweight値を格納.
+				m_meshData.skinJointsHandle.push_back(sx::vec<void*,4>(NULL, NULL, NULL, NULL));
+				m_meshData.skinWeights.push_back(sxsdk::vec4(0, 0, 0, 0));
+				for (int j = 0; j < bindsCou && j < 4; ++j) {
+					const sxsdk::skin_bind_class& skinBind = skin->get_bind(j);
+					m_meshData.skinJointsHandle[i][j] = skinBind.get_shape()->get_handle();
+					m_meshData.skinWeights[i][j]      = skinBind.get_weight();
 				}
-				for (int j = 0; j + bindsCou < 4 && j < shapeList.size(); ++j) {
-					m_meshData.skinJointsHandle[i][j + bindsCou] = shapeList[j];
-					m_meshData.skinWeights[i][j + bindsCou]      = 0.0f;
+				if (bindsCou < 4) {
+					// ボーンの親をたどり、skinのweight 0(スキンの影響なし)として割り当てる.
+					// これは、gltf出力時にスキン対象とするボーン(node)を認識しやすくするため.
+					std::vector<sxsdk::shape_class *> shapeList;
+					const sxsdk::skin_bind_class& skinBind = skin->get_bind(bindsCou - 1);
+					sxsdk::shape_class* pS = skinBind.get_shape();
+					if (pS->has_dad()) {
+						pS = pS->get_dad();
+						while ((pS->get_part().get_part_type()) == sxsdk::enums::bone_joint || (pS->get_part().get_part_type()) == sxsdk::enums::ball_joint) {
+							shapeList.push_back(pS);
+							if (shapeList.size() > 3) break;
+							if (!pS->has_dad()) break;
+							pS = pS->get_dad();
+						}
+					}
+					for (int j = 0; j + bindsCou < 4 && j < shapeList.size(); ++j) {
+						m_meshData.skinJointsHandle[i][j + bindsCou] = shapeList[j];
+						m_meshData.skinWeights[i][j + bindsCou]      = 0.0f;
+					}
 				}
 			}
 		}
@@ -534,7 +541,11 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_output_texture_id));
 		item->set_selection((int)m_exportParam.outputTexture);
 	}
-
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_bones_and_skins_id));
+		item->set_bool(m_exportParam.outputBonesAndSkins);
+	}
 }
 
 void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -558,6 +569,11 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_texture_id) {
 		m_exportParam.outputTexture = (GLTFConverter::export_texture_type)(item.get_selection());
+		return true;
+	}
+
+	if (id == dlg_output_bones_and_skins_id) {
+		m_exportParam.outputBonesAndSkins = item.get_bool();
 		return true;
 	}
 
@@ -676,9 +692,10 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 
 		materialData.shadeMasterSurface = master_surface;
 
-		// test.
 		// マスターサーフェス名に「doubleSided」が含まれる場合は、doubleSidedを有効化.
-		if (materialData.name.find_first_of("doubleSided") != std::string::npos) {
+		std::string materialName = materialData.name;
+		std::transform(materialName.begin(), materialName.end(), materialName.begin(), ::tolower);
+		if (materialName.find_first_of("doublesided") != std::string::npos) {
 			materialData.doubleSided = true;
 		}
 

@@ -62,8 +62,8 @@ void CTempMeshData::optimize ()
 		if (useVersList[i] < 0) {
 			useVersList.erase(useVersList.begin() + i);
 			vertices.erase(vertices.begin() + i);
-			skinWeights.erase(skinWeights.begin() + i);
-			skinJointsHandle.erase(skinJointsHandle.begin() + i);
+			if (!skinWeights.empty()) skinWeights.erase(skinWeights.begin() + i);
+			if (!skinJointsHandle.empty()) skinJointsHandle.erase(skinJointsHandle.begin() + i);
 		}
 	}
 }
