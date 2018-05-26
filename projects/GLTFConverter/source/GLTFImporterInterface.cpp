@@ -300,6 +300,8 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			// 稜線を生成.
 			pMesh.make_edges();
 		}
+		// 限界角度の指定.
+		pMesh.set_threshold(50.0f);
 
 		return true;
 	}
@@ -365,6 +367,10 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 			sxsdk::surface_class* surface = masterSurface.get_surface();
 			surface->set_diffuse_color(materialD.baseColorFactor);
+
+			// 光沢を調整.
+			surface->set_highlight(std::min(materialD.metallicFactor, 0.3f));
+			surface->set_highlight_size(0.7f);
 
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
