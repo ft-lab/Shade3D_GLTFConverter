@@ -5,7 +5,7 @@
 #include "GLTFLoader.h"
 #include "SceneData.h"
 #include "Shade3DUtil.h"
-
+#include "MathUtil.h"
 
 enum
 {
@@ -542,6 +542,13 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 
 				mLayer.set_blur(true);
+			} else {
+				if (MathUtil::isZero(materialD.emissionFactor)) {
+					surface->set_glow(0.0f);
+				} else {
+					surface->set_glow_color(materialD.emissionFactor);
+					surface->set_glow(1.0f);
+				}
 			}
 
 			{

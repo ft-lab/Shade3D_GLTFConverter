@@ -16,7 +16,6 @@ enum
 	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
 };
 
-
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
 	m_dlgOK = false;
