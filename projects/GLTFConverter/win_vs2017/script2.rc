@@ -30,6 +30,7 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 TEXT                    SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\text.sxul"
 STRINGS                 SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\strings.sxul"
 EXPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\export_dlg.sxul"
+IMPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\import_dlg.sxul"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -115,6 +116,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 TEXT                    SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\text.sxul"
 STRINGS                 SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\strings.sxul"
 EXPORT_DLG              SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\export_dlg.sxul"
+IMPORT_DLG              SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\import_dlg.sxul"
 
 #endif    // íÜçëåÍ (P.R.C.) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -136,6 +138,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 TEXT                    SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\text.sxul"
 EXPORT_DLG              SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\export_dlg.sxul"
+IMPORT_DLG              SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\import_dlg.sxul"
 
 #endif    // âpåÍ (ïƒçë) resources
 /////////////////////////////////////////////////////////////////////////////

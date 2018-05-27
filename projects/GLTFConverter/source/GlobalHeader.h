@@ -48,4 +48,26 @@ public:
 	}
 };
 
+/**
+ * インポートダイアログボックスのパラメータ.
+ */
+class CImportDlgParam
+{
+public:
+	int gamma;						// ガンマ補正値 : 0 ... 1.0 , 1 ... 1.0/2.2
+	bool meshImportNormals;			// 法線の読み込み.
+	float meshAngleThreshold;		// 限界角度.
+
+public:
+	CImportDlgParam () {
+		clear();
+	}
+
+	void clear () {
+		gamma = 0;
+		meshImportNormals = false;
+		meshAngleThreshold = 50.0f;
+	}
+};
+
 #endif

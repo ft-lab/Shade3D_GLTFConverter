@@ -6,10 +6,23 @@
 #include "SceneData.h"
 #include "Shade3DUtil.h"
 
+
+enum
+{
+	dlg_gamma_id = 101,							// ガンマ値.
+	dlg_mesh_import_normals_id = 201,			// 法線の読み込み.
+	dlg_mesh_angle_threshold_id = 202,			// 限界角度.
+};
+
+namespace {
+	// importerでは常駐にならないからか、クラス内に情報を持つと次回読み込みでクリアされることになるので.
+	// 外部に出した.
+	CImportDlgParam g_importParam;			// インポート時のパラメータ.
+}
+
 CGLTFImporterInterface::CGLTFImporterInterface (sxsdk::shade_interface &shade) : shade(shade)
 {
 }
-
 
 /**
  * アプリケーション終了時に呼ばれる.
@@ -62,6 +75,7 @@ const char *CGLTFImporterInterface::get_file_extension_description (int index, v
  */
 void CGLTFImporterInterface::do_pre_import (const sxsdk::mat4 &t, void *path)
 {
+	m_coordinatesMatrix = t;
 }
 
 /**
@@ -104,6 +118,90 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	// シーン情報を構築.
 	m_createGLTFScene(scene, &sceneData);
 }
+
+/****************************************************************/
+/* ダイアログイベント											*/
+/****************************************************************/
+void CGLTFImporterInterface::initialize_dialog (sxsdk::dialog_interface& dialog, void*)
+{
+}
+
+void CGLTFImporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *)
+{
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_gamma_id));
+		item->set_selection((int)g_importParam.gamma);
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_mesh_import_normals_id));
+		item->set_bool(g_importParam.meshImportNormals);
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_mesh_angle_threshold_id));
+		item->set_float(g_importParam.meshAngleThreshold);
+	}
+
+	// 「座標変換」を無効化.
+	{
+		{
+			sxsdk::dialog_item_class* item;
+			item = &(d.get_dialog_item(10002));
+			item->set_enabled(false);
+		}
+		for (int i = 0; i < 3; ++i) {
+			sxsdk::dialog_item_class* item;
+			item = &(d.get_dialog_item(10021 + i));
+			item->set_enabled(false);
+		}
+		for (int i = 0; i < 3; ++i) {
+			sxsdk::dialog_item_class* item;
+			item = &(d.get_dialog_item(10031 + i));
+			item->set_enabled(false);
+		}
+		{
+			sxsdk::dialog_item_class* item;
+			item = &(d.get_dialog_item(10041));
+			item->set_enabled(false);
+		}
+	}
+}
+
+void CGLTFImporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
+{
+}
+
+bool CGLTFImporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::dialog_item_class &item, int action, void *)
+{
+	const int id = item.get_id();
+
+	if (id == sx::iddefault) {
+		g_importParam.clear();
+		load_dialog_data(dialog);
+		return true;
+	}
+
+	if (id == dlg_gamma_id) {
+		g_importParam.gamma = (int)item.get_selection();
+		return true;
+	}
+
+	if (id == dlg_mesh_import_normals_id) {
+		g_importParam.meshImportNormals = (int)item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_mesh_angle_threshold_id) {
+		g_importParam.meshAngleThreshold = item.get_float();
+		return true;
+	}
+
+	return false;
+}
+
+/****************************************************************/
 
 /**
  * GLTFを読み込んだシーン情報より、Shade3Dの形状として構築.
@@ -157,7 +255,7 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 
 	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
 		// メッシュを生成.
-		const sxsdk::mat4 m = (nodeD.childNodeIndex >= 0) ? sxsdk::mat4::identity : (sceneData->getNodeMatrix(nodeIndex));
+		sxsdk::mat4 m = (nodeD.childNodeIndex >= 0) ? sxsdk::mat4::identity : (sceneData->getNodeMatrix(nodeIndex));
 		m_createGLTFMesh(nodeD.name, scene, sceneData, nodeD.meshIndex, m);
 	}
 
@@ -245,6 +343,18 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 		scene->end_polygon_mesh();
 		if (errF) return false;
 
+		// 法線を読み込み（ベイク）.
+		if (g_importParam.meshImportNormals) {
+			sxsdk::vec3 normals[4];
+			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				sxsdk::face_class& f = pMesh.face(i);
+				const int vCou = f.get_number_of_vertices();
+				if (vCou != 3) continue;
+				for (int j = 0; j < 3; ++j) normals[j] = newMeshData.triangleNormals[iPos + j];
+				f.set_normals(vCou, normals);
+			}
+		}
+
 		// UV0を格納.
 		if (!newMeshData.triangleUV0.empty()) {
 			const int uvIndex = pMesh.append_uv_layer();
@@ -300,8 +410,9 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			// 稜線を生成.
 			pMesh.make_edges();
 		}
+
 		// 限界角度の指定.
-		pMesh.set_threshold(50.0f);
+		pMesh.set_threshold(g_importParam.meshAngleThreshold);
 
 		return true;
 	}
@@ -338,6 +449,13 @@ void CGLTFImporterInterface::m_createGLTFImages (sxsdk::scene_interface *scene, 
 			imageD.m_shadeMasterImage = &masterImage;
 			imageD.width  = image->get_size().x;
 			imageD.height = image->get_size().y;
+
+			// ガンマの指定 (法線以外).
+			if (!(imageD.imageMask & CImageData::gltf_image_mask_normal)) {
+				if (g_importParam.gamma == 1) {
+					masterImage.set_gamma(1.0f / 2.2f);
+				}
+			}
 		}
 
 		// 作業用に出力したファイルを削除.

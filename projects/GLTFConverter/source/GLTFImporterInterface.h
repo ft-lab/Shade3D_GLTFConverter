@@ -15,6 +15,8 @@ private:
 	sxsdk::shade_interface& shade;
 	std::string m_tempPath;		// 作業用のディレクトリ.
 
+	sxsdk::mat4 m_coordinatesMatrix;		// インポート時のスケールなどの変換行列.
+
 private:
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_IMPORTER_INTERFACE_ID; }
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }
@@ -48,6 +50,26 @@ private:
 	 * アプリケーション終了時に呼ばれる.
 	 */
 	virtual void cleanup (void *aux=0);
+
+	/**
+	 * ダイアログ表示のスキップ.
+	 */
+	virtual bool skips_dialog (void *) { return false; }
+
+	/**
+	 * リソースに埋め込むSXULを指定.
+	 */
+	virtual const char *get_include_resource_name (const int index, void * aux = 0) {
+		return "import_dlg";
+	}
+
+	/****************************************************************/
+	/* ダイアログイベント											*/
+	/****************************************************************/
+	virtual void initialize_dialog (sxsdk::dialog_interface& dialog, void* aux = 0);
+	virtual void load_dialog_data (sxsdk::dialog_interface &d,void * = 0);
+	virtual void save_dialog_data (sxsdk::dialog_interface &dialog,void * = 0);
+	virtual bool respond (sxsdk::dialog_interface &dialog, sxsdk::dialog_item_class &item, int action, void *);
 
 private:
 	/**
