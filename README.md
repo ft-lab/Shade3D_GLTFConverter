@@ -47,7 +47,7 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * ボーンやスキン情報の入出力
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
-※1 : ver.0.5.0.0では、エクスポート時のMetallic/Roughness/Occlusion出力はまだ未実装です。   
+※1 : ver.0.1.0.0では、エクスポート時のMetallic/Roughness/Occlusion出力はまだ未実装です。   
 
 ### エクスポート時のdoubleSidedの対応について
 
@@ -160,5 +160,5 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
-[2018/05/27]   
+[2018/05/27] ver.0.1.0.0   
 * 初回版 (Winのみ)
