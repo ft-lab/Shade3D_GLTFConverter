@@ -505,6 +505,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 
 				mLayer.set_blur(true);
+				mLayer.set_uv_mapping(materialD.baseColorTexCoord);
 			}
 
 			// 法線マップをマッピングレイヤとして追加.
@@ -522,6 +523,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 
 				mLayer.set_blur(true);
+				mLayer.set_uv_mapping(materialD.normalTexCoord);
 			}
 
 			// 発光をマッピングレイヤとして追加.
@@ -542,6 +544,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 
 				mLayer.set_blur(true);
+				mLayer.set_uv_mapping(materialD.emissionTexCoord);
+
 			} else {
 				if (MathUtil::isZero(materialD.emissionFactor)) {
 					surface->set_glow(0.0f);
@@ -579,6 +583,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 							mLayer.set_weight(0.5f);
 						}
 						mLayer.set_blur(true);
+						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
 					}
 
 					// Metallicを「反射」要素としてマッピングレイヤに追加.
@@ -598,6 +603,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 							mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_blue_mode);
 						}
 						mLayer.set_blur(true);
+						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
 					}
 
 					// BaseColorを「反射」に乗算.
@@ -619,6 +625,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 							mLayer.set_weight(1.0f);
 						}
 						mLayer.set_blur(true);
+						mLayer.set_uv_mapping(materialD.baseColorTexCoord);
 					}
 
 					// Roughnessを「荒さ」要素としてマッピングレイヤに追加.
@@ -639,6 +646,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 							mLayer.set_flip_color(true);		// RoughnessはShade3Dのマッピングレイヤでは、黒に近づくにつれて粗くなる.
 						}
 						mLayer.set_blur(true);
+						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
 					}
 
 					// Occlusionを「拡散反射」の乗算としてマッピングレイヤに追加.
@@ -661,6 +669,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						}
 						mLayer.set_blur(true);
 						mLayer.set_weight(materialD.occlusionStrength);
+						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
 					}
 				}
 			}
@@ -684,6 +693,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 					mLayer.set_blur(true);
 					mLayer.set_weight(materialD.occlusionStrength);
+					mLayer.set_uv_mapping(materialD.occlusionTexCoord);
 				}
 			}
 

@@ -39,6 +39,12 @@ public:
 	float metallicFactor;				// Metallicの値.
 	float occlusionStrength;			// Occlusionの強さ.
 
+	int baseColorTexCoord;				// BaseColorのテクスチャで使用するTexCoord(0 or 1).
+	int normalTexCoord;					// 法線マップのテクスチャで使用するTexCoord(0 or 1).
+	int emissionTexCoord;				// 発光のテクスチャで使用するTexCoord(0 or 1).
+	int metallicRoughnessTexCoord;		// Metallic(B) / Roughness(G) のテクスチャで使用するTexCoord(0 or 1).
+	int occlusionTexCoord;				// Ambient Occlusionのテクスチャで使用するTexCoord(0 or 1).
+
 public:
 	CMaterialData ();
 	~CMaterialData ();
@@ -61,6 +67,12 @@ public:
 		this->metallicFactor        = v.metallicFactor;
 
 		this->shadeMasterSurface    = v.shadeMasterSurface;
+
+		this->baseColorTexCoord          = v.baseColorTexCoord;
+		this->normalTexCoord             = v.normalTexCoord;
+		this->emissionTexCoord           = v.emissionTexCoord;
+		this->metallicRoughnessTexCoord  = v.metallicRoughnessTexCoord;
+		this->occlusionTexCoord          = v.occlusionTexCoord;
 
 		return (*this);
     }

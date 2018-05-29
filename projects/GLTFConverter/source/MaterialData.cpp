@@ -33,6 +33,12 @@ void CMaterialData::clear ()
 	occlusionImageIndex         = -1;
 
 	shadeMasterSurface = NULL;
+
+	baseColorTexCoord         = 0;
+	normalTexCoord            = 0;
+	emissionTexCoord          = 0;
+	metallicRoughnessTexCoord = 0;
+	occlusionTexCoord         = 0;
 }
 
 /**
@@ -57,6 +63,12 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->emissionImageIndex) != v.emissionImageIndex) return false;
 	if ((this->metallicRoughnessImageIndex) != v.metallicRoughnessImageIndex) return false;
 	if ((this->occlusionImageIndex) != v.occlusionImageIndex) return false;
+
+	if ((this->baseColorTexCoord) != v.baseColorTexCoord) return false;
+	if ((this->normalTexCoord) != v.normalTexCoord) return false;
+	if ((this->emissionTexCoord) != v.emissionTexCoord) return false;
+	if ((this->metallicRoughnessTexCoord) != v.metallicRoughnessTexCoord) return false;
+	if ((this->occlusionTexCoord) != v.occlusionTexCoord) return false;
 
 	return true;
 }

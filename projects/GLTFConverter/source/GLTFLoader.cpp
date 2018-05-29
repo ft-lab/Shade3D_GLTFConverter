@@ -364,6 +364,8 @@ namespace {
 				if (texture.imageId != "") {
 					dstMaterialData.baseColorImageIndex = std::stoi(texture.imageId);
 				}
+
+				dstMaterialData.baseColorTexCoord = (int)material.metallicRoughness.baseColorTexture.texCoord;
 			}
 
 			// 法線のテクスチャIDを取得.
@@ -376,6 +378,8 @@ namespace {
 				if (texture.imageId != "") {
 					dstMaterialData.normalImageIndex = std::stoi(texture.imageId);
 				}
+
+				dstMaterialData.normalTexCoord = (int)material.normalTexture.texCoord;
 			}
 
 			// EmissionのテクスチャIDを取得.
@@ -388,6 +392,7 @@ namespace {
 				if (texture.imageId != "") {
 					dstMaterialData.emissionImageIndex = std::stoi(texture.imageId);
 				}
+				dstMaterialData.emissionTexCoord = (int)material.emissiveTexture.texCoord;
 			}
 
 			// Metallic/RoughnessのテクスチャIDを取得.
@@ -400,6 +405,7 @@ namespace {
 				if (texture.imageId != "") {
 					dstMaterialData.metallicRoughnessImageIndex = std::stoi(texture.imageId);
 				}
+				dstMaterialData.metallicRoughnessTexCoord = (int)material.metallicRoughness.metallicRoughnessTexture.texCoord;
 			}
 
 			// OcclusionのテクスチャIDを取得.
@@ -412,6 +418,7 @@ namespace {
 				if (texture.imageId != "") {
 					dstMaterialData.occlusionImageIndex = std::stoi(texture.imageId);
 				}
+				dstMaterialData.occlusionTexCoord = (int)material.occlusionTexture.texCoord;
 			}
 		}
 
