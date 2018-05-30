@@ -650,6 +650,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			case sxsdk::enums::diffuse_mapping:
 				diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.baseColorImageIndex = imageIndex;
+				materialData.baseColorTexCoord   = mappingLayer.get_uv_mapping();
 				break;
 
 			case sxsdk::enums::reflection_mapping:
@@ -663,10 +664,13 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			case sxsdk::enums::normal_mapping:
 				normalMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.normalImageIndex = imageIndex;
+				materialData.normalTexCoord   = mappingLayer.get_uv_mapping();
 				break;
 
 			case sxsdk::enums::glow_mapping:
 				emissionMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+				materialData.emissionImageIndex = imageIndex;
+				materialData.emissionTexCoord   = mappingLayer.get_uv_mapping();
 				break;
 			}
 		}

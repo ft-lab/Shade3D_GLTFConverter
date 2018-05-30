@@ -227,11 +227,24 @@ namespace {
 			// テクスチャを割り当て.
 			if (materialD.baseColorImageIndex >= 0) {
 				material.metallicRoughness.baseColorTexture.textureId = std::to_string(materialD.baseColorImageIndex);
-				material.metallicRoughness.baseColorTexture.texCoord  = 0;		// UV層番号 (0/1).
+				material.metallicRoughness.baseColorTexture.texCoord = (size_t)materialD.baseColorTexCoord;
+
 			}
+			if (materialD.emissionImageIndex >= 0) {
+				material.emissiveTexture.textureId =  std::to_string(materialD.emissionImageIndex);
+				material.emissiveTexture.texCoord  = (size_t)materialD.emissionTexCoord;
+			}
+
 			if (materialD.normalImageIndex >= 0) {
 				material.normalTexture.textureId = std::to_string(materialD.normalImageIndex);
-				material.normalTexture.texCoord  = 0;							// UV層番号 (0/1).
+				material.normalTexture.texCoord  = (size_t)materialD.normalTexCoord;
+			}
+			if (materialD.metallicRoughnessImageIndex >= 0) {		// TODO : まだ途中.
+				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
+			}
+			if (materialD.occlusionImageIndex >= 0) {				// TODO : まだ途中.
+				material.occlusionTexture.textureId = std::to_string(materialD.occlusionImageIndex);
+				material.occlusionTexture.texCoord  = (size_t)materialD.occlusionTexCoord;
 			}
 
 			gltfDoc.materials.Append(material);
