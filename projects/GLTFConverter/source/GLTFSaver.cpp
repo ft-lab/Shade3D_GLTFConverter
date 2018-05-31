@@ -505,9 +505,7 @@ namespace {
 				const CSkinData& skinD = sceneData->skins[loop];
 				const size_t jointsCou = skinD.joints.size();
 				if (jointsCou == 0) continue;
-
-				std::vector<sxsdk::mat4> jointMatList;
-				jointMatList.resize(jointsCou, sxsdk::mat4::identity);
+				if (skinD.joints.empty() || skinD.inverseBindMatrices.empty()) continue;
 
 				AccessorDesc acceDesc;
 				acceDesc.accessorType  = TYPE_MAT4;
@@ -524,7 +522,7 @@ namespace {
 					fData.resize(byteLength / sizeof(float), 0.0f);
 					int iPos = 0;
 					for (size_t i = 0; i < jointsCou; ++i) {
-						const sxsdk::mat4& m = jointMatList[i];
+						const sxsdk::mat4& m = skinD.inverseBindMatrices[i];
 						for (size_t k = 0; k < 16; ++k) {
 							fData[iPos++] = m[k >> 2][k & 3];
 						}
@@ -825,9 +823,7 @@ namespace {
 				const CSkinData& skinD = sceneData->skins[loop];
 				const size_t jointsCou = skinD.joints.size();
 				if (jointsCou == 0) continue;
-
-				std::vector<sxsdk::mat4> jointMatList;
-				jointMatList.resize(jointsCou, sxsdk::mat4::identity);
+				if (skinD.joints.empty() || skinD.inverseBindMatrices.empty()) continue;
 
 				Accessor acce;
 				acce.id             = std::to_string(accessorID);
@@ -851,7 +847,7 @@ namespace {
 					fData.resize(buffV.byteLength / sizeof(float), 0.0f);
 					int iPos = 0;
 					for (size_t i = 0; i < jointsCou; ++i) {
-						const sxsdk::mat4& m = jointMatList[i];
+						const sxsdk::mat4& m = skinD.inverseBindMatrices[i];
 						for (size_t k = 0; k < 16; ++k) {
 							fData[iPos++] = m[k >> 2][k & 3];
 						}
@@ -1011,10 +1007,9 @@ namespace {
 			Skin dstSkin;
 			dstSkin.name = skinD.name;
 			dstSkin.id   = std::to_string(loop);
-			//if (skinD.inverseBindMatrices >= 0) dstSkin.inverseBindMatricesAccessorId = std::to_string(skinD.inverseBindMatrices);
 #if 1
 			// 各ジョイントの変換行列の逆数の保持用.
-			if (!skinD.joints.empty()) {
+			if (!skinD.joints.empty() && !skinD.inverseBindMatrices.empty()) {
 				dstSkin.inverseBindMatricesAccessorId = std::to_string(accessorID++);
 			}
 

@@ -822,10 +822,11 @@ sxsdk::shape_class* CGLTFExporterInterface::m_getBoneRoot (const std::vector<sxs
 
 /**
  * ルートボーンから子をたどり、要素をマップに格納していく(再帰).
+ * @param[in]  depth      再帰のdepth.
  * @param[in]  pShape     ボーン形状.
  * @param[out] mapD       first : shape_classのhandle、second : 出現回数.
  */
-void CGLTFExporterInterface::m_storeChildBonesLoop (sxsdk::shape_class* pShape, std::map<void *, int>& mapD)
+void CGLTFExporterInterface::m_storeChildBonesLoop (const int depth, sxsdk::shape_class* pShape, std::map<void *, int>& mapD)
 {
 	const int type = pShape->get_type();
 	if (type != sxsdk::enums::part) return;
@@ -834,12 +835,12 @@ void CGLTFExporterInterface::m_storeChildBonesLoop (sxsdk::shape_class* pShape, 
 
 	mapD[pShape->get_handle()]++;
 
-	if (pShape->has_son()) {
-		sxsdk::shape_class* pS = pShape->get_son();
-		while (pS->has_bro()) {
-			pS = pS->get_bro();
-			m_storeChildBonesLoop(pS, mapD);
-		}
+	if (!pShape->has_son()) return;
+
+	sxsdk::shape_class* pS = pShape->get_son();
+	while (pS->has_bro()) {
+		pS = pS->get_bro();
+		m_storeChildBonesLoop(depth + 1, pS, mapD);
 	}
 }
 
@@ -910,7 +911,7 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			}
 
 			// pBoneRootからたどり、先端のボーンまでmapに格納していく.
-			m_storeChildBonesLoop(pBoneRoot, shapeHandleMap);
+			m_storeChildBonesLoop(0, pBoneRoot, shapeHandleMap);
 		}
 
 		const size_t jointsCou = shapeHandleMap.size();
@@ -929,14 +930,45 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 		// Skinとして採用するノード番号を取得し、skin情報として格納.
 		const size_t skinIndex = m_sceneData->skins.size();
 		CSkinData skinData;
+		std::vector<int> jointIndexList;
+
 		skinData.joints.resize(jointsCou);
+		skinData.inverseBindMatrices.resize(jointsCou);
+		jointIndexList.resize(jointsCou);
 		auto iter = shapeHandleMap.begin();
 		for (size_t i = 0; i < jointsCou; ++i) {
 			const int nodeIndex = m_findNodeIndexFromShapeHandle(iter->first);
 			skinData.joints[i] = nodeIndex;
 			shapeHandleMap[iter->first] = i;
+			jointIndexList[i] = (int)i;
+
+			// ボーンの逆変換行列を指定.
+			// ルートボーンの場合はワールド座標での逆変換行列.
+			const CNodeData& nodeD = m_sceneData->nodes[nodeIndex];
+			//const sxsdk::mat4 m = (nodeIndex == skeletonID) ? (m_sceneData->getLocalToWorldMatrix(nodeIndex)) : nodeD.getMatrix();
+			const sxsdk::mat4 m = m_sceneData->getLocalToWorldMatrix(nodeIndex);
+
+			skinData.inverseBindMatrices[i] = inv(m);
+
 			iter++;
 		}
+
+		// node番号の若い順に入れ替え.
+		// 一部のGLTFビュワーではnodeの順番が前後しているとうまいことSkeletonが表示されないため.
+		for (size_t i = 0; i < jointsCou; ++i) {
+			for (size_t j = i + 1; j < jointsCou; ++j) {
+				if (skinData.joints[i] > skinData.joints[j]) {
+					std::swap(skinData.joints[i], skinData.joints[j]);
+					std::swap(jointIndexList[i], jointIndexList[j]);
+					{
+						const sxsdk::mat4 m = skinData.inverseBindMatrices[j];
+						skinData.inverseBindMatrices[j] = skinData.inverseBindMatrices[i];
+						skinData.inverseBindMatrices[i] = m;
+					}
+				}
+			}
+		}
+
 		skinData.meshIndex  = meshLoop;
 		skinData.skeletonID = skeletonID;
 		m_sceneData->skins.push_back(skinData);
@@ -951,7 +983,7 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
 				for (int j = 0; j < 4; ++j) {
 					if (hD[j] != NULL) {
-						primD.skinJoints[i][j] = shapeHandleMap[ hD[j] ];
+						primD.skinJoints[i][j] = jointIndexList[ shapeHandleMap[ hD[j] ] ];
 					}
 				}
 			}

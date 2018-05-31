@@ -698,16 +698,9 @@ namespace {
 			skinD.name = skin.name;
 			if (skin.skeletonId != "") skinD.skeletonID = std::stoi(skin.skeletonId);
 			if (skin.inverseBindMatricesAccessorId != "") {
-				skinD.inverseBindMatrices = std::stoi(skin.inverseBindMatricesAccessorId);
+				// TODO : 不要 ?.
+				const int accessorID = std::stoi(skin.inverseBindMatricesAccessorId);
 
-				// TODO.
-				const Accessor& acce = gltfDoc.accessors[skinD.inverseBindMatrices];
-				const int bufferViewID = std::stoi(acce.bufferViewId);
-
-				if (acce.componentType == COMPONENT_FLOAT) {
-					if (acce.type == TYPE_MAT4) {		// 4x4行列のバッファを取得.
-					}
-				}
 			}
 			
 			const size_t jointsCou = skin.jointIds.size();
@@ -717,8 +710,6 @@ namespace {
 					skinD.joints[j] = std::stoi(skin.jointIds[j]);
 				}
 			}
-
-
 		}
 
 		// skin情報より、nodesのノードがボーンになりうるかチェック.

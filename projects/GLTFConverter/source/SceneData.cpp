@@ -36,6 +36,19 @@ void CNodeData::clear ()
 	rotation    = sxsdk::quaternion_class();
 }
 
+/**
+ * 変換行列を取得.
+ */
+sxsdk::mat4 CNodeData::getMatrix () const
+{
+	sxsdk::mat4 m = sxsdk::mat4::identity;
+
+	sxsdk::vec3 rotE;
+	rotation.get_euler(rotE);
+	m = sxsdk::mat4::scale(scale) * sxsdk::mat4::rotate(rotE) * sxsdk::mat4::translate(translation);
+	return m;
+}
+
 //---------------------------------------------.
 CSceneData::CSceneData ()
 {
@@ -396,3 +409,20 @@ std::string CSceneData::getUniqueMaterialName (const std::string& name)
 	return newName;
 }
 
+/**
+ * ローカル座標からワールド座標の変換行列を取得
+ * @param[in] nodeIndex  ノード番号.
+ * @return 変換行列.
+ */
+sxsdk::mat4 CSceneData::getLocalToWorldMatrix (const int nodeIndex) const
+{
+	sxsdk::mat4 lwMat = sxsdk::mat4::identity;
+
+	int nodeIndex2 = nodeIndex;
+	while (nodeIndex2 >= 0) {
+		const CNodeData& nodeD = nodes[nodeIndex2];
+		lwMat = lwMat * nodeD.getMatrix();
+		nodeIndex2 = nodeD.parentNodeIndex;
+	}
+	return lwMat;
+}

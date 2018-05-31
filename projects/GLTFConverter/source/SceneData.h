@@ -58,6 +58,11 @@ public:
     }
 
 	void clear ();
+
+	/**
+	 * 変換行列を取得.
+	 */
+	sxsdk::mat4 getMatrix () const;
 };
 
 //---------------------------------------------.
@@ -188,6 +193,13 @@ public:
 	 * @return 他とはかぶらないマテリアル名.
 	 */
 	std::string getUniqueMaterialName (const std::string& name);
+
+	/**
+	 * ローカル座標からワールド座標の変換行列を取得
+	 * @param[in] nodeIndex  ノード番号.
+	 * @return 変換行列.
+	 */
+	sxsdk::mat4 getLocalToWorldMatrix (const int nodeIndex) const;
 };
 
 #endif

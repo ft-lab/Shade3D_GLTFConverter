@@ -262,10 +262,11 @@ private:
 
 	/**
 	 * ルートボーンから子をたどり、要素をマップに格納していく(再帰).
+	 * @param[in]  depth      再帰のdepth.
 	 * @param[in]  pShape     ボーン形状.
 	 * @param[out] mapD       first : shape_classのhandle、second : 出現回数.
 	 */
-	void m_storeChildBonesLoop (sxsdk::shape_class* pShape, std::map<void *, int>& mapD);
+	void m_storeChildBonesLoop (const int depth, sxsdk::shape_class* pShape, std::map<void *, int>& mapD);
 
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);

@@ -12,11 +12,11 @@
 class CSkinData
 {
 public:
-	int inverseBindMatrices;			// バインド情報（accessorsの参照インデックス）.
 	std::string name;					// 名前.
 	int skeletonID;						// スケルトンID.
 	int meshIndex;						// 対応するメッシュ番号.
 	std::vector<int> joints;			// 対応するノード番号.
+	std::vector<sxsdk::mat4> inverseBindMatrices;	// ジョイントごとの逆行列.
 
 public:
 	CSkinData ();
