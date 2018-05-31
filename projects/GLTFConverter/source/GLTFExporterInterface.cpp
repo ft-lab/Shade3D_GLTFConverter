@@ -311,7 +311,6 @@ void CGLTFExporterInterface::begin_polymesh_vertex (int n, void *)
 	m_meshData.vertices.resize(n);
 	m_meshData.skinJointsHandle.clear();
 	m_meshData.skinWeights.clear();
-	m_meshData.skinMatrices.clear();
 }
 
 /**
@@ -329,15 +328,6 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 			const sxsdk::mat4 skin_m_inv = inv(skin_m);
 			sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * skin_m_inv;
 			pos = sxsdk::vec3(v4.x, v4.y, v4.z);
-
-			// 変換行列の位置をmm ==> m 変換.
-			{
-				sxsdk::mat4 sM = skin_m_inv;
-				sM[3][0] *= 0.001f;
-				sM[3][1] *= 0.001f;
-				sM[3][2] *= 0.001f;
-				m_meshData.skinMatrices.push_back(sM);
-			}
 		}
 	}
 
@@ -374,6 +364,23 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 						m_meshData.skinJointsHandle[i][j + bindsCou] = shapeList[j];
 						m_meshData.skinWeights[i][j + bindsCou]      = 0.0f;
 					}
+				}
+
+				// skinWeights[]が大きい順に並び替え.
+				for (int j = 0; j < 4; ++j) {
+					for (int k = j + 1; k < 4; ++k) {
+						if (m_meshData.skinWeights[i][j] < m_meshData.skinWeights[i][k]) {
+							std::swap(m_meshData.skinWeights[i][j], m_meshData.skinWeights[i][k]);
+							std::swap(m_meshData.skinJointsHandle[i][j], m_meshData.skinJointsHandle[i][k]);
+						}
+					}
+				}
+
+				// Weight値の合計が1.0になるように正規化.
+				float sumWeight = 0.0f;
+				for (int j = 0; j < 4; ++j) sumWeight += m_meshData.skinWeights[i][j];
+				if (!MathUtil::isZero(sumWeight) && !MathUtil::isZero(1.0f - sumWeight)) {
+					for (int j = 0; j < 4; ++j) m_meshData.skinWeights[i][j] /= sumWeight;
 				}
 			}
 		}
@@ -915,7 +922,6 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 				primD.skinJointsHandle.clear();
 				primD.skinWeights.clear();
 				primD.skinJoints.clear();
-				primD.skinMatrices.clear();
 			}
 			continue;
 		}
