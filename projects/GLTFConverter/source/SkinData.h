@@ -15,6 +15,7 @@ public:
 	int inverseBindMatrices;			// バインド情報（accessorsの参照インデックス）.
 	std::string name;					// 名前.
 	int skeletonID;						// スケルトンID.
+	int meshIndex;						// 対応するメッシュ番号.
 	std::vector<int> joints;			// 対応するノード番号.
 
 public:
@@ -23,6 +24,7 @@ public:
     CSkinData& operator = (const CSkinData &v) {
 		this->name                = v.name;
 		this->skeletonID          = v.skeletonID;
+		this->meshIndex           = v.meshIndex;
 		this->inverseBindMatrices = v.inverseBindMatrices;
 		this->joints              = v.joints;
 		return (*this);

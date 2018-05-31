@@ -172,10 +172,12 @@ namespace {
 			gltfNode.id   = std::to_string(i);
 
 			// nodeDを親とする子ノードリストを取得.
+			childNodeIndex.clear();
 			for (size_t j = 0; j < nodesCou; ++j) {
 				if (i == j) continue;
 				const CNodeData& nodeD2 = sceneData->nodes[j];
 				if (nodeD2.parentNodeIndex == i) {
+					childNodeIndex.push_back(j);
 					gltfNode.children.push_back(std::to_string(j));
 				}
 			}
@@ -228,8 +230,8 @@ namespace {
 			if (materialD.baseColorImageIndex >= 0) {
 				material.metallicRoughness.baseColorTexture.textureId = std::to_string(materialD.baseColorImageIndex);
 				material.metallicRoughness.baseColorTexture.texCoord = (size_t)materialD.baseColorTexCoord;
-
 			}
+
 			if (materialD.emissionImageIndex >= 0) {
 				material.emissiveTexture.textureId =  std::to_string(materialD.emissionImageIndex);
 				material.emissiveTexture.texCoord  = (size_t)materialD.emissionTexCoord;
@@ -253,10 +255,11 @@ namespace {
 
 	/**
 	 * メッシュ情報を指定.
+	 * @return accessorIDの数.
 	 */
-	void setMeshesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	int setMeshesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
 		const size_t meshCou = sceneData->meshes.size();
-		if (meshCou == 0) return;
+		if (meshCou == 0) return 0;
 
 		int accessorID = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
@@ -305,6 +308,8 @@ namespace {
 			// Mesh情報を追加.
 			gltfDoc.meshes.Append(mesh);
 		}
+
+		return accessorID;
 	}
 
 	/**
@@ -492,6 +497,58 @@ namespace {
 				}
 			}
 		}
+
+#if 0
+		// スキンの情報を格納.
+		{
+			const size_t skinsCou = sceneData->skins.size();
+
+			for (size_t loop = 0; loop < skinsCou; ++loop) {
+				const CSkinData& skinD = sceneData->skins[loop];
+				const int meshIndex = skinD.meshIndex;
+				if (meshIndex < 0) continue;
+
+				const CMeshData& meshD = sceneData->meshes[meshIndex];
+				if (!meshD.hasSkinMatrices()) continue;
+				const size_t primCou = meshD.primitives.size();
+				size_t versCou = 0;
+				for (size_t i = 0; i < primCou; ++i) {
+					const CPrimitiveData& primD = meshD.primitives[i];
+					versCou += primD.skinMatrices.size();
+				}
+
+				AccessorDesc acceDesc;
+				acceDesc.accessorType  = TYPE_MAT4;
+				acceDesc.componentType = COMPONENT_FLOAT;
+				acceDesc.byteOffset    = byteOffset;
+				acceDesc.normalized    = false;
+
+				const size_t byteLength = sizeof(float) * 16 * versCou;
+
+				std::vector<float> fData;
+				{
+					fData.resize(byteLength / sizeof(float), 0.0f);
+					int iPos = 0;
+					for (size_t i = 0; i < primCou; ++i) {
+						const CPrimitiveData& primD = meshD.primitives[i];
+						const size_t vCou = primD.skinMatrices.size();
+						for (size_t j = 0; j < vCou; ++j) {
+							const sxsdk::mat4& m = primD.skinMatrices[j];
+							for (size_t k = 0; k < 16; ++k) {
+								fData[iPos++] = m[k >> 2][k & 3];
+							}
+						}
+					}
+				}
+
+				bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+				bufferBuilder->AddAccessor(fData, acceDesc); 
+
+				byteOffset += byteLength;
+				accessorID++;
+			}
+		}
+#endif
 	}
 
 	/**
@@ -771,7 +828,66 @@ namespace {
 				}
 			}
 		}
+#if 0
+		// スキンの情報を格納.
+		{
+			const size_t skinsCou = sceneData->skins.size();
 
+			for (size_t loop = 0; loop < skinsCou; ++loop) {
+				const CSkinData& skinD = sceneData->skins[loop];
+				const int meshIndex = skinD.meshIndex;
+				if (meshIndex < 0) continue;
+
+				const CMeshData& meshD = sceneData->meshes[meshIndex];
+				if (!meshD.hasSkinMatrices()) continue;
+				const size_t primCou = meshD.primitives.size();
+				size_t versCou = 0;
+				for (size_t i = 0; i < primCou; ++i) {
+					const CPrimitiveData& primD = meshD.primitives[i];
+					versCou += primD.skinMatrices.size();
+				}
+
+				Accessor acce;
+				acce.id             = std::to_string(accessorID);
+				acce.bufferViewId   = std::to_string(accessorID);
+				acce.type           = TYPE_MAT4;
+				acce.componentType  = COMPONENT_FLOAT;
+				acce.count          = versCou;
+				gltfDoc.accessors.Append(acce);
+
+				BufferView buffV;
+				buffV.id         = std::to_string(accessorID);
+				buffV.bufferId   = std::string("0");
+				buffV.byteOffset = byteOffset;
+				buffV.byteLength = sizeof(float) * 16 * versCou;
+				buffV.target     = ARRAY_BUFFER;
+				gltfDoc.bufferViews.Append(buffV);
+
+				// バッファ情報として格納.
+				if (binWriter) {
+					std::vector<float> fData;
+					fData.resize(buffV.byteLength / sizeof(float), 0.0f);
+					int iPos = 0;
+					for (size_t i = 0; i < primCou; ++i) {
+						const CPrimitiveData& primD = meshD.primitives[i];
+						const size_t vCou = primD.skinMatrices.size();
+						for (size_t j = 0; j < vCou; ++j) {
+							//const sxsdk::mat4& m = primD.skinMatrices[j];
+							sxsdk::mat4 m = sxsdk::mat4::identity;
+							for (size_t k = 0; k < 16; ++k) {
+								fData[iPos++] = m[k >> 2][k & 3];
+							}
+						}
+					}
+
+					binWriter->Write(gltfDoc.bufferViews[accessorID], &(fData[0]), gltfDoc.accessors[accessorID]);
+				}
+
+				byteOffset += buffV.byteLength;
+				accessorID++;
+			}
+		}
+#endif
 		// buffers.
 		{
 			Buffer buff;
@@ -903,17 +1019,26 @@ namespace {
 	/**
 	 * スキン情報を格納.
 	 */
-	void setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	void setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int meshAccessorIDCount) {
 		const size_t skinsCou = sceneData->skins.size();
 		if (skinsCou == 0) return;
 
+		int accessorID = meshAccessorIDCount;
 		for (size_t loop = 0; loop < skinsCou; ++loop) {
 			const CSkinData& skinD = sceneData->skins[loop];
+			const int meshIndex = skinD.meshIndex;
+			if (meshIndex < 0) continue;
+
 			const size_t joinsCou = skinD.joints.size();
 			Skin dstSkin;
 			dstSkin.name = skinD.name;
 			dstSkin.id   = std::to_string(loop);
-			if (skinD.inverseBindMatrices >= 0) dstSkin.inverseBindMatricesAccessorId = std::to_string(skinD.inverseBindMatrices);
+			//if (skinD.inverseBindMatrices >= 0) dstSkin.inverseBindMatricesAccessorId = std::to_string(skinD.inverseBindMatrices);
+#if 0
+			if (sceneData->meshes[meshIndex].hasSkinMatrices()) {		// スキンのための変換行列を持つ場合.
+				dstSkin.inverseBindMatricesAccessorId = std::to_string(accessorID++);
+			}
+#endif
 			if (skinD.skeletonID >= 0) dstSkin.skeletonId = std::to_string(skinD.skeletonID);
 			for (size_t j = 0; j < joinsCou; ++j) dstSkin.jointIds.push_back(std::to_string(skinD.joints[j]));
 			gltfDoc.skins.Append(dstSkin);
@@ -984,10 +1109,10 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		::setNodesData(gltfDoc, sceneData);
 
 		// メッシュ情報を指定.
-		::setMeshesData(gltfDoc, sceneData);
+		const int meshAccessorIDCount = ::setMeshesData(gltfDoc, sceneData);
 
 		// スキン情報を指定.
-		::setSkinData(gltfDoc, sceneData);
+		::setSkinData(gltfDoc, sceneData, meshAccessorIDCount);
 
 		// バッファ情報を指定.
 		// 拡張子がgltfの場合、binファイルもここで出力.

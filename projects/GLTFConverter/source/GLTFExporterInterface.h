@@ -255,6 +255,18 @@ private:
 	 */
 	int m_findNodeIndexFromShapeHandle (void* handle);
 
+	/**
+	 * 指定の配列内のボーン要素から一番親を探す.
+	 */
+	sxsdk::shape_class* m_getBoneRoot (const std::vector<sxsdk::shape_class *>& shapes);
+
+	/**
+	 * ルートボーンから子をたどり、要素をマップに格納していく(再帰).
+	 * @param[in]  pShape     ボーン形状.
+	 * @param[out] mapD       first : shape_classのhandle、second : 出現回数.
+	 */
+	void m_storeChildBonesLoop (sxsdk::shape_class* pShape, std::map<void *, int>& mapD);
+
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);
 	~CGLTFExporterInterface ();

@@ -24,6 +24,7 @@ void CTempMeshData::clear ()
 	skinWeights.clear();
 	skinJoints.clear();
 	skinJointsHandle.clear();
+	skinMatrices.clear();
 	triangleIndices.clear();
 	triangleNormals.clear();
 	triangleUV0.clear();
@@ -64,6 +65,7 @@ void CTempMeshData::optimize ()
 			vertices.erase(vertices.begin() + i);
 			if (!skinWeights.empty()) skinWeights.erase(skinWeights.begin() + i);
 			if (!skinJointsHandle.empty()) skinJointsHandle.erase(skinJointsHandle.begin() + i);
+			if (!skinMatrices.empty()) skinMatrices.erase(skinMatrices.begin() + i);
 		}
 	}
 }
@@ -93,6 +95,7 @@ void CPrimitiveData::clear ()
 	skinWeights.clear();
 	skinJoints.clear();
 	skinJointsHandle.clear();
+	skinMatrices.clear();
 }
 
 /**
@@ -108,6 +111,7 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 	triangleIndices  = tempMeshData.triangleIndices;
 	skinWeights      = tempMeshData.skinWeights;
 	skinJointsHandle = tempMeshData.skinJointsHandle;
+	skinMatrices     = tempMeshData.skinMatrices;
 
 	//---------------------------------------------------------.
 	// 法線やUVは、三角形ごとの頂点から頂点数分の配列に格納するようにコンバート.
@@ -170,6 +174,10 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 				if (!skinJointsHandle.empty()) {
 					const sx::vec<void*,4> v = skinJointsHandle[vLoop];
 					skinJointsHandle.push_back(v);
+				}
+				if (!skinMatrices.empty()) {
+					const sxsdk::mat4 v = skinMatrices[vLoop];
+					skinMatrices.push_back(v);
 				}
 
 				triangleIndices[iP1] = vIndex;
@@ -259,6 +267,7 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 		tempMeshD.vertices         = tempMeshData.vertices;
 		tempMeshD.skinWeights      = tempMeshData.skinWeights;
 		tempMeshD.skinJointsHandle = tempMeshData.skinJointsHandle;
+		tempMeshD.skinMatrices     = tempMeshData.skinMatrices;
 
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 			const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
@@ -437,6 +446,17 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 				}
 			}
 		}
+		if (useSkinWeights && !primitiveD.skinMatrices.empty()) {
+			if (!primitiveD.skinMatrices.empty()) {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinMatrices.push_back(primitiveD.skinMatrices[i]);
+				}
+			} else {
+				for (size_t i = 0; i < versCou; ++i) {
+					tempMeshData.skinMatrices.push_back(sxsdk::mat4::identity);
+				}
+			}
+		}
 
 		tempMeshData.faceGroupMaterialIndex[loop] = primitiveD.materialIndex;
 
@@ -446,3 +466,17 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 	return true;
 }
 
+/**
+ * 頂点ごとにスキンのための変換行列を持つか.
+ */
+bool CMeshData::hasSkinMatrices () const
+{
+	bool ret = false;
+	for (size_t i = 0; i < primitives.size(); ++i) {
+		if (!primitives[i].skinMatrices.empty()) {
+			ret = true;
+			break;
+		}
+	}
+	return ret;
+}

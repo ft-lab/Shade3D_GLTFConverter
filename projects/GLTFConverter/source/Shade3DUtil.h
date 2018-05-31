@@ -66,6 +66,11 @@ namespace Shade3DUtil
 	 * @param[in] boneRoot  対象のボーンルート.
 	 */
 	void resizeBones (sxsdk::shape_class* boneRoot);
+
+	/**
+	 * 指定の形状の階層の深さを取得.
+	 */
+	int getShapeHierarchyDepth (sxsdk::shape_class* pShape);
 }
 
 #endif

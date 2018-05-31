@@ -311,6 +311,7 @@ void CGLTFExporterInterface::begin_polymesh_vertex (int n, void *)
 	m_meshData.vertices.resize(n);
 	m_meshData.skinJointsHandle.clear();
 	m_meshData.skinWeights.clear();
+	m_meshData.skinMatrices.clear();
 }
 
 /**
@@ -325,8 +326,18 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 		// スキン変換前の座標値を計算.
 		if (m_exportParam.outputBonesAndSkins) {
 			const sxsdk::mat4 skin_m = skin->get_skin_world_matrix();
-			sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * inv(skin_m);
+			const sxsdk::mat4 skin_m_inv = inv(skin_m);
+			sxsdk::vec4 v4 = sxsdk::vec4(pos, 1) * m_LWMat * skin_m_inv;
 			pos = sxsdk::vec3(v4.x, v4.y, v4.z);
+
+			// 変換行列の位置をmm ==> m 変換.
+			{
+				sxsdk::mat4 sM = skin_m_inv;
+				sM[3][0] *= 0.001f;
+				sM[3][1] *= 0.001f;
+				sM[3][2] *= 0.001f;
+				m_meshData.skinMatrices.push_back(sM);
+			}
 		}
 	}
 
@@ -783,6 +794,49 @@ int CGLTFExporterInterface::m_findNodeIndexFromShapeHandle (void* handle)
 }
 
 /**
+ * 指定の配列内のボーン要素から一番親を探す.
+ */
+sxsdk::shape_class* CGLTFExporterInterface::m_getBoneRoot (const std::vector<sxsdk::shape_class *>& shapes)
+{
+	sxsdk::shape_class* pBoneRoot = NULL;
+	int minDepth = -1;
+
+	const size_t sCou = shapes.size();
+	for (size_t i = 0; i < sCou; ++i) {
+		sxsdk::shape_class *pS = shapes[i];
+		const int depth = Shade3DUtil::getShapeHierarchyDepth(pS);
+		if (pBoneRoot == NULL || depth < minDepth) {
+			pBoneRoot = pS;
+			minDepth  = depth;
+		}
+	}
+	return pBoneRoot;
+}
+
+/**
+ * ルートボーンから子をたどり、要素をマップに格納していく(再帰).
+ * @param[in]  pShape     ボーン形状.
+ * @param[out] mapD       first : shape_classのhandle、second : 出現回数.
+ */
+void CGLTFExporterInterface::m_storeChildBonesLoop (sxsdk::shape_class* pShape, std::map<void *, int>& mapD)
+{
+	const int type = pShape->get_type();
+	if (type != sxsdk::enums::part) return;
+	const int partType = pShape->get_part().get_part_type();
+	if (partType != sxsdk::enums::bone_joint && partType != sxsdk::enums::ball_joint) return;
+
+	mapD[pShape->get_handle()]++;
+
+	if (pShape->has_son()) {
+		sxsdk::shape_class* pS = pShape->get_son();
+		while (pS->has_bro()) {
+			pS = pS->get_bro();
+			m_storeChildBonesLoop(pS, mapD);
+		}
+	}
+}
+
+/**
  * ポリゴンメッシュに格納したスキン情報より、スキン情報をm_sceneDataに格納する.
  */
 void CGLTFExporterInterface::m_setSkinsFromMeshes ()
@@ -825,6 +879,33 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			}
 		}
 
+		// shapeHandleMap[]に格納されたジョイントハンドルのうち、ボーンのルートを探し.
+		// ボーンの階層構造の末端まで漏れがないようにmapに格納.
+		sxsdk::shape_class* pBoneRoot = NULL;
+		int skeletonID = -1;
+		if (!errF && !shapeHandleMap.empty()) {
+			// sxsdk::shape_class * に変換.
+			std::vector<sxsdk::shape_class *> tmpShapes;
+			const size_t jCou = shapeHandleMap.size();
+			tmpShapes.resize(jCou, NULL);
+			auto iter = shapeHandleMap.begin();
+			for (size_t i = 0; i < jCou; ++i) {
+				tmpShapes[i] = m_pScene->get_shape_by_handle(iter->first);
+				iter++;
+			}
+
+			// ボーンルートを取得.
+			pBoneRoot = m_getBoneRoot(tmpShapes);
+
+			// 対応する形状のノード番号を取得.
+			if (pBoneRoot) {
+				skeletonID = m_findNodeIndexFromShapeHandle(pBoneRoot->get_handle());
+			}
+
+			// pBoneRootからたどり、先端のボーンまでmapに格納していく.
+			m_storeChildBonesLoop(pBoneRoot, shapeHandleMap);
+		}
+
 		const size_t jointsCou = shapeHandleMap.size();
 
 		// スキン情報を破棄する.
@@ -834,6 +915,7 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 				primD.skinJointsHandle.clear();
 				primD.skinWeights.clear();
 				primD.skinJoints.clear();
+				primD.skinMatrices.clear();
 			}
 			continue;
 		}
@@ -849,6 +931,8 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			shapeHandleMap[iter->first] = i;
 			iter++;
 		}
+		skinData.meshIndex  = meshLoop;
+		skinData.skeletonID = skeletonID;
 		m_sceneData->skins.push_back(skinData);
 
 		// skinで参照しているインデックスに置きかえる.

@@ -271,3 +271,17 @@ void Shade3DUtil::resizeBones (sxsdk::shape_class* boneRoot)
 {
 	::resizeBonesLoop(*boneRoot, NULL);
 }
+
+/**
+ * 指定の形状の階層の深さを取得.
+ */
+int Shade3DUtil::getShapeHierarchyDepth (sxsdk::shape_class* pShape)
+{
+	int depth = 0;
+	sxsdk::shape_class* pS = pShape;
+	while (pS->has_dad()) {
+		depth++;
+		pS = pS->get_dad();
+	}
+	return depth;
+}

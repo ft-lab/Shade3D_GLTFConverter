@@ -22,6 +22,7 @@ public:
 	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキンのウエイト値.
 	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキンのジョイントインデックス値 (Import時に使用).
 	std::vector< sx::vec<void *,4> > skinJointsHandle;	// 頂点ごとのスキンのジョイントのハンドル (Export時に使用).
+	std::vector<sxsdk::mat4> skinMatrices;				// 頂点ごとのスキン時の変換行列.
 
 	std::vector<int> triangleIndices;				// 三角形の頂点インデックス.
 	std::vector<int> triangleFaceGroupIndex;		// 三角形ごとのフェイスグループ番号.
@@ -42,6 +43,7 @@ public:
 		this->skinWeights     = v.skinWeights;
 		this->skinJoints      = v.skinJoints;
 		this->skinJointsHandle = v.skinJointsHandle;
+		this->skinMatrices     = v.skinMatrices;
 		this->triangleIndices = v.triangleIndices;
 		this->triangleFaceGroupIndex  = v.triangleFaceGroupIndex;
 		this->triangleNormals = v.triangleNormals;
@@ -79,6 +81,7 @@ public:
 	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキン時のウエイト (最大4つ分).
 	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキン時に参照するジョイントインデックスリスト (最大4つ分).
 	std::vector< sx::vec<void *,4> > skinJointsHandle;	// 頂点ごとのスキンのジョイントのハンドル (Export時に使用).
+	std::vector<sxsdk::mat4> skinMatrices;		// 頂点ごとのスキン時の変換行列.
 
 	std::vector<int> triangleIndices;		// 三角形の頂点インデックス.
 
@@ -99,6 +102,7 @@ public:
 		this->skinWeights     = v.skinWeights;
 		this->skinJoints      = v.skinJoints;
 		this->skinJointsHandle = v.skinJointsHandle;
+		this->skinMatrices     = v.skinMatrices;
 
 		return (*this);
     }
@@ -155,6 +159,11 @@ public:
 	 * @param[out] tempMeshData  まとめたメッシュ情報を格納.
 	 */
 	bool mergePrimitives (CTempMeshData& tempMeshData) const;
+
+	/**
+	 * 頂点ごとにスキンのための変換行列を持つか.
+	 */
+	bool hasSkinMatrices () const;
 };
 
 #endif
