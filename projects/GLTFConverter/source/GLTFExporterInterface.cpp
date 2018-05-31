@@ -930,17 +930,17 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 		// Skinとして採用するノード番号を取得し、skin情報として格納.
 		const size_t skinIndex = m_sceneData->skins.size();
 		CSkinData skinData;
-		std::vector<int> jointIndexList;
+		std::vector<void *> jointHandleList;
 
 		skinData.joints.resize(jointsCou);
 		skinData.inverseBindMatrices.resize(jointsCou);
-		jointIndexList.resize(jointsCou);
+		jointHandleList.resize(jointsCou);
 		auto iter = shapeHandleMap.begin();
 		for (size_t i = 0; i < jointsCou; ++i) {
 			const int nodeIndex = m_findNodeIndexFromShapeHandle(iter->first);
 			skinData.joints[i] = nodeIndex;
 			shapeHandleMap[iter->first] = i;
-			jointIndexList[i] = (int)i;
+			jointHandleList[i] = iter->first;
 
 			// ボーンの逆変換行列を指定.
 			// ルートボーンの場合はワールド座標での逆変換行列.
@@ -959,7 +959,8 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			for (size_t j = i + 1; j < jointsCou; ++j) {
 				if (skinData.joints[i] > skinData.joints[j]) {
 					std::swap(skinData.joints[i], skinData.joints[j]);
-					std::swap(jointIndexList[i], jointIndexList[j]);
+					std::swap(shapeHandleMap[jointHandleList[i]], shapeHandleMap[jointHandleList[j]]);
+					std::swap(jointHandleList[i], jointHandleList[j]);
 					{
 						const sxsdk::mat4 m = skinData.inverseBindMatrices[j];
 						skinData.inverseBindMatrices[j] = skinData.inverseBindMatrices[i];
@@ -983,7 +984,7 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
 				for (int j = 0; j < 4; ++j) {
 					if (hD[j] != NULL) {
-						primD.skinJoints[i][j] = jointIndexList[ shapeHandleMap[ hD[j] ] ];
+						primD.skinJoints[i][j] = shapeHandleMap[ hD[j] ];
 					}
 				}
 			}
