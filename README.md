@@ -45,6 +45,8 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を入力
 * マテリアル/テクスチャイメージとして、BaseColor(基本色)/Normal(法線)/Emissive(発光)を出力 (※1)
 * ボーンやスキン情報の入出力
+* ポリゴンメッシュの頂点カラーの入出力 (頂点カラー0のみ) ver.0.1.0.3で追加。    
+頂点カラーとしてRGBAの要素を使用しています。
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 ※1 : ver.0.1.0.0では、エクスポート時のMetallic/Roughness/Occlusion出力はまだ未実装です。   
@@ -140,6 +142,7 @@ Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算と
 この際に、移動/回転/スケール要素で渡すようにしており、Shade3DのGLTF Exporterでは「せん断」情報は渡していません。   
 * テクスチャイメージとして使用できるファイルフォーマットは、pngまたはjpegのみです。   
 * UV層は0/1番目を使用できます(ver.0.1.0.1 追加)。   
+* ポリゴンメッシュの頂点に割り当てる頂点カラーは、頂点カラー番号0のみを乗算合成として使用できます (ver.0.1.0.3 追加)。
 
 ## ビルド方法 (開発者向け)
 
@@ -172,6 +175,9 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/06/05] ver.0.1.0.3   
+* Export/Import : ポリゴンメッシュの頂点カラーの入出力に対応。頂点カラー0のみを使用します。
 
 [2018/06/01] ver.0.1.0.2   
 * Export : スキンを割り当てた場合に、出力結果が不正になる問題を修正。SkinのinverseBindMatricesの出力を行うようにしました。
