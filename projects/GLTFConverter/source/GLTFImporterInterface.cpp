@@ -12,6 +12,8 @@ enum
 	dlg_gamma_id = 101,							// ガンマ値.
 	dlg_mesh_import_normals_id = 201,			// 法線の読み込み.
 	dlg_mesh_angle_threshold_id = 202,			// 限界角度.
+	dlg_mesh_import_vertex_color_id = 203,		// 頂点カラーの読み込み.
+
 };
 
 namespace {
@@ -143,6 +145,11 @@ void CGLTFImporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_mesh_angle_threshold_id));
 		item->set_float(g_importParam.meshAngleThreshold);
 	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_mesh_import_vertex_color_id));
+		item->set_bool(g_importParam.meshImportVertexColor);
+	}
 
 	// 「座標変換」を無効化.
 	{
@@ -195,6 +202,11 @@ bool CGLTFImporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_mesh_angle_threshold_id) {
 		g_importParam.meshAngleThreshold = item.get_float();
+		return true;
+	}
+
+	if (id == dlg_mesh_import_vertex_color_id) {
+		g_importParam.meshImportVertexColor = (int)item.get_bool();
 		return true;
 	}
 
@@ -381,10 +393,31 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			}
 		}
 
+		// 頂点カラーを格納.
+		bool hasVertexColor = false;
+		if (g_importParam.meshImportVertexColor) {
+			if (!newMeshData.triangleColor0.empty()) {
+				hasVertexColor = true;
+				const int vLayerIndex = pMesh.append_vertex_color_layer();;
+				sxsdk::vec4 col;
+				for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					sxsdk::face_class& f = pMesh.face(i);
+					for (int j = 0; j < 3; ++j) {
+						col = newMeshData.triangleColor0[iPos + j];
+						f.set_vertex_color(vLayerIndex, j, sxsdk::rgba_class(col.x, col.y, col.z, col.w));
+					}
+				}
+			}
+		}
+
 		// マテリアルを割り当て.
 		if (faceGroupCou == 1) {
 			const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[0]];
 			if (materialD.shadeMasterSurface) {
+				if (hasVertexColor) {		// 頂点カラーのマッピングレイヤを追加.
+					Shade3DUtil::setVertexColorSurfaceLayer(materialD.shadeMasterSurface);
+				}
+
 				pMesh.set_master_surface(materialD.shadeMasterSurface);
 			}
 		} else {
@@ -393,6 +426,10 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 				const int facegroupIndex = pMesh.append_face_group();
 				const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[i]];
 				if (materialD.shadeMasterSurface) {
+					if (hasVertexColor) {		// 頂点カラーのマッピングレイヤを追加.
+						Shade3DUtil::setVertexColorSurfaceLayer(materialD.shadeMasterSurface);
+					}
+
 					pMesh.set_face_group_surface(facegroupIndex, materialD.shadeMasterSurface);
 				}
 			}

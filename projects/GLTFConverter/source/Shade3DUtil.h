@@ -30,6 +30,11 @@ namespace Shade3DUtil
 	bool hasVertexColor (sxsdk::shape_class* shape);
 
 	/**
+	 * 表面材質のマッピングレイヤとして、頂点カラー0の層を乗算合成で追加.
+	 */
+	void setVertexColorSurfaceLayer (sxsdk::master_surface_class* pMasterSurface);
+
+	/**
 	 * 面を反転するか。親をたどって調べる.
 	 */
 	bool isFaceFlip (sxsdk::shape_class* shape);

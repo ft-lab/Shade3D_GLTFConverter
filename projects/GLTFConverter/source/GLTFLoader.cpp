@@ -212,6 +212,39 @@ namespace {
 					}
 				}
 
+				// Color0を取得.
+				if (meshPrim.color0AccessorId != "") {
+					const int color0ID = std::stoi(meshPrim.color0AccessorId);
+					const Accessor& acce = gltfDoc.accessors[color0ID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
+
+					if (acce.componentType == COMPONENT_FLOAT && (acce.type == TYPE_VEC4 || acce.type == TYPE_VEC3)) {
+						// Color0の配列を取得.
+						// floatの配列で返るため、/4 または /3 がColor0要素数.
+						std::vector<float> color0;
+						if (reader) color0 = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) color0 = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const int fCou = (acce.type == TYPE_VEC4) ? 4 : 3;
+						const int offsetI = acce.byteOffset / (sizeof(float));
+
+						const size_t versCou = color0.size();
+						if (versCou > 0 && acce.count > 0) {
+							dstPrimitiveData.color0.resize(acce.count);
+							if (fCou == 4) {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4(color0[iPos + 0], color0[iPos + 1], color0[iPos + 2], color0[iPos + 3]);
+								}
+							} else {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4(color0[iPos + 0], color0[iPos + 1], color0[iPos + 2], 1.0f);
+								}
+							}
+						}
+					}
+				}
+
+
 				// 三角形の頂点インデックスを取得.
 				if (meshPrim.indicesAccessorId != "") {
 					const int indicesID = std::stoi(meshPrim.indicesAccessorId);

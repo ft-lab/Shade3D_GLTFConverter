@@ -324,3 +324,46 @@ bool Shade3DUtil::hasVertexColor (sxsdk::shape_class* shape)
 
 	return false;
 }
+
+/**
+ * 表面材質のマッピングレイヤとして、頂点カラー0の層を乗算合成で追加.
+ */
+void Shade3DUtil::setVertexColorSurfaceLayer (sxsdk::master_surface_class* pMasterSurface)
+{
+	if (!pMasterSurface->get_has_surface_attributes()) {
+		pMasterSurface->set_has_surface_attributes(true);
+	}
+	sxsdk::surface_class* surface = pMasterSurface->get_surface();
+	const int layersCou = surface->get_number_of_mapping_layers();
+
+	bool hasVertexColorMapping = false;
+	bool hasDiffuseMapping = false;
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(i);
+		const int pattern = mappingLayer.get_pattern();
+		if (pattern == sxsdk::enums::vertex_color_pattern) {
+			if (mappingLayer.get_vertex_color_layer() == 0) {
+				hasVertexColorMapping = true;
+				break;
+			}
+		}
+		if (mappingLayer.get_type() == sxsdk::enums::diffuse_mapping) {
+			hasDiffuseMapping = true;
+		}
+	}
+	if (hasVertexColorMapping) return;
+
+	// 頂点カラー(頂点カラー0)のマッピングレイヤを追加.
+	{
+		surface->append_mapping_layer();
+		const int layerIndex = layersCou;
+		sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(layerIndex);
+		mappingLayer.set_pattern(sxsdk::enums::vertex_color_pattern);
+		mappingLayer.set_type(sxsdk::enums::diffuse_mapping);
+		mappingLayer.set_vertex_color_layer(0);
+
+		if (hasDiffuseMapping) {				// 乗算合成にする.
+			mappingLayer.set_blend_mode(7);		// 乗算合成.
+		}
+	}
+}

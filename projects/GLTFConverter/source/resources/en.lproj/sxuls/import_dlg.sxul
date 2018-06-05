@@ -4,5 +4,6 @@
 	<group label="Polygonmesh">
 		<bool id="201" label="Import normals" />
 		<float id="202" label="Angle threshold" />
+		<bool id="203" label="Import vertex color" />
 	</group>
 </dialog>

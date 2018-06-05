@@ -4,5 +4,6 @@
 	<group label="ポリゴンメッシュ">
 		<bool id="201" label="法線を読み込み" />
 		<float id="202" label="限界角度" />
+		<bool id="203" label="頂点カラーを読み込み" />
 	</group>
 </dialog>
