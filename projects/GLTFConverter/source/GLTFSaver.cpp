@@ -276,6 +276,9 @@ namespace {
 			// attributes - POSITION   : 頂点位置.
 			// attributes - TEXCOORD_0 : テクスチャのUV0.
 			// attributes - TEXCOORD_1 : テクスチャのUV0.
+			// attributes - COLOR_0    : 頂点カラー.
+			// attributes - JOINTS_0   : バインドされているジョイント.
+			// attributes - WEIGHTS_0  : スキンのウエイト値.
 			for (size_t primLoop = 0; primLoop < primCou; ++primLoop) {
 				const CPrimitiveData& primitiveD = meshD.primitives[primLoop];
 
@@ -292,6 +295,9 @@ namespace {
 				}
 				if (!primitiveD.uv1.empty()) {
 					meshPrimitive.uv1AccessorId = std::to_string(accessorID++);
+				}
+				if (!primitiveD.color0.empty()) {
+					meshPrimitive.color0AccessorId = std::to_string(accessorID++);
 				}
 				if (!primitiveD.skinJoints.empty()) {
 					meshPrimitive.joints0AccessorId = std::to_string(accessorID++);
@@ -432,6 +438,23 @@ namespace {
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
 					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv1), acceDesc); 
+
+					byteOffset += byteLength;
+					accessorID++;
+				}
+
+				// color0Accessor.
+				if (!primitiveD.color0.empty()) {
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_VEC4;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+
+					const size_t byteLength = (sizeof(float) * 4) * primitiveD.color0.size();
+
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(convert_vec4_to_float(primitiveD.color0), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -725,6 +748,31 @@ namespace {
 
 					// バッファ情報として格納.
 					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.uv1[0]), gltfDoc.accessors[accessorID]);
+
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
+
+				// color0Accessor.
+				if (!primitiveD.color0.empty()) {
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_VEC4;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = primitiveD.color0.size();
+					gltfDoc.accessors.Append(acce);
+
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = (sizeof(float) * 4) * primitiveD.color0.size();
+					buffV.target     = ARRAY_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.color0[0]), gltfDoc.accessors[accessorID]);
 
 					byteOffset += buffV.byteLength;
 					accessorID++;

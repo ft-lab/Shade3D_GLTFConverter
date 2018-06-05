@@ -14,6 +14,8 @@ enum
 {
 	dlg_output_texture_id = 101,			// テクスチャ出力:|マスターサーフェス名の拡張子指定を参照|pngに置き換え|jpegに置き換え.
 	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
+	dlg_output_vertex_color_id = 103,		// 頂点カラーを出力.
+
 };
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
@@ -448,6 +450,21 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 }
 
 /**
+ * 頂点カラー情報を受け取る.
+ */
+void CGLTFExporterInterface::polymesh_face_vertex_colors (int n_list, const int list[], const sxsdk::rgba_class* vertex_colors, int layer_index, int number_of_layers, void*)
+{
+	if (!m_exportParam.outputVertexColor) return;
+
+	if (n_list == 3 && layer_index == 0) {
+		for (int i = 0; i < n_list; ++i) {
+			const sxsdk::rgba_class col = vertex_colors[i];
+			m_meshData.triangleColor0.push_back(sxsdk::vec4(col.red, col.green, col.blue, col.alpha));
+		}
+	}
+}
+
+/**
  * ポリゴンメッシュの終了時に呼ばれる.
  */
 void CGLTFExporterInterface::end_polymesh (void *)
@@ -563,6 +580,12 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_output_bones_and_skins_id));
 		item->set_bool(m_exportParam.outputBonesAndSkins);
 	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_vertex_color_id));
+		item->set_bool(m_exportParam.outputVertexColor);
+	}
+
 }
 
 void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -591,6 +614,11 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_bones_and_skins_id) {
 		m_exportParam.outputBonesAndSkins = item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_output_vertex_color_id) {
+		m_exportParam.outputVertexColor = item.get_bool();
 		return true;
 	}
 

@@ -2,4 +2,5 @@
 <dialog default_button="true" title="GLTF Export">
 	<selection id="101" label="テクスチャ出力:|イメージ名から拡張子を参照|pngに置き換え|jpegに置き換え" />
 	<bool id="102" label="ボーンとスキンを出力" />
+	<bool id="103" label="頂点カラーを出力" />
 </dialog>

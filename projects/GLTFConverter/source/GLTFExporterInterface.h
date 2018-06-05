@@ -124,6 +124,16 @@ private:
 	virtual bool must_divide_polymesh (void *aux=0) { return false; }
 
 	/**
+	 * 頂点カラー情報の受け取り許可.
+	 */
+	virtual bool can_accept_polymesh_face_vertex_colors (void* aux = 0) { return true; }
+
+	/**
+	 * 頂点カラー情報を受け取る.
+	 */
+	virtual void polymesh_face_vertex_colors (int n_list, const int list[], const sxsdk::rgba_class* vertex_colors, int layer_index, int number_of_layers, void*);
+
+	/**
 	 * バイナリで出力.
 	 */
 	virtual bool can_export_binary (void * = 0) { return true; }

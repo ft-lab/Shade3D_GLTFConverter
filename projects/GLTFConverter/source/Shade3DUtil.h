@@ -25,6 +25,11 @@ namespace Shade3DUtil
 	sxsdk::shape_class* getHasSurfaceParentShape (sxsdk::shape_class* shape);
 
 	/**
+	 * 頂点カラーのレイヤを持つか.
+	 */
+	bool hasVertexColor (sxsdk::shape_class* shape);
+
+	/**
 	 * 面を反転するか。親をたどって調べる.
 	 */
 	bool isFaceFlip (sxsdk::shape_class* shape);

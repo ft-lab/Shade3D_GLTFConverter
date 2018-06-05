@@ -285,3 +285,42 @@ int Shade3DUtil::getShapeHierarchyDepth (sxsdk::shape_class* pShape)
 	}
 	return depth;
 }
+
+/**
+ * 頂点カラーのレイヤを持つか.
+ */
+bool Shade3DUtil::hasVertexColor (sxsdk::shape_class* shape)
+{
+	if (shape->get_type() != sxsdk::enums::polygon_mesh) return false;
+	sxsdk::shape_class* shape2 = Shade3DUtil::getHasSurfaceParentShape(shape);
+	if (!shape2->get_has_surface_attributes()) return false;
+
+	// 頂点カラーのマッピングレイヤを持つか.
+	try {
+		sxsdk::surface_class* surface = shape2->get_surface();
+		const int layersCou = surface->get_number_of_mapping_layers();
+		if (layersCou <= 0) return false;
+		bool hasVertexColorMappingLayer = false;
+		for (int i = 0; i < layersCou; ++i) {
+			const sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() != sxsdk::enums::vertex_color_pattern) continue;
+			if (mappingLayer.get_vertex_color_layer() == 0) {
+				hasVertexColorMappingLayer = true;
+				break;
+			}
+		}
+		if (!hasVertexColorMappingLayer) return false;
+	} catch (...) {
+		return false;
+	}
+
+	// ポリゴンメッシュの頂点カラー情報があるか.
+	try {
+		sxsdk::polygon_mesh_class& pMesh = shape->get_polygon_mesh();
+		if (pMesh.get_number_of_vertex_color_layers() >= 1)  return true;
+	} catch (...) {
+		return false;
+	}
+
+	return false;
+}

@@ -28,6 +28,7 @@ void CTempMeshData::clear ()
 	triangleNormals.clear();
 	triangleUV0.clear();
 	triangleUV1.clear();
+	triangleColor0.clear();
 	triangleFaceGroupIndex.clear();
 
 	materialIndex = 0;
@@ -88,6 +89,7 @@ void CPrimitiveData::clear ()
 	normals.clear();
 	uv0.clear();
 	uv1.clear();
+	color0.clear();
 	triangleIndices.clear();
 	materialIndex = 0;
 	skinWeights.clear();
@@ -208,6 +210,18 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 			}
 		}
 	}
+
+	// 頂点カラーを格納.
+	if (!tempMeshData.triangleColor0.empty()) {
+		color0.resize(newVersCou);
+		for (size_t i = 0, iPos = 0; i < trisCou; ++i, iPos += 3) {
+			for (int j = 0; j < 3; ++j) {
+				const int iV = triangleIndices[iPos + j];
+				color0[iV] = tempMeshData.triangleColor0[iPos + j];
+			}
+		}
+
+	}
 }
 
 /**
@@ -283,6 +297,11 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 				tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 1]);
 				tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 2]);
 			}
+			if (!tempMeshData.triangleColor0.empty()) {
+				tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 0]);
+				tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 1]);
+				tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 2]);
+			}
 		}
 
 		// 不要頂点の除去.
@@ -327,8 +346,8 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 	tempMeshData.name = this->name;
 
 	// どの要素を使用するか.
-	bool useUV0, useUV1, useNormal, useSkinWeights, useSkinJoints;
-	useUV0 = useUV1 = useNormal = useSkinWeights = useSkinJoints = false;
+	bool useUV0, useUV1, useNormal, useColor0, useSkinWeights, useSkinJoints;
+	useUV0 = useUV1 = useNormal = useColor0 = useSkinWeights = useSkinJoints = false;
 	for (size_t loop = 0; loop < primitivesCou; ++loop) {
 		const CPrimitiveData& primitiveD = primitives[loop];
 		if (!primitiveD.normals.empty()) useNormal = true;
@@ -336,6 +355,7 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 		if (!primitiveD.uv1.empty()) useUV1 = true;
 		if (!primitiveD.skinJoints.empty()) useSkinJoints = true;
 		if (!primitiveD.skinWeights.empty()) useSkinWeights = true;
+		if (!primitiveD.color0.empty()) useColor0 = true;
 	}
 
 	size_t vOffset = 0;
@@ -410,6 +430,24 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
 					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
 					tempMeshData.triangleUV1.push_back(sxsdk::vec2(0, 0));
+				}
+			}
+		}
+		if (useColor0) {
+			if (!primitiveD.color0.empty()) {
+				for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					const int i0 = primitiveD.triangleIndices[iPos + 0];
+					const int i1 = primitiveD.triangleIndices[iPos + 1];
+					const int i2 = primitiveD.triangleIndices[iPos + 2];
+					tempMeshData.triangleColor0.push_back(primitiveD.color0[i0]);
+					tempMeshData.triangleColor0.push_back(primitiveD.color0[i1]);
+					tempMeshData.triangleColor0.push_back(primitiveD.color0[i2]);
+				}
+			} else {
+				for (size_t i = 0; i < triCou; ++i) {
+					tempMeshData.triangleColor0.push_back(sxsdk::vec4(1, 1, 1, 1));
+					tempMeshData.triangleColor0.push_back(sxsdk::vec4(1, 1, 1, 1));
+					tempMeshData.triangleColor0.push_back(sxsdk::vec4(1, 1, 1, 1));
 				}
 			}
 		}

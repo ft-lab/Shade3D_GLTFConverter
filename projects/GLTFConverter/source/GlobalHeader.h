@@ -36,6 +36,7 @@ class CExportDlgParam
 public:
 	GLTFConverter::export_texture_type outputTexture;		// エクスポート時のテクスチャの種類.
 	bool outputBonesAndSkins;								// ボーンとスキン情報を出力.
+	bool outputVertexColor;									// 頂点カラーを出力.
 
 public:
 	CExportDlgParam () {
@@ -45,6 +46,7 @@ public:
 	void clear () {
 		outputTexture       = GLTFConverter::export_texture_name;
 		outputBonesAndSkins = true;
+		outputVertexColor   = true;
 	}
 };
 

@@ -28,6 +28,7 @@ public:
 	std::vector<sxsdk::vec3> triangleNormals;		// 三角形ごとの法線.
 	std::vector<sxsdk::vec2> triangleUV0;			// 三角形ごとのUV0.
 	std::vector<sxsdk::vec2> triangleUV1;			// 三角形ごとのUV1.
+	std::vector<sxsdk::vec4> triangleColor0;		// 三角形ごとの頂点カラー0.
 
 	int materialIndex;							// 対応するマテリアル番号.
 	std::vector<int> faceGroupMaterialIndex;	// フェイスグループごとのマテリアル番号リスト.
@@ -47,6 +48,7 @@ public:
 		this->triangleNormals = v.triangleNormals;
 		this->triangleUV0     = v.triangleUV0;
 		this->triangleUV1     = v.triangleUV1;
+		this->triangleColor0  = v.triangleColor0;
 
 		this->materialIndex   = v.materialIndex;
 		this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;
@@ -76,6 +78,7 @@ public:
 	std::vector<sxsdk::vec3> normals;		// 頂点ごとの法線.
 	std::vector<sxsdk::vec2> uv0;			// 頂点ごとのUV0.
 	std::vector<sxsdk::vec2> uv1;			// 頂点ごとのUV1.
+	std::vector<sxsdk::vec4> color0;		// 頂点ごとのColor0.
 	std::vector<sxsdk::vec4> skinWeights;		// 頂点ごとのスキン時のウエイト (最大4つ分).
 	std::vector< sx::vec<int,4> > skinJoints;	// 頂点ごとのスキン時に参照するジョイントインデックスリスト (最大4つ分).
 	std::vector< sx::vec<void *,4> > skinJointsHandle;	// 頂点ごとのスキンのジョイントのハンドル (Export時に使用).
@@ -94,6 +97,7 @@ public:
 		this->normals         = v.normals;
 		this->uv0             = v.uv0;
 		this->uv1             = v.uv1;
+		this->color0          = v.color0;
 		this->triangleIndices = v.triangleIndices;
 		this->materialIndex   = v.materialIndex;
 		this->skinWeights     = v.skinWeights;
