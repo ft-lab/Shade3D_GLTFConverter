@@ -48,6 +48,11 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 {
 	if ((this->shadeMasterSurface) && v.shadeMasterSurface) {
 		if ((this->shadeMasterSurface->get_handle()) == v.shadeMasterSurface->get_handle()) return true;
+
+		// マスターサーフェス同士の場合は、名前が一致しない場合は同じでないとみなす.
+		const std::string name1(this->shadeMasterSurface->get_name());
+		const std::string name2(v.shadeMasterSurface->get_name());
+		if (name1 != name2) return false;
 	}
 
 	if (!MathUtil::isZero((this->alphaCutOff) - v.alphaCutOff)) return false;
