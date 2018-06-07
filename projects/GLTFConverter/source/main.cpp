@@ -1,6 +1,6 @@
 ﻿/**
  *  @file   main.cpp
- *  @brief  GLTFインポータ・エクスポータ.
+ *  @brief  glTFインポータ・エクスポータ.
  */
 
 #include "GlobalHeader.h"

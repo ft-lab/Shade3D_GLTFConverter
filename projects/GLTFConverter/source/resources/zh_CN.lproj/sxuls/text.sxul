@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <strings>
-	<string id="product_name" value="GLTF Converter"/>
+	<string id="product_name" value="glTF Converter"/>
 	<string id="author" value="ft-lab."/>
 	<string id="company" value="ft-lab."/>
-	<string id="comments" value="GLTF Converter"/>
+	<string id="comments" value="glTF Converter"/>
 
 	<string id="title" value="gltf"/>
-	<string id="gltf_importer_title" value="GLTF (gltf/glb) ..."/>
-	<string id="gltf_exporter_title" value="GLTF (glb) ..."/>
+	<string id="gltf_importer_title" value="glTF (gltf/glb) ..."/>
+	<string id="gltf_exporter_title" value="glTF (glb) ..."/>
 
 </strings>

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{80D1C118-8460-433F-AAA7-248FCE964A0D}</ProjectGuid>
     <RootNamespace>plugins</RootNamespace>
-    <ProjectName>GLTFConverter</ProjectName>
+    <ProjectName>glTFConverter</ProjectName>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
