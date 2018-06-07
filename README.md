@@ -61,7 +61,7 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 ### エクスポート時の「アルファ透明」の対応について (ver.0.1.0.4 - )
 
 表面材質のマッピングレイヤとして、「イメージ/拡散反射」の「アルファ透明」を選択した場合、    
-元のイメージがpngのAlpha要素を持つ場合に、透過処理が行われます。    
+元のイメージがpngのAlpha要素を持つ場合に、透過処理(glTFのalphaMode:MASK)が行われます。    
 <img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_alpha_blend.png"/>     
 
 この場合、エクスポート時のオプションで「テクスチャ出力」を「jpegに置き換え」としたときも、png形式で出力されます。
@@ -188,6 +188,11 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/06/07] ver.0.1.0.5   
+* Export/Import : 表面材質のマッピングレイヤでの「アルファ透明」は、glTFのalphaModeをBLENDからMASKに変更。    
+この場合は、Export時にalphaCutoffを0.9として出力するようにした。
+* Export : Export時のマスターサーフェス名の「doubleSided」指定がうまくglTFに反映されていなかった問題を修正。
 
 [2018/06/07] ver.0.1.0.4   
 * Export/Import : 表面材質のマッピングレイヤでの「アルファ透明」の対応。
