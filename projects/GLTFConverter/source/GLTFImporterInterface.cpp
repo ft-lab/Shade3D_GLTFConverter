@@ -66,8 +66,8 @@ const char *CGLTFImporterInterface::get_file_extension (int index, void *)
  */
 const char *CGLTFImporterInterface::get_file_extension_description (int index, void*)
 {
-	if (index == 0) return "GLTF";
-	if (index == 1) return "GLTF";
+	if (index == 0) return "glTF";
+	if (index == 1) return "glTF";
 
 	return 0;
 }
@@ -527,6 +527,9 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			surface->set_highlight(std::min(materialD.metallicFactor, 0.3f));
 			surface->set_highlight_size(0.7f);
 
+			// ALPHA_BLEND : アルファを考慮.
+			const bool alphaBlend = (materialD.alphaMode == 2);
+
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
 				surface->append_mapping_layer();
@@ -543,6 +546,11 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				mLayer.set_blur(true);
 				mLayer.set_uv_mapping(materialD.baseColorTexCoord);
+
+				// DiffuseのマッピングをAlpha透過にする.
+				if (alphaBlend) {
+					mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
+				}
 			}
 
 			// 法線マップをマッピングレイヤとして追加.

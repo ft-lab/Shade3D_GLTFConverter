@@ -40,7 +40,7 @@ const char *CGLTFExporterInterface::get_file_extension (void *aux)
  */
 const char *CGLTFExporterInterface::get_file_description (void *aux)
 {
-	return "GLTF";
+	return "glTF";
 }
 
 /**
@@ -697,6 +697,12 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.baseColorImageIndex = imageIndex;
 				materialData.baseColorTexCoord   = mappingLayer.get_uv_mapping();
+
+				// アルファ透過する場合.
+				if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
+					materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮.
+				}
+
 				break;
 
 			case sxsdk::enums::reflection_mapping:

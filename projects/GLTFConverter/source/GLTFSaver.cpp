@@ -249,6 +249,12 @@ namespace {
 				material.occlusionTexture.texCoord  = (size_t)materialD.occlusionTexCoord;
 			}
 
+			// アルファ合成のパラメータを渡す.
+			if (materialD.alphaMode != ALPHA_OPAQUE) {
+				material.alphaMode   = ALPHA_BLEND;
+				//material.alphaCutoff = materialD.alphaCutOff;
+			}
+
 			gltfDoc.materials.Append(material);
 		}
 	}
