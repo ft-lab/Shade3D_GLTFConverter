@@ -64,7 +64,7 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 	// Asset情報を指定.
 	{
 		m_sceneData->assetVersion   = "2.0";
-		m_sceneData->assetGenerator = "GLTF Converter for Shade3D";
+		m_sceneData->assetGenerator = "glTF Converter for Shade3D";
 		m_sceneData->filePath       = std::string(m_pluginExporter->get_file_path());
 	}
 
@@ -73,7 +73,7 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 
 	m_pScene = scene;
 
-	shade.message("----- GLTF Exporter -----");
+	shade.message("----- glTF Exporter -----");
 
 	// シーケンスモード時は、出力時にシーケンスOffにして出す.
 	// シーンの変更フラグは後で元に戻す.
@@ -701,6 +701,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				// アルファ透過する場合.
 				if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
 					materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮.
+
+					CImageData& imageData = m_sceneData->images[imageIndex];
+					imageData.useBaseColorAlpha = true;
 				}
 
 				break;

@@ -37,6 +37,7 @@ public:
 	sxsdk::master_image_class* m_shadeMasterImage;	// Shade3Dでのマスターイメージクラス.
 
 	int imageMask;						// テクスチャとして使用している情報.
+	bool useBaseColorAlpha;				// BaseColorとしてAlphaを使用するか.
 
 public:
 	CImageData ();
@@ -49,6 +50,7 @@ public:
 		this->width      = v.width;
 		this->height     = v.height;
 		this->imageMask  = v.imageMask;
+		this->useBaseColorAlpha = v.useBaseColorAlpha;
 		this->m_shadeMasterImage = v.m_shadeMasterImage;
 
 		return (*this);

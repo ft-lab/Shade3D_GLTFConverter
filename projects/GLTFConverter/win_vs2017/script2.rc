@@ -38,8 +38,8 @@ IMPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,3
- PRODUCTVERSION 0,1,0,3
+ FILEVERSION 0,1,0,4
+ PRODUCTVERSION 0,1,0,4
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -55,12 +55,12 @@ BEGIN
         BLOCK "041104b0"
         BEGIN
             VALUE "CompanyName", "ft-lab."
-            VALUE "FileDescription", "GLTF Converter (Importer/Exporter)"
-            VALUE "FileVersion", "0, 1, 0, 3"
+            VALUE "FileDescription", "glTF Converter (Importer/Exporter)"
+            VALUE "FileVersion", "0, 1, 0, 4"
             VALUE "InternalName", "GLTF Converter"
             VALUE "LegalCopyright", "Copyright (C) 2018 ft-lab."
             VALUE "ProductName", "GLTF Converter"
-            VALUE "ProductVersion", "0, 1, 0, 3"
+            VALUE "ProductVersion", "0, 1, 0, 4"
         END
     END
     BLOCK "VarFileInfo"

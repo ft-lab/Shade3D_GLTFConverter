@@ -19,6 +19,7 @@ void CImageData::clear ()
 	mimeType = "";
 	imageDatas.clear();
 	width = height = 0;
+	useBaseColorAlpha = false;
 	imageMask = CImageData::gltf_image_mask_none;
 
 	m_shadeMasterImage = NULL;

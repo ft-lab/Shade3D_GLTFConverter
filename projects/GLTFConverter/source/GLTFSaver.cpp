@@ -252,7 +252,6 @@ namespace {
 			// アルファ合成のパラメータを渡す.
 			if (materialD.alphaMode != ALPHA_OPAQUE) {
 				material.alphaMode   = ALPHA_BLEND;
-				//material.alphaCutoff = materialD.alphaCutOff;
 			}
 
 			gltfDoc.materials.Append(material);
@@ -961,6 +960,8 @@ namespace {
 			} else if ((sceneData->exportParam.outputTexture) == GLTFConverter::export_texture_jpeg) {
 				extStr = "jpg";
 			}
+			// アルファ透明を使用する場合は、pngにする.
+			if (imageD.useBaseColorAlpha) extStr = "png";
 
 			// ファイル名を再構成.
 			fileName = StringUtil::getFileName(imageD.name, false) + std::string(".") + extStr;

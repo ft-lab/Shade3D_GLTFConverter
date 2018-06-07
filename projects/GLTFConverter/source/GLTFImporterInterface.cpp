@@ -99,7 +99,7 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	CGLTFLoader gltfLoader;
 	CSceneData sceneData;
 
-	shade.message("----- GLTF Importer -----");
+	shade.message("----- glTF Importer -----");
 
 	if (!gltfLoader.loadGLTF(fileName, &sceneData)) {
 		const std::string errorMessage = std::string("Error : ") + gltfLoader.getErrorString();

@@ -89,7 +89,7 @@ extern "C" SXSDKEXPORT void STDCALL get_info (sxsdk::shade_plugin_info &info, sx
 	info.major_version = 0;
 	info.minor_version = 1;
 	info.micro_version = 0;
-	info.build_number =  3;
+	info.build_number =  4;
 }
 
 /**
