@@ -527,8 +527,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			surface->set_highlight(std::min(materialD.metallicFactor, 0.3f));
 			surface->set_highlight_size(0.7f);
 
-			// ALPHA_BLEND : アルファを考慮.
-			const bool alphaBlend = (materialD.alphaMode == 2);
+			// ALPHA_BLEND/ALPHA_MASK : アルファを考慮.
+			const bool alphaBlend = (materialD.alphaMode == 2 || materialD.alphaMode == 3);
 
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {

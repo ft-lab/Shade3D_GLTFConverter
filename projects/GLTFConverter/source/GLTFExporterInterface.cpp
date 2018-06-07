@@ -700,7 +700,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 				// アルファ透過する場合.
 				if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
-					materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮.
+					materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+					materialData.alphaCutOff = 0.9f;
 
 					CImageData& imageData = m_sceneData->images[imageIndex];
 					imageData.useBaseColorAlpha = true;
@@ -753,7 +754,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 		// マスターサーフェス名に「doubleSided」が含まれる場合は、doubleSidedを有効化.
 		std::string materialName = materialData.name;
 		std::transform(materialName.begin(), materialName.end(), materialName.begin(), ::tolower);
-		if (materialName.find_first_of("doublesided") != std::string::npos) {
+		if (materialName.find("doublesided") != std::string::npos) {
 			materialData.doubleSided = true;
 		}
 
