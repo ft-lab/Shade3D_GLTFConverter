@@ -127,6 +127,11 @@ public:
 	 * 頂点座標のバウンディングボックスを計算.
 	 */
 	void calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) const;
+
+	/**
+	 * 頂点カラー情報で、Alphaを出力する必要があるか.
+	 */
+	bool hasNeedVertexColorAlpha () const;
 };
 
 /**

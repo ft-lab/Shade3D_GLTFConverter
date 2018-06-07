@@ -315,6 +315,26 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 	return (int)primitivesData.size();
 }
 
+/**
+ * 頂点カラー情報で、Alphaを出力する必要があるか.
+ */
+bool CPrimitiveData::hasNeedVertexColorAlpha () const
+{
+	if (color0.empty()) return false;
+
+	bool hasAlpha = false;
+
+	const size_t vCou = color0.size();
+	for (size_t i = 0; i < vCou; ++i) {
+		const sxsdk::vec4& col = color0[i];
+		if (!MathUtil::isZero(col.w - 1.0)) {
+			hasAlpha = true;
+			break;
+		}
+	}
+	return hasAlpha;
+}
+
 //---------------------------------------------------------------.
 CMeshData::CMeshData ()
 {

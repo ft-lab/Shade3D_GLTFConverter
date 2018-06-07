@@ -33,15 +33,36 @@ namespace {
 
 	/**
 	 * sxsdk::vec4をfoatの配列に置き換え.
+	 * @param[in] vList     vec4の配列.
+	 * @param[in] useAlpha  Alpha情報を格納するか.
 	 */
-	std::vector<float> convert_vec4_to_float (const std::vector<sxsdk::vec4>& vList)
+	std::vector<float> convert_vec4_to_float (const std::vector<sxsdk::vec4>& vList, const bool useAlpha = true)
 	{
-		std::vector<float> newData = std::vector<float>(vList.size() * 4);
-		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += 4) {
+		const int eCou = useAlpha ? 4 : 3;
+		std::vector<float> newData = std::vector<float>(vList.size() * eCou);
+		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += eCou) {
 			newData[iPos + 0] = vList[i].x;
 			newData[iPos + 1] = vList[i].y;
 			newData[iPos + 2] = vList[i].z;
-			newData[iPos + 3] = vList[i].w;
+			if (useAlpha) newData[iPos + 3] = vList[i].w;
+		}
+		return newData;
+	}
+
+	/**
+	 * sxsdk::vec4をunsigned charの配列に置き換え.
+	 * @param[in] vList     vec4の配列.
+	 * @param[in] useAlpha  Alpha情報を格納するか.
+	 */
+	std::vector<unsigned char> convert_vec4_to_uchar (const std::vector<sxsdk::vec4>& vList, const bool useAlpha = true)
+	{
+		const int eCou = useAlpha ? 4 : 3;
+		std::vector<unsigned char> newData = std::vector<unsigned char>(vList.size() * eCou);
+		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += eCou) {
+			newData[iPos + 0] = (unsigned char)std::min((int)(vList[i].x * 255.0f), 255);
+			newData[iPos + 1] = (unsigned char)std::min((int)(vList[i].y * 255.0f), 255);
+			newData[iPos + 2] = (unsigned char)std::min((int)(vList[i].z * 255.0f), 255);
+			if (useAlpha) newData[iPos + 3] = (unsigned char)std::min((int)(vList[i].w * 255.0f), 255);
 		}
 		return newData;
 	}
@@ -453,14 +474,15 @@ namespace {
 				if (!primitiveD.color0.empty()) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC4;
-					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.componentType = COMPONENT_UNSIGNED_BYTE;
 					acceDesc.byteOffset    = byteOffset;
-					acceDesc.normalized    = false;
+					acceDesc.normalized    = true;
 
-					const size_t byteLength = (sizeof(float) * 4) * primitiveD.color0.size();
+					size_t byteLength = (sizeof(unsigned char) * 4) * primitiveD.color0.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec4_to_float(primitiveD.color0), acceDesc); 
+					const std::vector<unsigned char> buff = convert_vec4_to_uchar(primitiveD.color0, true);
+					bufferBuilder->AddAccessor(buff, acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -765,20 +787,24 @@ namespace {
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
 					acce.type           = TYPE_VEC4;
-					acce.componentType  = COMPONENT_FLOAT;
+					acce.componentType  = COMPONENT_UNSIGNED_BYTE;
 					acce.count          = primitiveD.color0.size();
+					acce.normalized     = true;
 					gltfDoc.accessors.Append(acce);
 
 					BufferView buffV;
 					buffV.id         = std::to_string(accessorID);
 					buffV.bufferId   = std::string("0");
 					buffV.byteOffset = byteOffset;
-					buffV.byteLength = (sizeof(float) * 4) * primitiveD.color0.size();
+					buffV.byteLength = (sizeof(unsigned char) * 4) * primitiveD.color0.size();
 					buffV.target     = ARRAY_BUFFER;
 					gltfDoc.bufferViews.Append(buffV);
 
 					// バッファ情報として格納.
-					if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(primitiveD.color0[0]), gltfDoc.accessors[accessorID]);
+					if (binWriter) {
+						std::vector<unsigned char> buff = convert_vec4_to_uchar(primitiveD.color0, true);
+						binWriter->Write(gltfDoc.bufferViews[accessorID], &(buff[0]), gltfDoc.accessors[accessorID]);
+					}
 
 					byteOffset += buffV.byteLength;
 					accessorID++;

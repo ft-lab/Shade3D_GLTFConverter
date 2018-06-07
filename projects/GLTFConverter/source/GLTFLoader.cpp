@@ -241,7 +241,31 @@ namespace {
 								}
 							}
 						}
+					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE && (acce.type == TYPE_VEC4 || acce.type == TYPE_VEC3)) {
+						// Color0の配列を取得.
+						// unsigned charの配列で返るため、/4 または /3 がColor0要素数.
+						std::vector<unsigned char> color0;
+						if (reader) color0 = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) color0 = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const int fCou = (acce.type == TYPE_VEC4) ? 4 : 3;
+						const int offsetI = acce.byteOffset / (sizeof(unsigned char));
+
+						const size_t versCou = color0.size();
+						if (versCou > 0 && acce.count > 0) {
+							dstPrimitiveData.color0.resize(acce.count);
+							if (fCou == 4) {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4((float)color0[iPos + 0] / 255.0f, (float)color0[iPos + 1] / 255.0f, (float)color0[iPos + 2] / 255.0f, (float)color0[iPos + 3] / 255.0f);
+								}
+							} else {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4((float)color0[iPos + 0] / 255.0f, (float)color0[iPos + 1] / 255.0f, (float)color0[iPos + 2] / 255.0f, 1.0f);
+								}
+							}
+						}
 					}
+
 				}
 
 
