@@ -697,6 +697,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.baseColorImageIndex = imageIndex;
 				materialData.baseColorTexCoord   = mappingLayer.get_uv_mapping();
+				materialData.baseColorTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
 
 				// アルファ透過する場合.
 				if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
@@ -721,12 +722,14 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				normalMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.normalImageIndex = imageIndex;
 				materialData.normalTexCoord   = mappingLayer.get_uv_mapping();
+				materialData.normalTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
 				break;
 
 			case sxsdk::enums::glow_mapping:
 				emissionMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
 				materialData.emissionImageIndex = imageIndex;
 				materialData.emissionTexCoord   = mappingLayer.get_uv_mapping();
+				materialData.emissionTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
 				break;
 			}
 		}

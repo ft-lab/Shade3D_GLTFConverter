@@ -546,6 +546,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				mLayer.set_blur(true);
 				mLayer.set_uv_mapping(materialD.baseColorTexCoord);
+				mLayer.set_repetition_x(std::max(1, (int)materialD.baseColorTexScale.x));
+				mLayer.set_repetition_y(std::max(1, (int)materialD.baseColorTexScale.y));
 
 				// DiffuseのマッピングをAlpha透過にする.
 				if (alphaBlend) {
@@ -569,6 +571,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				mLayer.set_blur(true);
 				mLayer.set_uv_mapping(materialD.normalTexCoord);
+				mLayer.set_repetition_x(std::max(1, (int)materialD.normalTexScale.x));
+				mLayer.set_repetition_y(std::max(1, (int)materialD.normalTexScale.y));
 			}
 
 			// 発光をマッピングレイヤとして追加.
@@ -590,6 +594,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				mLayer.set_blur(true);
 				mLayer.set_uv_mapping(materialD.emissionTexCoord);
+				mLayer.set_repetition_x(std::max(1, (int)materialD.emissionTexScale.x));
+				mLayer.set_repetition_y(std::max(1, (int)materialD.emissionTexScale.y));
 
 			} else {
 				if (MathUtil::isZero(materialD.emissionFactor)) {
@@ -629,6 +635,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						}
 						mLayer.set_blur(true);
 						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
+						mLayer.set_repetition_x(std::max(1, (int)materialD.metallicRoughnessTexScale.x));
+						mLayer.set_repetition_y(std::max(1, (int)materialD.metallicRoughnessTexScale.y));
 					}
 
 					// Metallicを「反射」要素としてマッピングレイヤに追加.
@@ -649,6 +657,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						}
 						mLayer.set_blur(true);
 						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
+						mLayer.set_repetition_x(std::max(1, (int)materialD.metallicRoughnessTexScale.x));
+						mLayer.set_repetition_y(std::max(1, (int)materialD.metallicRoughnessTexScale.y));
 					}
 
 					// BaseColorを「反射」に乗算.
@@ -671,6 +681,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						}
 						mLayer.set_blur(true);
 						mLayer.set_uv_mapping(materialD.baseColorTexCoord);
+						mLayer.set_repetition_x(std::max(1, (int)materialD.baseColorTexScale.x));
+						mLayer.set_repetition_y(std::max(1, (int)materialD.baseColorTexScale.y));
 					}
 
 					// Roughnessを「荒さ」要素としてマッピングレイヤに追加.
@@ -692,6 +704,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						}
 						mLayer.set_blur(true);
 						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
+						mLayer.set_repetition_x(std::max(1, (int)materialD.metallicRoughnessTexScale.x));
+						mLayer.set_repetition_y(std::max(1, (int)materialD.metallicRoughnessTexScale.y));
 					}
 
 					// Occlusionを「拡散反射」の乗算としてマッピングレイヤに追加.
@@ -715,6 +729,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_blur(true);
 						mLayer.set_weight(materialD.occlusionStrength);
 						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);
+						mLayer.set_repetition_x(std::max(1, (int)materialD.metallicRoughnessTexScale.x));
+						mLayer.set_repetition_y(std::max(1, (int)materialD.metallicRoughnessTexScale.y));
 					}
 				}
 			}
@@ -739,6 +755,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					mLayer.set_blur(true);
 					mLayer.set_weight(materialD.occlusionStrength);
 					mLayer.set_uv_mapping(materialD.occlusionTexCoord);
+					mLayer.set_repetition_x(std::max(1, (int)materialD.occlusionTexScale.x));
+					mLayer.set_repetition_y(std::max(1, (int)materialD.occlusionTexScale.y));
 				}
 			}
 

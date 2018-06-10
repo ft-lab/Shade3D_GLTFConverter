@@ -228,10 +228,32 @@ namespace {
 	}
 
 	/**
+	 * テクスチャのoffset/scaleの指定を文字列化.
+	 */
+	std::string getTextureTransformStr (const sxsdk::vec2& offset, const sxsdk::vec2& scale) {
+		std::string str = "";
+
+		if (!MathUtil::isZero(offset)) {
+			str += "\"offset\": [" + std::to_string(offset.x) + std::string(",") + std::to_string(offset.y) + std::string("]\n");
+		}
+		if (str != "") str += std::string(",\n");
+		if (!MathUtil::isZero(scale - sxsdk::vec2(1, 1))) {
+			str += "\"scale\": [" + std::to_string(scale.x) + std::string(",") + std::to_string(scale.y) + std::string("]\n");
+		}
+		if (str == "") return "";
+
+		str = std::string("{\n") + str + std::string("}\n");
+		return str;
+	}
+
+	/**
 	 * マテリアル情報を指定.
 	 */
 	void setMaterialsData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
 		const size_t mCou = sceneData->materials.size();
+
+		// 拡張として使用する要素名を追加.
+		gltfDoc.extensionsUsed.insert("KHR_texture_transform");
 
 		for (size_t i = 0; i < mCou; ++i) {
 			const CMaterialData& materialD = sceneData->materials[i];
@@ -251,16 +273,34 @@ namespace {
 			if (materialD.baseColorImageIndex >= 0) {
 				material.metallicRoughness.baseColorTexture.textureId = std::to_string(materialD.baseColorImageIndex);
 				material.metallicRoughness.baseColorTexture.texCoord = (size_t)materialD.baseColorTexCoord;
+
+				// テクスチャのTiling情報を指定.
+				{
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.baseColorTexScale);
+					if (str != "") material.metallicRoughness.baseColorTexture.extensions["KHR_texture_transform"] = str;
+				}
 			}
 
 			if (materialD.emissionImageIndex >= 0) {
 				material.emissiveTexture.textureId =  std::to_string(materialD.emissionImageIndex);
 				material.emissiveTexture.texCoord  = (size_t)materialD.emissionTexCoord;
+
+				// テクスチャのTiling情報を指定.
+				{
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.emissionTexScale);
+					if (str != "") material.emissiveTexture.extensions["KHR_texture_transform"] = str;
+				}
 			}
 
 			if (materialD.normalImageIndex >= 0) {
 				material.normalTexture.textureId = std::to_string(materialD.normalImageIndex);
 				material.normalTexture.texCoord  = (size_t)materialD.normalTexCoord;
+
+				// テクスチャのTiling情報を指定.
+				{
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.normalTexScale);
+					if (str != "") material.normalTexture.extensions["KHR_texture_transform"] = str;
+				}
 			}
 			if (materialD.metallicRoughnessImageIndex >= 0) {		// TODO : まだ途中.
 				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
@@ -268,6 +308,12 @@ namespace {
 			if (materialD.occlusionImageIndex >= 0) {				// TODO : まだ途中.
 				material.occlusionTexture.textureId = std::to_string(materialD.occlusionImageIndex);
 				material.occlusionTexture.texCoord  = (size_t)materialD.occlusionTexCoord;
+
+				// テクスチャのTiling情報を指定.
+				{
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.occlusionTexScale);
+					if (str != "") material.occlusionTexture.extensions["KHR_texture_transform"] = str;
+				}
 			}
 
 			// アルファ合成のパラメータを渡す.

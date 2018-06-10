@@ -45,6 +45,14 @@ public:
 	int metallicRoughnessTexCoord;		// Metallic(B) / Roughness(G) のテクスチャで使用するTexCoord(0 or 1).
 	int occlusionTexCoord;				// Ambient Occlusionのテクスチャで使用するTexCoord(0 or 1).
 
+	// Tiling用のスケール値 (glTF 2.0ではTextureごとのextensionsにKHR_texture_transform のscaleとして追加).
+	sxsdk::vec2 baseColorTexScale;
+	sxsdk::vec2 normalTexScale;
+	sxsdk::vec2 emissionTexScale;
+	sxsdk::vec2 metallicRoughnessTexScale;
+	sxsdk::vec2 occlusionTexScale;
+
+
 public:
 	CMaterialData ();
 	~CMaterialData ();
@@ -73,6 +81,12 @@ public:
 		this->emissionTexCoord           = v.emissionTexCoord;
 		this->metallicRoughnessTexCoord  = v.metallicRoughnessTexCoord;
 		this->occlusionTexCoord          = v.occlusionTexCoord;
+
+		this->baseColorTexScale         = v.baseColorTexScale;
+		this->normalTexScale            = v.normalTexScale;
+		this->emissionTexScale          = v.emissionTexScale;
+		this->metallicRoughnessTexScale = v.metallicRoughnessTexScale;
+		this->occlusionTexScale         = v.occlusionTexScale;
 
 		return (*this);
     }

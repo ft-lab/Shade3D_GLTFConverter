@@ -39,6 +39,12 @@ void CMaterialData::clear ()
 	emissionTexCoord          = 0;
 	metallicRoughnessTexCoord = 0;
 	occlusionTexCoord         = 0;
+
+	baseColorTexScale         = sxsdk::vec2(1, 1);
+	normalTexScale            = sxsdk::vec2(1, 1);
+	emissionTexScale          = sxsdk::vec2(1, 1);
+	metallicRoughnessTexScale = sxsdk::vec2(1, 1);
+	occlusionTexScale         = sxsdk::vec2(1, 1);
 }
 
 /**
@@ -74,6 +80,12 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->emissionTexCoord) != v.emissionTexCoord) return false;
 	if ((this->metallicRoughnessTexCoord) != v.metallicRoughnessTexCoord) return false;
 	if ((this->occlusionTexCoord) != v.occlusionTexCoord) return false;
+
+	if ((this->baseColorTexScale)         != v.baseColorTexScale) return false;
+	if ((this->normalTexScale)            != v.normalTexScale) return false;
+	if ((this->emissionTexScale)          != v.emissionTexScale) return false;
+	if ((this->metallicRoughnessTexScale) != v.metallicRoughnessTexScale) return false;
+	if ((this->occlusionTexScale)         != v.occlusionTexScale) return false;
 
 	return true;
 }
