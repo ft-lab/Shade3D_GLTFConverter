@@ -252,8 +252,22 @@ namespace {
 	void setMaterialsData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
 		const size_t mCou = sceneData->materials.size();
 
+		// テクスチャの繰り返しで (1, 1)でないものがあるかチェック.
+		bool repeatTex = false;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
+			if (materialD.baseColorTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.emissionTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.normalTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.metallicRoughnessTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.occlusionTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (repeatTex) break;
+		}
+
 		// 拡張として使用する要素名を追加.
-		gltfDoc.extensionsUsed.insert("KHR_texture_transform");
+		if (repeatTex) {
+			gltfDoc.extensionsUsed.insert("KHR_texture_transform");
+		}
 
 		for (size_t i = 0; i < mCou; ++i) {
 			const CMaterialData& materialD = sceneData->materials[i];
