@@ -3,4 +3,5 @@
 	<selection id="101" label="Output texture:|Extension refers to from image name|Replace with png|Replace with jpeg" />
 	<bool id="102" label="Output bones and skins" />
 	<bool id="103" label="Output vertex color" />
+	<bool id="104" label="Outout animation" />
 </dialog>

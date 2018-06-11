@@ -647,6 +647,65 @@ namespace {
 			}
 		}
 #endif
+
+		// アニメーション情報を格納.
+		{
+			const CAnimationData animD = sceneData->animations;
+			const size_t animCou = animD.channelData.size();
+
+			for (size_t loop = 0; loop < animCou; ++loop) {
+				const CAnimChannelData& channelD = animD.channelData[loop];
+				const CAnimSamplerData& samplerD = animD.samplerData[loop];
+
+				{
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = TYPE_SCALAR;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+
+					// min/maxの指定は必須.
+					const size_t dataCou = samplerD.inputData.size();
+					{
+						float minV, maxV;
+						minV = maxV = samplerD.inputData[0];
+						for (size_t i = 0; i < dataCou; ++i) {
+							const float v = samplerD.inputData[i];
+							minV = std::min(minV, v);
+							maxV = std::max(maxV, v);
+						}
+						acceDesc.minValues.push_back(minV);
+						acceDesc.maxValues.push_back(maxV);
+					}
+
+					const size_t byteLength = sizeof(float) * dataCou;
+
+					// バッファ情報として格納.
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(samplerD.inputData, acceDesc); 
+
+					byteOffset += byteLength;
+					accessorID++;
+				}
+				{
+					AccessorDesc acceDesc;
+					acceDesc.accessorType  = (channelD.pathType == CAnimChannelData::path_type_translation) ? TYPE_VEC3 : TYPE_VEC4;
+					acceDesc.componentType = COMPONENT_FLOAT;
+					acceDesc.byteOffset    = byteOffset;
+					acceDesc.normalized    = false;
+
+					const size_t dataCou = samplerD.outputData.size();
+					const size_t byteLength = sizeof(float) * dataCou;
+
+					// バッファ情報として格納.
+					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+					bufferBuilder->AddAccessor(samplerD.outputData, acceDesc); 
+
+					byteOffset += byteLength;
+					accessorID++;
+				}
+			}
+		}
 	}
 
 	/**
@@ -1001,6 +1060,86 @@ namespace {
 			}
 		}
 #endif
+		// アニメーション情報を格納.
+		{
+			const CAnimationData animD = sceneData->animations;
+			const size_t animCou = animD.channelData.size();
+
+			for (size_t loop = 0; loop < animCou; ++loop) {
+				const CAnimChannelData& channelD = animD.channelData[loop];
+				const CAnimSamplerData& samplerD = animD.samplerData[loop];
+
+				{
+					const size_t dataCou = samplerD.inputData.size();
+
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = TYPE_SCALAR;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = dataCou;
+
+					// min/maxの指定は必須.
+					{
+						float minV, maxV;
+						minV = maxV = samplerD.inputData[0];
+						for (size_t i = 0; i < dataCou; ++i) {
+							const float v = samplerD.inputData[i];
+							minV = std::min(minV, v);
+							maxV = std::max(maxV, v);
+						}
+						acce.min.push_back(minV);
+						acce.max.push_back(maxV);
+					}
+
+					gltfDoc.accessors.Append(acce);
+
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = sizeof(float) * dataCou;
+					buffV.target     = UNKNOWN_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) {
+						binWriter->Write(gltfDoc.bufferViews[accessorID], &(samplerD.inputData[0]), gltfDoc.accessors[accessorID]);
+					}
+
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
+				{
+					const size_t dataCou = samplerD.outputData.size();
+
+					const int eCou = (channelD.pathType == CAnimChannelData::path_type_translation) ? 3 : 4;
+					Accessor acce;
+					acce.id             = std::to_string(accessorID);
+					acce.bufferViewId   = std::to_string(accessorID);
+					acce.type           = (channelD.pathType == CAnimChannelData::path_type_translation) ? TYPE_VEC3 : TYPE_VEC4;
+					acce.componentType  = COMPONENT_FLOAT;
+					acce.count          = dataCou / eCou;
+					gltfDoc.accessors.Append(acce);
+
+					BufferView buffV;
+					buffV.id         = std::to_string(accessorID);
+					buffV.bufferId   = std::string("0");
+					buffV.byteOffset = byteOffset;
+					buffV.byteLength = sizeof(float) * dataCou;
+					buffV.target     = UNKNOWN_BUFFER;
+					gltfDoc.bufferViews.Append(buffV);
+
+					// バッファ情報として格納.
+					if (binWriter) {
+						binWriter->Write(gltfDoc.bufferViews[accessorID], &(samplerD.outputData[0]), gltfDoc.accessors[accessorID]);
+					}
+
+					byteOffset += buffV.byteLength;
+					accessorID++;
+				}
+			}
+		}
 
 		// buffers.
 		{
@@ -1135,9 +1274,9 @@ namespace {
 	/**
 	 * スキン情報を格納.
 	 */
-	void setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int meshAccessorIDCount) {
+	int setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int meshAccessorIDCount) {
 		const size_t skinsCou = sceneData->skins.size();
-		if (skinsCou == 0) return;
+		if (skinsCou == 0) return meshAccessorIDCount;
 
 		int accessorID = meshAccessorIDCount;
 		for (size_t loop = 0; loop < skinsCou; ++loop) {
@@ -1160,7 +1299,52 @@ namespace {
 			for (size_t j = 0; j < joinsCou; ++j) dstSkin.jointIds.push_back(std::to_string(skinD.joints[j]));
 			gltfDoc.skins.Append(dstSkin);
 		}
+
+		return accessorID;
 	}
+
+	/**
+	 * アニメーション情報を格納.
+	 */
+	int setAnimationData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int skinAccessorIDCount) {
+		const CAnimationData animD = sceneData->animations;
+		const size_t animCou = animD.channelData.size();
+		if (animCou == 0) return skinAccessorIDCount;
+
+		Animation anim;
+		anim.id   = std::to_string(0);
+		anim.name = animD.name;
+
+		int accessorID = skinAccessorIDCount;
+		for (size_t loop = 0; loop < animCou; ++loop) {
+			const CAnimChannelData& channelD = animD.channelData[loop];
+
+			// Channel情報を格納.
+			{
+				AnimationChannel animChannel;
+				animChannel.id            = std::to_string(loop);
+				animChannel.samplerId     = std::to_string(channelD.samplerIndex);
+				animChannel.target.nodeId = std::to_string(channelD.targetNodeIndex);
+				animChannel.target.path   = (channelD.pathType == CAnimChannelData::path_type_translation) ? TARGET_TRANSLATION : TARGET_ROTATION;
+				anim.channels.push_back(animChannel);
+			}
+
+			// Sampler情報を格納.
+			{
+				AnimationSampler animSampler;
+				animSampler.id               = std::to_string(loop);
+				animSampler.inputAccessorId  = std::to_string(accessorID++);
+				animSampler.interpolation    = INTERPOLATION_LINEAR;
+				animSampler.outputAccessorId = std::to_string(accessorID++);
+				anim.samplers.Append(animSampler);
+			}
+		}
+
+		gltfDoc.animations.Append(anim);
+
+		return accessorID;
+	}
+
 }
 
 CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
@@ -1229,7 +1413,10 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		const int meshAccessorIDCount = ::setMeshesData(gltfDoc, sceneData);
 
 		// スキン情報を指定.
-		::setSkinData(gltfDoc, sceneData, meshAccessorIDCount);
+		const int skinAccessorIDCount = ::setSkinData(gltfDoc, sceneData, meshAccessorIDCount);
+
+		// アニメーション情報を指定.
+		::setAnimationData(gltfDoc, sceneData, skinAccessorIDCount);
 
 		// バッファ情報を指定.
 		// 拡張子がgltfの場合、binファイルもここで出力.

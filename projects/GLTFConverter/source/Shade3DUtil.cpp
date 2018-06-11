@@ -243,15 +243,23 @@ sxsdk::vec3 Shade3DUtil::getBoneCenter (sxsdk::shape_class& shape, float *size)
 	if (size) *size = 0.0f;
 	if (!Shade3DUtil::isBone(shape)) return sxsdk::vec3(0, 0, 0);
 
-	const sxsdk::mat4 lwMat = shape.get_local_to_world_matrix();
-	const sxsdk::vec3 center = sxsdk::vec3(0, 0, 0) * shape.get_transformation() * lwMat;
-
+	// シーケンスOff時の中心位置を取得する.
+	// この場合は、bone->get_matrix()を使用.
+	// shape.get_transformation() を取得すると、これはシーケンスOn時の変換行列になる.
 	try {
 		compointer<sxsdk::bone_joint_interface> bone(shape.get_bone_joint_interface());
+		const sxsdk::mat4 m = bone->get_matrix();
+
+		const sxsdk::mat4 lwMat = shape.get_local_to_world_matrix();
+		const sxsdk::vec3 center = sxsdk::vec3(0, 0, 0) * m * lwMat;
+
 		if (size) *size = bone->get_size();
+
+		return center;
 	} catch (...) { }
 
-	return center;
+	return sxsdk::vec3(0, 0, 0);
+
 }
 
 /**

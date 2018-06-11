@@ -9,6 +9,7 @@
 #include "MaterialData.h"
 #include "ImageData.h"
 #include "SkinData.h"
+#include "AnimationData.h"
 
 #include <vector>
 #include <string>
@@ -87,6 +88,8 @@ public:
 	std::vector<CMeshData> meshes;			// メッシュ情報の配列 (GLTFのMesh).
 	std::vector<CImageData> images;			// 画像情報の配列.
 	std::vector<CSkinData> skins;			// スキン情報の配列.
+
+	CAnimationData animations;				// アニメーション情報クラス.
 
 	CExportDlgParam exportParam;			// エクスポート時のパラメータ.
 

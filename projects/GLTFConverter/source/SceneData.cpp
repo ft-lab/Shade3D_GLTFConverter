@@ -68,6 +68,7 @@ void CSceneData::clear()
 	images.clear();
 	skins.clear();
 	m_nodeStack.clear();
+	animations.clear();
 }
 
 /**

@@ -37,6 +37,7 @@ public:
 	GLTFConverter::export_texture_type outputTexture;		// エクスポート時のテクスチャの種類.
 	bool outputBonesAndSkins;								// ボーンとスキン情報を出力.
 	bool outputVertexColor;									// 頂点カラーを出力.
+	bool outputAnimation;									// アニメーションを出力.
 
 public:
 	CExportDlgParam () {
@@ -47,6 +48,7 @@ public:
 		outputTexture       = GLTFConverter::export_texture_name;
 		outputBonesAndSkins = true;
 		outputVertexColor   = true;
+		outputAnimation     = true;
 	}
 };
 
@@ -60,6 +62,7 @@ public:
 	bool meshImportNormals;			// 法線の読み込み.
 	float meshAngleThreshold;		// 限界角度.
 	bool meshImportVertexColor;		// 頂点カラーの読み込み.
+	bool importAnimation;			// アニメーションの読み込み.
 
 public:
 	CImportDlgParam () {
@@ -68,9 +71,10 @@ public:
 
 	void clear () {
 		gamma = 0;
-		meshImportNormals = false;
-		meshAngleThreshold = 50.0f;
+		meshImportNormals     = false;
+		meshAngleThreshold    = 50.0f;
 		meshImportVertexColor = true;
+		importAnimation       = true;
 	}
 };
 

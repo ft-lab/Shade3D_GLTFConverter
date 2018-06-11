@@ -261,6 +261,11 @@ private:
 	void m_setSkinsFromMeshes ();
 
 	/**
+	 * ボーンよりアニメーション情報を格納.
+	 */
+	void m_setAnimations ();
+
+	/**
 	 * 形状のハンドルに対応するノード番号を取得.
 	 */
 	int m_findNodeIndexFromShapeHandle (void* handle);

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Import">
 	<selection id="101" label="Image gamma:|1.0|1.0/2.2" />
+	<bool id="102" label="Import animation" />
 	<group label="Polygonmesh">
 		<bool id="201" label="Import normals" />
 		<float id="202" label="Angle threshold" />

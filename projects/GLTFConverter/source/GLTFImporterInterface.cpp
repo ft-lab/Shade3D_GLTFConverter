@@ -10,10 +10,10 @@
 enum
 {
 	dlg_gamma_id = 101,							// ガンマ値.
+	dlg_import_animation_id = 102,				// アニメーションの読み込み.
 	dlg_mesh_import_normals_id = 201,			// 法線の読み込み.
 	dlg_mesh_angle_threshold_id = 202,			// 限界角度.
 	dlg_mesh_import_vertex_color_id = 203,		// 頂点カラーの読み込み.
-
 };
 
 namespace {
@@ -137,6 +137,11 @@ void CGLTFImporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 	}
 	{
 		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_import_animation_id));
+		item->set_bool(g_importParam.importAnimation);
+	}
+	{
+		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_mesh_import_normals_id));
 		item->set_bool(g_importParam.meshImportNormals);
 	}
@@ -192,6 +197,11 @@ bool CGLTFImporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_gamma_id) {
 		g_importParam.gamma = (int)item.get_selection();
+		return true;
+	}
+
+	if (id == dlg_import_animation_id) {
+		g_importParam.importAnimation = (int)item.get_bool();
 		return true;
 	}
 

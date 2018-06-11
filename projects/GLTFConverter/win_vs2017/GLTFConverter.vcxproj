@@ -277,6 +277,7 @@
     <ClCompile Include="..\..\..\include\sxcore\com.cpp" />
     <ClCompile Include="..\..\..\include\sxcore\debug.cpp" />
     <ClCompile Include="..\..\..\include\sxcore\vectors.cpp" />
+    <ClCompile Include="..\source\AnimationData.cpp" />
     <ClCompile Include="..\source\GLTFExporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFImporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFLoader.cpp" />
@@ -293,6 +294,7 @@
     <ClCompile Include="..\source\StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\source\AnimationData.h" />
     <ClInclude Include="..\source\GlobalHeader.h" />
     <ClInclude Include="..\source\GLTFExporterInterface.h" />
     <ClInclude Include="..\source\GLTFImporterInterface.h" />

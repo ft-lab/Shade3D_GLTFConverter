@@ -15,7 +15,7 @@ enum
 	dlg_output_texture_id = 101,			// テクスチャ出力:|マスターサーフェス名の拡張子指定を参照|pngに置き換え|jpegに置き換え.
 	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
 	dlg_output_vertex_color_id = 103,		// 頂点カラーを出力.
-
+	dlg_output_animation_id = 104,			// アニメーションを出力.
 };
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
@@ -125,6 +125,11 @@ void CGLTFExporterInterface::clean_up (void *)
 
 	// ポリゴンメッシュのスキン情報より、スキン情報を格納.
 	m_setSkinsFromMeshes();
+
+	// アニメーション情報を格納.
+	if (m_exportParam.outputAnimation) {
+		m_setAnimations();
+	}
 
 	CGLTFSaver gltfSaver(&shade);
 	if (gltfSaver.saveGLTF(m_sceneData->filePath, &(*m_sceneData))) {
@@ -585,7 +590,11 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_output_vertex_color_id));
 		item->set_bool(m_exportParam.outputVertexColor);
 	}
-
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_animation_id));
+		item->set_bool(m_exportParam.outputAnimation);
+	}
 }
 
 void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -619,6 +628,11 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_vertex_color_id) {
 		m_exportParam.outputVertexColor = item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_output_animation_id) {
+		m_exportParam.outputAnimation = item.get_bool();
 		return true;
 	}
 
@@ -1034,5 +1048,72 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 		if (meshNodeIndex >= 0) {
 			m_sceneData->nodes[meshNodeIndex].skinIndex = skinIndex;
 		}
+	}
+}
+
+/**
+ * ボーンよりアニメーション情報を格納.
+ */
+void CGLTFExporterInterface::m_setAnimations ()
+{
+	m_sceneData->animations.clear();
+	const size_t nodesCou =  m_sceneData->nodes.size();
+	if (nodesCou <= 1) return;
+
+	const float frameRate = (float)(m_pScene->get_frame_rate());
+
+	for (size_t nLoop = 0; nLoop < nodesCou; ++nLoop) {
+		const CNodeData& nodeD = m_sceneData->nodes[nLoop];
+		sxsdk::shape_class* shape = m_pScene->get_shape_by_handle(nodeD.pShapeHandle);
+		if (!shape || !Shade3DUtil::isBone(*shape)) continue;
+		if (!shape->has_motion()) continue;
+
+		const std::string name = shape->get_name();
+		const sxsdk::vec3 boneWCenter = Shade3DUtil::getBoneCenter(*shape, NULL);
+		const sxsdk::mat4 lwMat = shape->get_local_to_world_matrix();
+		const sxsdk::vec3 boneLCenter = (boneWCenter * inv(lwMat));
+
+		try {
+			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
+			const int pointsCou = motion->get_number_of_motion_points();
+			if (pointsCou == 0) continue;
+
+			// 移動(offset)/回転要素をキーフレームとして格納.
+			const int transI = (int)m_sceneData->animations.channelData.size();
+			m_sceneData->animations.channelData.push_back(CAnimChannelData());
+			m_sceneData->animations.samplerData.push_back(CAnimSamplerData());
+			const int rotationI = (int)m_sceneData->animations.channelData.size();
+			m_sceneData->animations.channelData.push_back(CAnimChannelData());
+			m_sceneData->animations.samplerData.push_back(CAnimSamplerData());
+
+			CAnimChannelData& transChannelD    = m_sceneData->animations.channelData[transI];
+			CAnimSamplerData& transSamplerD    = m_sceneData->animations.samplerData[transI];
+			CAnimChannelData& rotationChannelD = m_sceneData->animations.channelData[rotationI];
+			CAnimSamplerData& rotationSamplerD = m_sceneData->animations.samplerData[rotationI];
+
+			transChannelD.pathType           = CAnimChannelData::path_type_translation;
+			transChannelD.targetNodeIndex    = nLoop;
+			transChannelD.samplerIndex       = transI;
+			rotationChannelD.pathType        = CAnimChannelData::path_type_rotation;
+			rotationChannelD.targetNodeIndex = nLoop;
+			rotationChannelD.samplerIndex    = rotationI;
+
+			for (int i = 0; i < pointsCou; ++i) {
+				compointer<sxsdk::motion_point_interface> motionPoint(motion->get_motion_point_interface(i));
+				const float seqPos              = (motionPoint->get_sequence()) / frameRate;
+				const sxsdk::vec3 offset        = motionPoint->get_offset();
+				sxsdk::vec3 offset2             = (offset + boneLCenter) * 0.001f;		// メートルに変換.
+				const sxsdk::quaternion_class q = motionPoint->get_rotation();
+				
+				transSamplerD.inputData.push_back(seqPos);
+				for (int j = 0; j < 3; ++j) transSamplerD.outputData.push_back(offset2[j]);
+
+				rotationSamplerD.inputData.push_back(seqPos);
+				rotationSamplerD.outputData.push_back(q.x);
+				rotationSamplerD.outputData.push_back(q.y);
+				rotationSamplerD.outputData.push_back(q.z);
+				rotationSamplerD.outputData.push_back(-q.w);
+			}
+		} catch (...) { }
 	}
 }
