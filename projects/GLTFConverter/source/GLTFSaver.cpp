@@ -689,7 +689,7 @@ namespace {
 				}
 				{
 					AccessorDesc acceDesc;
-					acceDesc.accessorType  = (channelD.pathType == CAnimChannelData::path_type_translation) ? TYPE_VEC3 : TYPE_VEC4;
+					acceDesc.accessorType  = (channelD.pathType == CAnimChannelData::path_type_translation || channelD.pathType == CAnimChannelData::path_type_scale) ? TYPE_VEC3 : TYPE_VEC4;
 					acceDesc.componentType = COMPONENT_FLOAT;
 					acceDesc.byteOffset    = byteOffset;
 					acceDesc.normalized    = false;
@@ -1113,11 +1113,11 @@ namespace {
 				{
 					const size_t dataCou = samplerD.outputData.size();
 
-					const int eCou = (channelD.pathType == CAnimChannelData::path_type_translation) ? 3 : 4;
+					const int eCou = (channelD.pathType == CAnimChannelData::path_type_translation || channelD.pathType == CAnimChannelData::path_type_scale) ? 3 : 4;
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
-					acce.type           = (channelD.pathType == CAnimChannelData::path_type_translation) ? TYPE_VEC3 : TYPE_VEC4;
+					acce.type           = (channelD.pathType == CAnimChannelData::path_type_translation || channelD.pathType == CAnimChannelData::path_type_scale) ? TYPE_VEC3 : TYPE_VEC4;
 					acce.componentType  = COMPONENT_FLOAT;
 					acce.count          = dataCou / eCou;
 					gltfDoc.accessors.Append(acce);

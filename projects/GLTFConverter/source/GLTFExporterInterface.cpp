@@ -1060,7 +1060,14 @@ void CGLTFExporterInterface::m_setAnimations ()
 	const size_t nodesCou =  m_sceneData->nodes.size();
 	if (nodesCou <= 1) return;
 
+	// シーケンス情報を取得.
+	// startFrame - endFrame の間のキーフレームを採用する.
 	const float frameRate = (float)(m_pScene->get_frame_rate());
+	const int totalFrames = m_pScene->get_total_frames();
+	int startFrame = m_pScene->get_start_frame();
+	if (startFrame < 0) startFrame = 0;
+	int endFrame = m_pScene->get_end_frame();
+	if (endFrame < 0) endFrame = totalFrames;
 
 	for (size_t nLoop = 0; nLoop < nodesCou; ++nLoop) {
 		const CNodeData& nodeD = m_sceneData->nodes[nLoop];
@@ -1100,11 +1107,14 @@ void CGLTFExporterInterface::m_setAnimations ()
 
 			for (int i = 0; i < pointsCou; ++i) {
 				compointer<sxsdk::motion_point_interface> motionPoint(motion->get_motion_point_interface(i));
-				const float seqPos              = (motionPoint->get_sequence()) / frameRate;
+				float seqPos = motionPoint->get_sequence();
+				if (seqPos < (float)startFrame || seqPos > (float)endFrame) continue;
+				seqPos /= frameRate;		// 秒単位に変換.
+
 				const sxsdk::vec3 offset        = motionPoint->get_offset();
 				sxsdk::vec3 offset2             = (offset + boneLCenter) * 0.001f;		// メートルに変換.
 				const sxsdk::quaternion_class q = motionPoint->get_rotation();
-				
+
 				transSamplerD.inputData.push_back(seqPos);
 				for (int j = 0; j < 3; ++j) transSamplerD.outputData.push_back(offset2[j]);
 
