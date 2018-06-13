@@ -309,12 +309,12 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 			bone->set_matrix(m);
 
 			scene->end_bone_joint();
-		} else {
-			// パートの行列を指定.
-			part->reset_transformation();
-			part->set_transformation_matrix(m);
 
+		} else {
 			scene->end_part();
+
+			// パートの行列を指定.
+			part->set_transformation_matrix(m);
 		}
 	}
 }
@@ -805,7 +805,6 @@ void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSce
 
 		const CNodeData& nodeD = sceneData->nodes[nodeIndex];
 		if (nodeD.skinIndex < 0) continue;
-
 		const CSkinData& skinD = sceneData->skins[nodeD.skinIndex];
 
 		// meshD.pMeshのポリゴンメッシュで使用しているスキンを登録.
@@ -851,13 +850,14 @@ void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSce
 				skinBindC.set_weight(skinWeight[j]);
 			}
 		}
-		pMesh.update_skin_bindings();
 
 		// 重複頂点のマージ.
 		pMesh.cleanup_redundant_vertices();
 
 		// 稜線を生成.
 		pMesh.make_edges();
+
+		pMesh.update_skin_bindings();
 	}
 }
 

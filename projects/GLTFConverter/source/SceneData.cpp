@@ -33,7 +33,7 @@ void CNodeData::clear ()
 
 	translation = sxsdk::vec3(0, 0, 0);
 	scale       = sxsdk::vec3(1, 1, 1);
-	rotation    = sxsdk::quaternion_class();
+	rotation    = sxsdk::quaternion_class::identity;
 }
 
 /**
