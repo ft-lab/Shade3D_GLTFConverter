@@ -1105,11 +1105,18 @@ void CGLTFExporterInterface::m_setAnimations ()
 			rotationChannelD.targetNodeIndex = nLoop;
 			rotationChannelD.samplerIndex    = rotationI;
 
+			float oldSeqPos = -1.0f;
 			for (int i = 0; i < pointsCou; ++i) {
 				compointer<sxsdk::motion_point_interface> motionPoint(motion->get_motion_point_interface(i));
 				float seqPos = motionPoint->get_sequence();
 				if (seqPos < (float)startFrame || seqPos > (float)endFrame) continue;
 				seqPos /= frameRate;		// 秒単位に変換.
+
+				// 同一のフレーム位置が格納済みの場合はスキップ.
+				// glTFの処理では、同一のフレーム位置である場合はエラーになる.
+				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
+				if (MathUtil::isZero(seqPos - oldSeqPos)) continue;
+				oldSeqPos = seqPos;
 
 				const sxsdk::vec3 offset        = motionPoint->get_offset();
 				sxsdk::vec3 offset2             = (offset + boneLCenter) * 0.001f;		// メートルに変換.

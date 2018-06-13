@@ -792,44 +792,54 @@ void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSce
 	if (skinsCou == 0) return;
 
 	for (size_t meshLoop = 0; meshLoop < meshsCou; ++meshLoop) {
-		const CMeshData& meshD = sceneData->meshes[meshLoop];
-		if (!meshD.pMeshHandle) continue;
-		sxsdk::shape_class* meshShape = scene->get_shape_by_handle(meshD.pMeshHandle);
-		if (!meshShape) continue;
-		if (meshShape->get_type() != sxsdk::enums::polygon_mesh) continue;
-		sxsdk::polygon_mesh_class& pMesh = meshShape->get_polygon_mesh();
+		m_setMeshSkin(scene, sceneData, (int)meshLoop);
+	}
+}
 
-		// meshLoopに対応するノード番号を取得.
-		const int nodeIndex = m_findNodeFromMeshIndex(sceneData, (int)meshLoop);
-		if (nodeIndex < 0) continue;
+void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex)
+{
+	const size_t skinsCou = sceneData->skins.size();
+	if (skinsCou == 0) return;
 
-		const CNodeData& nodeD = sceneData->nodes[nodeIndex];
-		if (nodeD.skinIndex < 0) continue;
-		const CSkinData& skinD = sceneData->skins[nodeD.skinIndex];
+	const CMeshData& meshD = sceneData->meshes[meshIndex];
+	if (!meshD.pMeshHandle) return;
+	sxsdk::shape_class* meshShape = scene->get_shape_by_handle(meshD.pMeshHandle);
+	if (!meshShape) return;
+	if (meshShape->get_type() != sxsdk::enums::polygon_mesh) return;
+	sxsdk::polygon_mesh_class& pMesh = meshShape->get_polygon_mesh();
 
-		// meshD.pMeshのポリゴンメッシュで使用しているスキンを登録.
-		pMesh.set_skin_type(1);		// 頂点ブレンドの指定.
-		std::vector<sxsdk::shape_class *> jointParts;
-		std::vector<std::string> jointNames;
-		jointParts.resize(skinD.joints.size(), NULL);
-		jointNames.resize(skinD.joints.size(), "");
-		for (size_t i = 0; i < skinD.joints.size(); ++i) {
-			const int jointNodeIndex = skinD.joints[i];
-			const CNodeData& jointNodeD = sceneData->nodes[jointNodeIndex + 1];		// ノードの0番目はルートとして新たに追加した要素なので、+1している.
-			if (jointNodeD.pShapeHandle) {
-				jointParts[i] = scene->get_shape_by_handle(jointNodeD.pShapeHandle);
-				jointNames[i] = jointParts[i]->get_name();
-				pMesh.append_skin(jointParts[i]->get_part());
-			}
+	// meshLoopに対応するノード番号を取得.
+	const int nodeIndex = m_findNodeFromMeshIndex(sceneData, meshIndex);
+	if (nodeIndex < 0) return;
+
+	const CNodeData& nodeD = sceneData->nodes[nodeIndex];
+	if (nodeD.skinIndex < 0) return;
+	const CSkinData& skinD = sceneData->skins[nodeD.skinIndex];
+
+	// meshD.pMeshのポリゴンメッシュで使用しているスキンを登録.
+	pMesh.set_skin_type(1);		// 頂点ブレンドの指定.
+	std::vector<sxsdk::shape_class *> jointParts;
+	std::vector<std::string> jointNames;
+	jointParts.resize(skinD.joints.size(), NULL);
+	jointNames.resize(skinD.joints.size(), "");
+	for (size_t i = 0; i < skinD.joints.size(); ++i) {
+		const int jointNodeIndex = skinD.joints[i];
+		const CNodeData& jointNodeD = sceneData->nodes[jointNodeIndex + 1];		// ノードの0番目はルートとして新たに追加した要素なので、+1している.
+		if (jointNodeD.pShapeHandle) {
+			jointParts[i] = scene->get_shape_by_handle(jointNodeD.pShapeHandle);
+			jointNames[i] = jointParts[i]->get_name();
+			pMesh.append_skin(jointParts[i]->get_part());
 		}
+	}
 
-		// プリミティブを1つにマージする.
-		CTempMeshData newMeshData;
-		if (!meshD.mergePrimitives(newMeshData)) continue;
-		if (newMeshData.skinJoints.empty() || newMeshData.skinWeights.empty()) continue;
+	// プリミティブを1つにマージする.
+	CTempMeshData newMeshData;
+	if (!meshD.mergePrimitives(newMeshData)) return;
+	if (newMeshData.skinJoints.empty() || newMeshData.skinWeights.empty()) return;
 
-		// meshD.pMeshのポリゴンメッシュに対してスキンのバインドとウエイト値を指定.
-		const size_t versCou = newMeshData.vertices.size();
+	// meshD.pMeshのポリゴンメッシュに対してスキンのバインドとウエイト値を指定.
+	const size_t versCou = newMeshData.vertices.size();
+	if ((int)versCou == pMesh.get_total_number_of_control_points()) {
 		for (size_t i = 0; i < versCou; ++i) {
 			const sxsdk::vec4& skinWeight   = newMeshData.skinWeights[i];
 			const sx::vec<int,4>& skinJoint = newMeshData.skinJoints[i];
@@ -843,6 +853,7 @@ void CGLTFImporterInterface::m_setMeshSkins (sxsdk::scene_interface *scene, CSce
 					break;
 				}
 			}
+
 			for (int j = 0; j < sCou; ++j) {
 				skinC.append_bind();
 				sxsdk::skin_bind_class& skinBindC = skinC.get_bind(j);
@@ -958,3 +969,4 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		} catch (...) { }
 	}
 }
+

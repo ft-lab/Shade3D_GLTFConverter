@@ -101,6 +101,7 @@ private:
 	 * 指定のMesh形状に対して、スキン情報を割り当て.
 	 */
 	void m_setMeshSkins (sxsdk::scene_interface *scene, CSceneData* sceneData);
+	void m_setMeshSkin (sxsdk::scene_interface *scene, CSceneData* sceneData, const int meshIndex);
 
 	/**
 	 * メッシュ番号を参照しているノードを取得.
