@@ -113,6 +113,11 @@ private:
 	 */
 	void m_adjustBones (sxsdk::shape_class* shape);
 
+	/**
+	 * アニメーション情報を割り当て.
+	 */
+	void m_setAnimations (sxsdk::scene_interface *scene, CSceneData* sceneData);
+
 public:
 	CGLTFImporterInterface (sxsdk::shade_interface &shade);
 

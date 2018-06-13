@@ -17,9 +17,11 @@ class CAnimChannelData
 public:
 	// 要素の種類.
 	enum PATH_TYPE {
-		path_type_translation = 0,		// 移動.
+		path_type_none = 0,
+		path_type_translation,			// 移動.
 		path_type_rotation,				// 回転.
 		path_type_scale,				// スケール.
+		path_type_weights,				// Weights.
 	};
 
 public:
@@ -94,6 +96,10 @@ public:
 
 	void clear ();
 
+	/**
+	 * アニメーション情報を持つかどうか.
+	 */
+	bool hasAnimation () const;
 };
 
 #endif

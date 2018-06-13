@@ -41,3 +41,11 @@ void CAnimationData::clear ()
 	channelData.clear();
 	samplerData.clear();
 }
+
+/**
+ * アニメーション情報を持つかどうか.
+ */
+bool CAnimationData::hasAnimation () const
+{
+	return (!channelData.empty() && !samplerData.empty());
+}

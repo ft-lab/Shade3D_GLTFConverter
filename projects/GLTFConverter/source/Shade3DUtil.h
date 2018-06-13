@@ -81,6 +81,14 @@ namespace Shade3DUtil
 	 * 指定の形状の階層の深さを取得.
 	 */
 	int getShapeHierarchyDepth (sxsdk::shape_class* pShape);
+
+	/**
+	 * 形状のモーションとして、指定のキーフレーム位置の要素が存在するか調べる.
+	 * @param[in] motion      形状が持つmotionクラスの参照.
+	 * @param[in] keyFrameV   キーフレーム値.
+	 * @return モーションポイントのインデックス。見つからなければ-1.
+	 */
+	int findMotionPoint (sxsdk::motion_interface* motion, const float keyFrameV);
 }
 
 #endif

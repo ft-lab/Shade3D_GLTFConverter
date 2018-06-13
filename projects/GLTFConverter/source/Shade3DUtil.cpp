@@ -2,6 +2,7 @@
  * Shade3Dのシーン走査のため便利機能など.
  */
 #include "Shade3DUtil.h"
+#include "MathUtil.h"
 
 namespace {
 	/**
@@ -374,4 +375,28 @@ void Shade3DUtil::setVertexColorSurfaceLayer (sxsdk::master_surface_class* pMast
 			mappingLayer.set_blend_mode(7);		// 乗算合成.
 		}
 	}
+}
+
+/**
+ * 形状のモーションとして、指定のキーフレーム位置の要素が存在するか調べる.
+ * @param[in] motion      形状が持つmotionクラスの参照.
+ * @param[in] keyFrameV   キーフレーム値.
+ * @return モーションポイントのインデックス。見つからなければ-1.
+ */
+int Shade3DUtil::findMotionPoint (sxsdk::motion_interface* motion, const float keyFrameV)
+{
+	int index = -1;
+	try {
+		const int mCou = motion->get_number_of_motion_points();
+		for (int i = 0; i < mCou; ++i) {
+			compointer<sxsdk::motion_point_interface> motionP(motion->get_motion_point_interface(i));
+			if (MathUtil::isZero((motionP->get_sequence()) - keyFrameV)) {
+				index = i;
+				break;
+			}
+		}
+		return index;
+	} catch (...) { }
+
+	return -1;
 }

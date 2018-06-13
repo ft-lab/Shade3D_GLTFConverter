@@ -116,6 +116,7 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	shade.message(std::string("Materials : ") + std::to_string(sceneData.materials.size()));
 	shade.message(std::string("Images : ") + std::to_string(sceneData.images.size()));
 	shade.message(std::string("Skins : ") + std::to_string(sceneData.skins.size()));
+	shade.message(std::string("Animations : ") + std::to_string(sceneData.animations.hasAnimation() ? 1 : 0));
 
 	// シーン情報を構築.
 	m_createGLTFScene(scene, &sceneData);
@@ -251,6 +252,11 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 
 	// ボーン調整.
 	m_adjustBones(&rootPart);
+
+	// アニメーション情報を割り当て.
+	if (g_importParam.importAnimation) {
+		m_setAnimations(scene, sceneData);
+	}
 }
 
 /**
@@ -888,5 +894,67 @@ void CGLTFImporterInterface::m_adjustBones (sxsdk::shape_class* shape)
 
 		// ボーンサイズを自動調整.
 		Shade3DUtil::resizeBones(rootBones[i]);
+	}
+}
+
+/**
+ * アニメーション情報を割り当て.
+ */
+void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSceneData* sceneData)
+{
+	const size_t animCou = sceneData->animations.channelData.size();
+	for (size_t loop = 0; loop < animCou; ++loop) {
+		const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
+		if (channelD.samplerIndex < 0 || channelD.targetNodeIndex < 0) continue;
+		const CAnimSamplerData& samplerD = sceneData->animations.samplerData[channelD.samplerIndex];
+
+		const int frameRate = scene->get_frame_rate();
+
+		try {
+			// Shade3Dでの対象形状を取得.
+			const CNodeData& nodeD = sceneData->nodes[channelD.targetNodeIndex + 1];	// ルートノードは別途追加したものなので+1している.
+			if (!nodeD.pShapeHandle) continue;
+			sxsdk::shape_class* shape = scene->get_shape_by_handle(nodeD.pShapeHandle);
+			if (!shape) continue;
+
+			const sxsdk::vec3 boneWCenter = Shade3DUtil::getBoneCenter(*shape, NULL);
+			const sxsdk::mat4 lwMat = shape->get_local_to_world_matrix();
+			const sxsdk::vec3 boneLCenter = (boneWCenter * inv(lwMat));
+
+			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
+
+			const size_t sCou = samplerD.inputData.size();
+			int iPos = 0;
+			for (size_t i = 0; i < sCou; ++i) {
+				const float fPos = samplerD.inputData[i];		// 秒単位のキーフレーム位置.
+				const float keyFramePos = fPos * (float)frameRate;
+
+				// すでにキーフレームが存在するか.
+				int motionPointIndex = Shade3DUtil::findMotionPoint(motion, keyFramePos);
+				if (motionPointIndex < 0) {
+					motionPointIndex = motion->create_motion_point(keyFramePos);
+				}
+
+				compointer<sxsdk::motion_point_interface> motionP(motion->get_motion_point_interface(motionPointIndex));
+
+				if (channelD.pathType == CAnimChannelData::path_type_translation) {
+					// オフセット値を取得し、メートルからミリメートルに変換.
+					sxsdk::vec3 offsetV = sxsdk::vec3(samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]) * 1000.0f;
+					offsetV -= boneLCenter;
+
+					motionP->set_offset(offsetV);
+					iPos += 3;
+
+				} else if (channelD.pathType == CAnimChannelData::path_type_rotation) {
+					sxsdk::quaternion_class q = sxsdk::quaternion_class(-samplerD.outputData[iPos + 3], samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]);
+					motionP->set_rotation(q);
+					iPos += 4;
+
+				} else {
+					break;
+				}
+			}
+
+		} catch (...) { }
 	}
 }

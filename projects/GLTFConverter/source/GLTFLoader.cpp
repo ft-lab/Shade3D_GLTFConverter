@@ -852,6 +852,94 @@ namespace {
 		// skin情報より、nodesのノードがボーンになりうるかチェック.
 		checkNodesBone(sceneData);
 	}
+
+	/**
+	 * Animation情報を格納.
+	 */
+	void storeGLTFAnimations (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+		sceneData->animations.clear();
+		const size_t animCou = gltfDoc.animations.Size();
+		if (animCou == 0) return;
+
+		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
+		std::shared_ptr<BinStreamReader> binStreamReader;
+		std::shared_ptr<GLTFResourceReader> binReader;
+		if (!reader) {
+			try {
+				const std::string fileDir = sceneData->getFileDir();
+				binStreamReader.reset(new BinStreamReader(fileDir));
+				binReader.reset(new GLTFResourceReader(*binStreamReader));
+			} catch (...) {
+				g_errorMessage = std::string("Bin file could not be loaded.");
+				return;
+			}
+		}
+
+		// TODO : 1つのアニメーションデータのみ.
+		//        実際は複数を格納可能.
+		const Animation& anim = gltfDoc.animations[0];
+
+		CAnimationData& dstAnimD = sceneData->animations;
+
+		const size_t channelsCou = anim.channels.size();
+		if (channelsCou > 0) {
+			for (size_t i = 0; i < channelsCou; ++i) {
+				const AnimationChannel& animChannel = anim.channels[i];
+				if (animChannel.samplerId == "" || animChannel.target.nodeId == "") continue;
+
+				CAnimChannelData animC;
+				animC.samplerIndex    = std::stoi(animChannel.samplerId);
+				animC.targetNodeIndex = std::stoi(animChannel.target.nodeId);
+
+				switch (animChannel.target.path) {
+				case TARGET_TRANSLATION:
+					animC.pathType = CAnimChannelData::path_type_translation;
+					break;
+				case TARGET_ROTATION:
+					animC.pathType = CAnimChannelData::path_type_rotation;
+					break;
+				case TARGET_SCALE:
+					animC.pathType = CAnimChannelData::path_type_scale;
+					break;
+				case TARGET_WEIGHTS:
+					animC.pathType = CAnimChannelData::path_type_weights;
+					break;
+				default:
+					animC.pathType = CAnimChannelData::path_type_none;
+				}
+				if (animC.pathType == CAnimChannelData::path_type_none) continue;
+
+				dstAnimD.channelData.push_back(animC);
+			}
+		}
+
+		const size_t samplersCou = anim.samplers.Size();
+		if (samplersCou > 0) {
+			for (size_t i = 0; i < samplersCou; ++i) {
+				const AnimationSampler& sampler = anim.samplers[i];
+
+				CAnimSamplerData samplerD;
+				if (sampler.inputAccessorId != "") {
+					const int accessorID = std::stoi(sampler.inputAccessorId);
+					const Accessor& acce = gltfDoc.accessors[accessorID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
+
+					if (reader) samplerD.inputData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) samplerD.inputData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				}
+				if (sampler.outputAccessorId != "") {
+					const int accessorID = std::stoi(sampler.outputAccessorId);
+					const Accessor& acce = gltfDoc.accessors[accessorID];
+					const int bufferViewID = std::stoi(acce.bufferViewId);
+
+					if (reader) samplerD.outputData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) samplerD.outputData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				}
+				dstAnimD.samplerData.push_back(samplerD);
+			}
+		}
+	}
+
 }
 
 CGLTFLoader::CGLTFLoader ()
@@ -977,6 +1065,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 		// スキン情報を取得.
 		::storeGLTFSkins(gltfDoc, reader, sceneData);
+
+		// アニメーション情報を格納.
+		::storeGLTFAnimations(gltfDoc, reader, sceneData);
 
 		if (g_errorMessage != "") return false;
 		return true;
