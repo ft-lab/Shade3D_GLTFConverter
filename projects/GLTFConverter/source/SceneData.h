@@ -203,6 +203,18 @@ public:
 	 * @return 変換行列.
 	 */
 	sxsdk::mat4 getLocalToWorldMatrix (const int nodeIndex) const;
+
+	/**
+	 * ノード番号に対応するSkinのInverseBindMatrixを取得.
+	 * @param[in]  nodeIndex          ノード番号.
+	 * @param[out] inverseBindMatrix  変換行列.
+	 */
+	bool getSkinsInverseBindMatrix (const int nodeIndex, sxsdk::mat4& inverseBindMatrix) const;
+
+	/**
+	 * glTFでの変換行列をShade3Dのミリメートル単位に変換.
+	 */
+	sxsdk::mat4 convMatrixToShade3D (const sxsdk::mat4& m) const;
 };
 
 #endif

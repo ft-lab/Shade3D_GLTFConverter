@@ -835,9 +835,23 @@ namespace {
 			skinD.name = skin.name;
 			if (skin.skeletonId != "") skinD.skeletonID = std::stoi(skin.skeletonId);
 			if (skin.inverseBindMatricesAccessorId != "") {
-				// TODO : 不要 ?.
 				const int accessorID = std::stoi(skin.inverseBindMatricesAccessorId);
+				const Accessor& acce = gltfDoc.accessors[accessorID];
+				const int bufferViewID = std::stoi(acce.bufferViewId);
 
+				std::vector<float> fData;
+				if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+				const size_t mCou = fData.size() / 16;
+
+				if (mCou > 0) {
+					skinD.inverseBindMatrices.resize(mCou);
+					for (size_t j = 0, iPos = 0; j < mCou; ++j, iPos += 16) {
+						float* fP = &(fData[iPos]);
+						sxsdk::mat4& m = skinD.inverseBindMatrices[j];
+						for (int k = 0; k < 16; ++k) m[k >> 2][k & 3] = fP[k];
+					}
+				}
 			}
 			
 			const size_t jointsCou = skin.jointIds.size();

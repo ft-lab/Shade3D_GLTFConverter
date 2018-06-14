@@ -427,3 +427,42 @@ sxsdk::mat4 CSceneData::getLocalToWorldMatrix (const int nodeIndex) const
 	}
 	return lwMat;
 }
+
+/**
+ * ノード番号に対応するSkinのInverseBindMatrixを取得.
+ * @param[in]  nodeIndex          ノード番号.
+ * @param[out] inverseBindMatrix  変換行列.
+ */
+bool CSceneData::getSkinsInverseBindMatrix (const int nodeIndex, sxsdk::mat4& inverseBindMatrix) const
+{
+	bool ret = false;
+	const size_t skinsCou = skins.size();
+	for (size_t i = 0; i < skinsCou; ++i) {
+		const CSkinData& skinD = skins[i];
+		const size_t jointsCou = skinD.joints.size();
+		if (jointsCou <= 0 || jointsCou != skinD.inverseBindMatrices.size()) continue;
+
+		for (size_t j = 0; j < jointsCou; ++j) {
+			if (skinD.joints[j] == nodeIndex) {
+				inverseBindMatrix = skinD.inverseBindMatrices[j];
+				ret = true;
+				break;
+			}
+		}
+		if (ret) break;
+	}
+	return ret;
+}
+
+/**
+ * glTFでの変換行列をShade3Dのミリメートル単位に変換.
+ */
+sxsdk::mat4 CSceneData::convMatrixToShade3D (const sxsdk::mat4& m) const
+{
+	sxsdk::vec3 scale ,shear, rotate, trans;
+	m.unmatrix(scale ,shear, rotate, trans);
+	trans *= 1000.0f;		// m ==> mm 変換.
+
+	return sxsdk::mat4::scale(scale) * sxsdk::mat4::rotate(rotate) * sxsdk::mat4::translate(trans);
+}
+

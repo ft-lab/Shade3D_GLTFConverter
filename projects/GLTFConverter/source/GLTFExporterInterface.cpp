@@ -998,7 +998,6 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			jointHandleList[i] = iter->first;
 
 			// ボーンの逆変換行列を指定.
-			// ルートボーンの場合はワールド座標での逆変換行列.
 			const CNodeData& nodeD = m_sceneData->nodes[nodeIndex];
 			//const sxsdk::mat4 m = (nodeIndex == skeletonID) ? (m_sceneData->getLocalToWorldMatrix(nodeIndex)) : nodeD.getMatrix();
 			const sxsdk::mat4 m = m_sceneData->getLocalToWorldMatrix(nodeIndex);
