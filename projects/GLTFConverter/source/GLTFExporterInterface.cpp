@@ -1113,8 +1113,8 @@ void CGLTFExporterInterface::m_setAnimations ()
 
 				// 同一のフレーム位置が格納済みの場合はスキップ.
 				// glTFの処理では、同一のフレーム位置である場合はエラーになる.
-				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
 				if (MathUtil::isZero(seqPos - oldSeqPos)) continue;
+				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
 				oldSeqPos = seqPos;
 
 				const sxsdk::vec3 offset        = motionPoint->get_offset();
