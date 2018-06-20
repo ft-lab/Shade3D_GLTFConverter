@@ -145,6 +145,15 @@ glTFでは、Roughness Metallicモデルの場合は「Roughness(G) Metallic(B)�
 別途Occlusionイメージがある場合は、そのイメージが拡散反射の乗算としてマッピングレイヤに追加されます。   
 Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算として表現されます。    
 
+### エクスポート時の表面材質のマッピングレイヤについて
+
+「イメージ/拡散反射」のマッピングレイヤで合成が「乗算」の場合は、glTFのOcclusion(RGB)のテクスチャとして反映しています。    
+それ以外の「イメージ/拡散反射」のマッピングレイヤはbaseColorのテクスチャとしました。    
+「イメージ/法線」のマッピングレイヤはnormalのテクスチャとして反映しています。    
+「イメージ/発光」のマッピングレイヤはemissiveのテクスチャとして反映しています。    
+
+これ以外の「荒さ」「反射」は、本来はRoughness/Metallicに反映する必要があるものですが、まだ未調整です。    
+
 ## 制限事項
 
 * カメラ情報の入出力には対応していません。  
@@ -205,6 +214,10 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/06/20] ver.0.1.0.7   
+* Export : 表面材質の「イメージ/拡散反射」で合成が「乗算」の場合は、Occlusionとして出力（暫定対応）
+* Import : 一部の形状の読み込みで不正になる問題を修正 (glTFのbyteStrideの判別が正しくなかった)
 
 [2018/06/14] ver.0.1.0.6   
 * Export/Import : 表面材質のマッピングのテクスチャの反復に暫定対応 (extensionのKHR_texture_transform)。    
