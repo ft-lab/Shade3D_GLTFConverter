@@ -540,7 +540,11 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			surface->set_diffuse_color(materialD.baseColorFactor);
 
 			// 光沢を調整.
-			surface->set_highlight(std::min(materialD.metallicFactor, 0.3f));
+			float highlightV = std::min(materialD.metallicFactor, 0.3f);
+			if (materialD.roughnessFactor < 1.0f) {
+				highlightV = std::max(materialD.roughnessFactor * 0.5f, highlightV);
+			}
+			surface->set_highlight(highlightV);
 			surface->set_highlight_size(0.7f);
 
 			// ALPHA_BLEND/ALPHA_MASK : アルファを考慮.
