@@ -354,7 +354,10 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 		}
 
 		// 三角形の頂点インデックスを格納.
+		std::vector<int> triIndexList;
+		triIndexList.resize(triCou, -1);
 		{
+			int index = 0;
 			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 				const int i0 = newMeshData.triangleIndices[iPos + 0];
 				const int i1 = newMeshData.triangleIndices[iPos + 1];
@@ -363,23 +366,29 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 					errF = true;
 					break;
 				}
+				if (i0 == i1 || i1 == i2 || i0 == i2) continue;
+				triIndexList[i] = index;
 
 				scene->append_polygon_mesh_face(i0, i1, i2);
+				index++;
 			}
 		}
-
 		scene->end_polygon_mesh();
+
 		if (errF) return false;
 
 		// 法線を読み込み（ベイク）.
 		if (g_importParam.meshImportNormals) {
 			sxsdk::vec3 normals[4];
 			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				sxsdk::face_class& f = pMesh.face(i);
-				const int vCou = f.get_number_of_vertices();
-				if (vCou != 3) continue;
-				for (int j = 0; j < 3; ++j) normals[j] = newMeshData.triangleNormals[iPos + j];
-				f.set_normals(vCou, normals);
+				if (triIndexList[i] < 0) continue;
+				try {
+					sxsdk::face_class& f = pMesh.face(triIndexList[i]);
+					const int vCou = f.get_number_of_vertices();
+					if (vCou != 3) continue;
+					for (int j = 0; j < 3; ++j) normals[j] = newMeshData.triangleNormals[iPos + j];
+					f.set_normals(vCou, normals);
+				} catch (...) { }
 			}
 		}
 
@@ -389,10 +398,13 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 			int triIndices[3];
 			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				sxsdk::face_class& f = pMesh.face(i);
-				for (int j = 0; j < 3; ++j) {
-					f.set_face_uv(uvIndex, j, newMeshData.triangleUV0[iPos + j]);
-				}
+				if (triIndexList[i] < 0) continue;
+				try {
+					sxsdk::face_class& f = pMesh.face(triIndexList[i]);
+					for (int j = 0; j < 3; ++j) {
+						f.set_face_uv(uvIndex, j, newMeshData.triangleUV0[iPos + j]);
+					}
+				} catch (...) { }
 			}
 		}
 
@@ -402,10 +414,13 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 			int triIndices[3];
 			for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				sxsdk::face_class& f = pMesh.face(i);
-				for (int j = 0; j < 3; ++j) {
-					f.set_face_uv(uvIndex, j, newMeshData.triangleUV1[iPos + j]);
-				}
+				if (triIndexList[i] < 0) continue;
+				try {
+					sxsdk::face_class& f = pMesh.face(triIndexList[i]);
+					for (int j = 0; j < 3; ++j) {
+						f.set_face_uv(uvIndex, j, newMeshData.triangleUV1[iPos + j]);
+					}
+				} catch (...) { }
 			}
 		}
 
@@ -417,11 +432,14 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 				const int vLayerIndex = pMesh.append_vertex_color_layer();;
 				sxsdk::vec4 col;
 				for (int i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-					sxsdk::face_class& f = pMesh.face(i);
-					for (int j = 0; j < 3; ++j) {
-						col = newMeshData.triangleColor0[iPos + j];
-						f.set_vertex_color(vLayerIndex, j, sxsdk::rgba_class(col.x, col.y, col.z, col.w));
-					}
+					if (triIndexList[i] < 0) continue;
+					try {
+						sxsdk::face_class& f = pMesh.face(triIndexList[i]);
+						for (int j = 0; j < 3; ++j) {
+							col = newMeshData.triangleColor0[iPos + j];
+							f.set_vertex_color(vLayerIndex, j, sxsdk::rgba_class(col.x, col.y, col.z, col.w));
+						}
+					} catch (...) { }
 				}
 			}
 		}
@@ -452,7 +470,8 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 			// 面ごとにフェイスグループを割り当て.
 			for (int i = 0; i < triCou; ++i) {
-				pMesh.set_face_group_index(i, newMeshData.triangleFaceGroupIndex[i]);
+				if (triIndexList[i] < 0) continue;
+				pMesh.set_face_group_index(triIndexList[i], newMeshData.triangleFaceGroupIndex[i]);
 			}
 		}
 
