@@ -126,19 +126,22 @@ namespace {
 					const int positionID = std::stoi(meshPrim.positionsAccessorId);
 					const Accessor& acce = gltfDoc.accessors[positionID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride  = bufferView.byteStride;
+					const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
 
 					// 頂点座標の配列を取得.
-					std::vector<Vector3> vers;
-					if (reader) vers = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) vers = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					// floatの配列に対して、floatStrideの間隔でデータが格納されている.
+					std::vector<float> fData;
+					if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+					const size_t offsetI = acce.byteOffset / sizeof(float);
 
-					const size_t versCou = vers.size();
-					if (versCou > 0 && acce.count > 0) {
+					if (fData.size() > 0 && acce.count > 0) {
 						dstPrimitiveData.vertices.resize(acce.count);
-						for (size_t j = 0; j < acce.count; ++j) {
-							dstPrimitiveData.vertices[j] = sxsdk::vec3(vers[j + offsetI].x, vers[j + offsetI].y, vers[j + offsetI].z);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+							dstPrimitiveData.vertices[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
 						}
 					}
 				}
@@ -148,19 +151,21 @@ namespace {
 					const int normalID = std::stoi(meshPrim.normalsAccessorId);
 					const Accessor& acce = gltfDoc.accessors[normalID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride  = bufferView.byteStride;
+					const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
 
 					// 法線の配列を取得.
-					std::vector<Vector3> normals;
-					if (reader) normals = reader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) normals = binReader->ReadBinaryData<Vector3>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					std::vector<float> fData;
+					if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const int offsetI = acce.byteOffset / (sizeof(float) * 3);
+					const size_t offsetI = acce.byteOffset / sizeof(float);
 
-					const size_t versCou = normals.size();
-					if (versCou > 0 && acce.count > 0) {
+					if (fData.size() > 0 && acce.count > 0) {
 						dstPrimitiveData.normals.resize(acce.count);
-						for (size_t j = 0; j < acce.count; ++j) {
-							dstPrimitiveData.normals[j] = sxsdk::vec3(normals[j + offsetI].x, normals[j + offsetI].y, normals[j + offsetI].z);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+							dstPrimitiveData.normals[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
 						}
 					}
 				}
@@ -170,6 +175,9 @@ namespace {
 					const int uv0ID = std::stoi(meshPrim.uv0AccessorId);
 					const Accessor& acce = gltfDoc.accessors[uv0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride  = bufferView.byteStride;
+					const size_t floatStride = (byteStride == 0) ? 2 : (byteStride / sizeof(float));
 
 					// UV0の配列を取得.
 					// floatの配列で返るため、/2 がUV要素数.
@@ -177,13 +185,12 @@ namespace {
 					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const int offsetI = acce.byteOffset / (sizeof(float));
+					const size_t offsetI = acce.byteOffset / (sizeof(float));
 
-					const size_t versCou = uvs.size();
-					if (versCou > 0 && acce.count > 0) {
+					if (uvs.size() > 0 && acce.count > 0) {
 						dstPrimitiveData.uv0.resize(acce.count);
 
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
 							dstPrimitiveData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 						}
 					}
@@ -194,6 +201,9 @@ namespace {
 					const int uv1ID = std::stoi(meshPrim.uv1AccessorId);
 					const Accessor& acce = gltfDoc.accessors[uv1ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride  = bufferView.byteStride;
+					const size_t floatStride = (byteStride == 0) ? 2 : (byteStride / sizeof(float));
 
 					// UV1の配列を取得.
 					// floatの配列で返るため、/2 がUV要素数.
@@ -201,12 +211,11 @@ namespace {
 					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const int offsetI = acce.byteOffset / (sizeof(float));
+					const size_t offsetI = acce.byteOffset / (sizeof(float));
 
-					const size_t versCou = uvs.size();
-					if (versCou > 0 && acce.count > 0) {
+					if (uvs.size() > 0 && acce.count > 0) {
 						dstPrimitiveData.uv1.resize(acce.count);
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += 2) {
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
 							dstPrimitiveData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
 						}
 					}
@@ -217,16 +226,20 @@ namespace {
 					const int color0ID = std::stoi(meshPrim.color0AccessorId);
 					const Accessor& acce = gltfDoc.accessors[color0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride = bufferView.byteStride;
 
 					if (acce.componentType == COMPONENT_FLOAT && (acce.type == TYPE_VEC4 || acce.type == TYPE_VEC3)) {
+						const size_t floatStride = (byteStride == 0) ? ((acce.type == TYPE_VEC4) ? 4 : 3) : (byteStride / sizeof(float));
+
 						// Color0の配列を取得.
 						// floatの配列で返るため、/4 または /3 がColor0要素数.
 						std::vector<float> color0;
 						if (reader) color0 = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 						else if (binReader) color0 = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-						const int fCou = (acce.type == TYPE_VEC4) ? 4 : 3;
-						const int offsetI = acce.byteOffset / (sizeof(float));
+						const size_t fCou    = floatStride;
+						const size_t offsetI = acce.byteOffset / (sizeof(float));
 
 						const size_t versCou = color0.size();
 						if (versCou > 0 && acce.count > 0) {
@@ -242,14 +255,16 @@ namespace {
 							}
 						}
 					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE && (acce.type == TYPE_VEC4 || acce.type == TYPE_VEC3)) {
+						const size_t ucharStride = (byteStride == 0) ? ((acce.type == TYPE_VEC4) ? 4 : 3) : byteStride / sizeof(unsigned char);
+
 						// Color0の配列を取得.
 						// unsigned charの配列で返るため、/4 または /3 がColor0要素数.
 						std::vector<unsigned char> color0;
 						if (reader) color0 = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 						else if (binReader) color0 = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-						const int fCou = (acce.type == TYPE_VEC4) ? 4 : 3;
-						const int offsetI = acce.byteOffset / (sizeof(unsigned char));
+						const size_t fCou    = ucharStride;
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned char));
 
 						const size_t versCou = color0.size();
 						if (versCou > 0 && acce.count > 0) {
@@ -261,6 +276,31 @@ namespace {
 							} else {
 								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
 									dstPrimitiveData.color0[j] = sxsdk::vec4((float)color0[iPos + 0] / 255.0f, (float)color0[iPos + 1] / 255.0f, (float)color0[iPos + 2] / 255.0f, 1.0f);
+								}
+							}
+						}
+					} else if (acce.componentType == COMPONENT_UNSIGNED_SHORT && (acce.type == TYPE_VEC4 || acce.type == TYPE_VEC3)) {
+						const size_t ushortStride = (byteStride == 0) ? ((acce.type == TYPE_VEC4) ? 4 : 3) : byteStride / sizeof(unsigned short);
+
+						// Color0の配列を取得.
+						// unsigned shortの配列で返るため、/4 または /3 がColor0要素数.
+						std::vector<unsigned short> color0;
+						if (reader) color0 = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) color0 = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t fCou    = ushortStride;
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned short));
+
+						const size_t versCou = color0.size();
+						if (versCou > 0 && acce.count > 0) {
+							dstPrimitiveData.color0.resize(acce.count);
+							if (fCou == 4) {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4((float)color0[iPos + 0] / 65535.0f, (float)color0[iPos + 1] / 65535.0f, (float)color0[iPos + 2] / 65535.0f, (float)color0[iPos + 3] / 65535.0f);
+								}
+							} else {
+								for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += fCou) {
+									dstPrimitiveData.color0[j] = sxsdk::vec4((float)color0[iPos + 0] / 65535.0f, (float)color0[iPos + 1] / 65535.0f, (float)color0[iPos + 2] / 65535.0f, 1.0f);
 								}
 							}
 						}
@@ -330,6 +370,8 @@ namespace {
 					const int weightsID = std::stoi(meshPrim.weights0AccessorId);
 					const Accessor& acce = gltfDoc.accessors[weightsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride = bufferView.byteStride;
 
 					// Weightの配列を取得.
 					// VEC4として入る。xyzwに対してウエイト値が入り、合計すると1.0となる.
@@ -339,10 +381,12 @@ namespace {
 						else if (binReader) weights = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 					}
 
-					const size_t vCou = weights.size() / 4;
-					if (vCou > 0 && vCou == acce.count) {
-						dstPrimitiveData.skinWeights.resize(vCou);
-						for (size_t j = 0, iPos = 0; j < vCou; ++j, iPos += 4) {
+					if (weights.size() > 0) {
+						const size_t floatStride = (byteStride == 0) ? 4 : (byteStride / sizeof(float));
+						const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+						dstPrimitiveData.skinWeights.resize(acce.count);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
 							dstPrimitiveData.skinWeights[j] = sxsdk::vec4(weights[iPos + 0], weights[iPos + 1], weights[iPos + 2], weights[iPos + 3]);
 						}
 					}

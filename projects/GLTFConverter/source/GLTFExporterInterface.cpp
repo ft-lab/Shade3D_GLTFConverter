@@ -708,18 +708,26 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 			switch (type) {
 			case sxsdk::enums::diffuse_mapping:
-				diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
-				materialData.baseColorImageIndex = imageIndex;
-				materialData.baseColorTexCoord   = mappingLayer.get_uv_mapping();
-				materialData.baseColorTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
+				if (mappingLayer.get_blend_mode() == 7) {		// 乗算合成の場合、Occlusionとみなす.
+					diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+					materialData.occlusionImageIndex = imageIndex;
+					materialData.occlusionTexCoord   = mappingLayer.get_uv_mapping();
+					materialData.occlusionTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
 
-				// アルファ透過する場合.
-				if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
-					materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-					materialData.alphaCutOff = 0.9f;
+				} else {
+					diffuseMappingIndexList.push_back(sx::vec<int,2>(i, imageIndex));
+					materialData.baseColorImageIndex = imageIndex;
+					materialData.baseColorTexCoord   = mappingLayer.get_uv_mapping();
+					materialData.baseColorTexScale   = sxsdk::vec2(mappingLayer.get_repetition_x(), mappingLayer.get_repetition_y());
 
-					CImageData& imageData = m_sceneData->images[imageIndex];
-					imageData.useBaseColorAlpha = true;
+					// アルファ透過する場合.
+					if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
+						materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+						materialData.alphaCutOff = 0.9f;
+
+						CImageData& imageData = m_sceneData->images[imageIndex];
+						imageData.useBaseColorAlpha = true;
+					}
 				}
 
 				break;
