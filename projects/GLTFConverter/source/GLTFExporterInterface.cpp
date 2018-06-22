@@ -16,11 +16,30 @@ enum
 	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
 	dlg_output_vertex_color_id = 103,		// 頂点カラーを出力.
 	dlg_output_animation_id = 104,			// アニメーションを出力.
+
+	dlg_asset_title_id = 201,				// タイトル.
+	dlg_asset_author_id = 202,				// 制作者.
+	dlg_asset_select_license_id = 203,		// ライセンス選択.
+	dlg_asset_license_id = 204,				// ライセンス.
+	dlg_asset_license_desc_id = 205,		// ライセンスの説明.
+	dlg_asset_source_id = 206,				// 参照先.
 };
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
 	m_dlgOK = false;
+
+	// ライセンスの種類.
+	// これはダイアログボックスの「ライセンスの選択」のリストと同じ並び.
+	m_licenseTypeList.clear();
+	m_licenseTypeList.push_back("All rights reserved");
+	m_licenseTypeList.push_back("CC BY");
+	m_licenseTypeList.push_back("CC BY-SA");
+	m_licenseTypeList.push_back("CC BY-NC");
+	m_licenseTypeList.push_back("CC BY-ND");
+	m_licenseTypeList.push_back("CC BY-NC-SA");
+	m_licenseTypeList.push_back("CC BY-NC-ND");
+	m_licenseTypeList.push_back("Public domain");
 }
 
 CGLTFExporterInterface::~CGLTFExporterInterface ()
@@ -66,6 +85,14 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 		m_sceneData->assetVersion   = "2.0";
 		m_sceneData->assetGenerator = "glTF Converter for Shade3D";
 		m_sceneData->filePath       = std::string(m_pluginExporter->get_file_path());
+	}
+
+	// Assetの拡張情報を指定.
+	{
+		m_sceneData->assetExtrasTitle   = m_exportParam.assetExtrasTitle;
+		m_sceneData->assetExtrasAuthor  = m_exportParam.assetExtrasAuthor;
+		m_sceneData->assetExtrasLicense = m_exportParam.assetExtrasLicense;
+		m_sceneData->assetExtrasSource  = m_exportParam.assetExtrasSource;
 	}
 
 	// エクスポート時のパラメータ.
@@ -569,6 +596,65 @@ void CGLTFExporterInterface::end_polymesh_face_group (void *)
 /****************************************************************/
 /* ダイアログイベント											*/
 /****************************************************************/
+/**
+ * ダイアログボックスの「ライセンス選択」で選択された要素より、対応するテキストを取得.
+ * その他の場合は "" を返す.
+ */
+std::string CGLTFExporterInterface::m_getSelectLicenseToString (const int selectionIndex)
+{
+	const int cou = (int)m_licenseTypeList.size();
+	if (selectionIndex < 0 || selectionIndex >= cou) return "";
+	return m_licenseTypeList[selectionIndex];
+}
+
+/**
+ * ダイアログボックスの「ライセンス選択」で選択された要素より、説明文のテキストを取得.
+ */
+std::string CGLTFExporterInterface::m_getSelectLicenseToDescString (const int selectionIndex)
+{
+	if (selectionIndex == 0) {
+		return shade.gettext("license_All_rights_reserved");
+	}
+	if (selectionIndex == 1) {
+		return shade.gettext("license_CC_BY");
+	}
+	if (selectionIndex == 2) {
+		return shade.gettext("license_CC_BY-SA");
+	}
+	if (selectionIndex == 3) {
+		return shade.gettext("license_CC_BY-NC");
+	}
+	if (selectionIndex == 4) {
+		return shade.gettext("license_CC_BY-ND");
+	}
+	if (selectionIndex == 5) {
+		return shade.gettext("license_CC_BY-NC-SA");
+	}
+	if (selectionIndex == 6) {
+		return shade.gettext("license_CC_BY-NC-ND");
+	}
+	if (selectionIndex == 7) {
+		return shade.gettext("license_public_domain");
+	}
+	return shade.gettext("license_other");
+}
+
+/**
+ * ダイアログボックスの「ライセンス」のテキストより、対応する「ライセンス選択」のインデックスを取得.
+ */
+int CGLTFExporterInterface::m_getLicenseStringToIndex (const std::string& str)
+{
+	const size_t cou = m_licenseTypeList.size();
+	int index = (int)cou;
+	for (size_t i = 0; i < cou; ++i) {
+		if (m_licenseTypeList[i] == str) {
+			index = (int)i;
+			break;
+		}
+	}
+	return index;
+}
+
 void CGLTFExporterInterface::initialize_dialog (sxsdk::dialog_interface& dialog, void*)
 {
 }
@@ -594,6 +680,42 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_output_animation_id));
 		item->set_bool(m_exportParam.outputAnimation);
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_title_id));
+		item->set_string(m_exportParam.assetExtrasTitle.c_str());
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_author_id));
+		item->set_string(m_exportParam.assetExtrasAuthor.c_str());
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_select_license_id));
+		const int index = m_getLicenseStringToIndex(m_exportParam.assetExtrasLicense);
+		item->set_selection(index);
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_license_id));
+		item->set_string(m_exportParam.assetExtrasLicense.c_str());
+		const int index = m_getLicenseStringToIndex(m_exportParam.assetExtrasLicense);
+		item->set_enabled(index == (int)m_licenseTypeList.size());
+	}
+	{
+		// ライセンスの説明文を表示.
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_license_desc_id));
+		const int index = m_getLicenseStringToIndex(m_exportParam.assetExtrasLicense);
+		item->set_text(m_getSelectLicenseToDescString(index));
+	}
+
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_asset_source_id));
+		item->set_string(m_exportParam.assetExtrasSource.c_str());
 	}
 }
 
@@ -633,6 +755,32 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_animation_id) {
 		m_exportParam.outputAnimation = item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_asset_title_id) {
+		m_exportParam.assetExtrasTitle = item.get_string();
+		return true;
+	}
+	if (id == dlg_asset_author_id) {
+		m_exportParam.assetExtrasAuthor = item.get_string();
+		return true;
+	}
+	if (id == dlg_asset_select_license_id) {
+		// 選択要素より、対応するテキストを取得.
+		int index = (int)item.get_selection();
+		const std::string str = m_getSelectLicenseToString(index);
+		m_exportParam.assetExtrasLicense = str;
+		load_dialog_data(dialog);
+		return true;
+	}
+
+	if (id == dlg_asset_license_id) {
+		m_exportParam.assetExtrasLicense = item.get_string();
+		return true;
+	}
+	if (id == dlg_asset_source_id) {
+		m_exportParam.assetExtrasSource = item.get_string();
 		return true;
 	}
 

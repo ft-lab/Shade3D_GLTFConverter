@@ -228,6 +228,33 @@ namespace {
 	}
 
 	/**
+	 * assetのextrasの文字列を作成.
+	 */
+	std::string getAssetExtrasStr (const CSceneData* sceneData) {
+		std::string str = "";
+
+		// TODO : urlエンコード.
+		if (sceneData->assetExtrasTitle != "") {
+			str += std::string("\"title\": \"") + sceneData->assetExtrasTitle + "\"";
+		}
+		if (sceneData->assetExtrasAuthor != "") {
+			if (str != "") str += std::string(",\n"); 
+			str += std::string("\"author\": \"") + sceneData->assetExtrasAuthor + "\"";
+		}
+		if (sceneData->assetExtrasLicense != "") {
+			if (str != "") str += std::string(",\n"); 
+			str += std::string("\"license\": \"") + sceneData->assetExtrasLicense + "\"";
+		}
+		if (sceneData->assetExtrasSource != "") {
+			if (str != "") str += std::string(",\n"); 
+			str += std::string("\"source\": \"") + sceneData->assetExtrasSource + "\"";
+		}
+		if (str != "") str = std::string("{\n") + str + std::string("\n}");
+
+		return str;
+	}
+
+	/**
 	 * テクスチャのoffset/scaleの指定を文字列化.
 	 */
 	std::string getTextureTransformStr (const sxsdk::vec2& offset, const sxsdk::vec2& scale) {
@@ -1390,6 +1417,9 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		gltfDoc.asset.generator = sceneData->assetGenerator;
 		gltfDoc.asset.version   = sceneData->assetVersion;		// GLTFバージョン.
 		gltfDoc.asset.copyright = sceneData->assetCopyRight;
+
+		// ヘッダ拡張部を指定.
+		gltfDoc.asset.extras = ::getAssetExtrasStr(sceneData);
 
 		// シーン情報を指定.
 		{

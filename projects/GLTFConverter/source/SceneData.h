@@ -80,6 +80,13 @@ public:
 	std::string assetGenerator;				// 作成ツール.
 	std::string assetCopyRight;				// Copy Right.
 
+	// 以下、Oculus Homeで指定されているもの.
+	std::string assetExtrasTitle;			// オブジェクト名.
+	std::string assetExtrasAuthor;			// 作者.
+	std::string assetExtrasLicense;			// ライセンス.
+	std::string assetExtrasSource;			// 原型モデルの参照先.
+
+
 	std::string filePath;					// ファイルフルパス.
 
 	std::vector<CNodeData> nodes;			// ノード情報.

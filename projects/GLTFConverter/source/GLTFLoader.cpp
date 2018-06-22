@@ -456,6 +456,57 @@ namespace {
 	}
 
 	/**
+	 * jsonのドキュメント内にて、指定のキー名が含まれるものがあるかチェック.
+	 */
+	std::string findJSONKeyName (rapidjson::Document& doc, const std::string& keyName) {
+		const int cou = doc.MemberCount();
+		std::string str = "";
+
+		for(rapidjson::Value::MemberIterator itr = doc.MemberBegin(); itr != doc.MemberEnd(); itr++) {
+			const std::string name = itr->name.GetString();
+			if (name.find(keyName) != std::string::npos) {
+				str = name;
+				break;
+			}
+		}
+		return str;
+	}
+
+	/**
+	 * json文字列より、asset-extrasの指定を取得.
+	 */
+	void storeAssetExtrasData (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+		sceneData->assetExtrasAuthor  = "";
+		sceneData->assetExtrasLicense = "";
+		sceneData->assetExtrasSource  = "";
+		sceneData->assetExtrasTitle   = "";
+
+		if (gltfDoc.asset.extras == "") return;
+
+		rapidjson::Document doc;
+		doc.Parse(gltfDoc.asset.extras.c_str());		// jsonとしてパース.
+		if (doc.HasParseError()) return;
+
+		std::string keyName = "";
+		if ((keyName = findJSONKeyName(doc, "author")) != "") {
+			rapidjson::Value& v = doc[keyName.c_str()];
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasAuthor = std::string(v.GetString());
+		}
+		if ((keyName = findJSONKeyName(doc, "license")) != "") {
+			rapidjson::Value& v = doc[keyName.c_str()];
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasLicense = std::string(v.GetString());
+		}
+		if ((keyName = findJSONKeyName(doc, "source")) != "") {
+			rapidjson::Value& v = doc[keyName.c_str()];
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasSource = std::string(v.GetString());
+		}
+		if ((keyName = findJSONKeyName(doc, "title")) != "") {
+			rapidjson::Value& v = doc[keyName.c_str()];
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasTitle = std::string(v.GetString());
+		}
+	}
+
+	/**
 	 * GLTFのMaterial情報を取得して格納.
 	 */
 	void storeGLTFMaterials (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
@@ -1108,6 +1159,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		sceneData->assetVersion   = gltfDoc.asset.version;
 		sceneData->assetGenerator = gltfDoc.asset.generator;
 		sceneData->assetCopyRight = gltfDoc.asset.copyright;
+
+		// Asset extras情報を取得.
+		::storeAssetExtrasData(gltfDoc, sceneData);
 
 		// メッシュ情報を取得.
 		::storeGLTFMeshes(gltfDoc, reader, sceneData);

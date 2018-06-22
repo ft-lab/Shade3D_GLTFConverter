@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
+	<group label="Asset情報">
+		<long-string id="201" label="タイトル:" />
+		<long-string id="202" label="作成者:" />
+		<selection id="203" label="ライセンス選択:|All rights reserved|CC BY|CC BY-SA|CC BY-NC|CC BY-ND|CC BY-NC-SA|CC BY-NC-ND|Public domain|その他" />
+		<long-string id="204" label="ライセンス:" />
+		<custom width="10" height="4" />
+		<hbox>
+			<custom width="70" height="10" />
+			<long-text id="205" label="" lines="4" editable="false" />
+		</hbox>
+		<custom width="10" height="4" />
+		<long-string id="206" label="原型モデルの参照先:" />
+	</group>
 	<selection id="101" label="テクスチャ出力:|イメージ名から拡張子を参照|pngに置き換え|jpegに置き換え" />
 	<bool id="102" label="ボーンとスキンを出力" />
 	<bool id="103" label="頂点カラーを出力" />

@@ -11,6 +11,8 @@
 #include "MaterialData.h"
 #include "ImageData.h"
 
+#include <string>
+#include <vector>
 #include <iostream>
 #include <memory>
 
@@ -46,6 +48,8 @@ private:
 
 	CExportDlgParam m_exportParam;				// エクスポート時のパラメータ.
 	bool m_dlgOK;
+
+	std::vector<std::string> m_licenseTypeList;		// ライセンスの種類.
 
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_EXPORTER_INTERFACE_ID; }
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }
@@ -282,6 +286,22 @@ private:
 	 * @param[out] mapD       first : shape_classのhandle、second : 出現回数.
 	 */
 	void m_storeChildBonesLoop (const int depth, sxsdk::shape_class* pShape, std::map<void *, int>& mapD);
+
+	/**
+	 * ダイアログボックスの「ライセンス選択」で選択された要素より、対応するテキストを取得.
+	 * その他の場合は "" を返す.
+	 */
+	std::string m_getSelectLicenseToString (const int selectionIndex);
+
+	/**
+	 * ダイアログボックスの「ライセンス選択」で選択された要素より、説明文のテキストを取得.
+	 */
+	std::string m_getSelectLicenseToDescString (const int selectionIndex);
+
+	/**
+	 * ダイアログボックスの「ライセンス」のテキストより、対応する「ライセンス選択」のインデックスを取得.
+	 */
+	int m_getLicenseStringToIndex (const std::string& str);
 
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);

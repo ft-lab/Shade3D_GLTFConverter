@@ -60,6 +60,11 @@ void CSceneData::clear()
 	assetVersion    = "";
 	assetGenerator  = "";
 	assetCopyRight  = "";
+	assetExtrasTitle   = "";
+	assetExtrasAuthor  = "";
+	assetExtrasLicense = "";
+	assetExtrasSource  = "";
+
 	filePath        = "";
 
 	nodes.clear();

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
+	<group label="Asset information">
+		<slong-string id="201" label="Title" />
+		<long-string id="202" label="Author" />
+		<long-string id="203" label="License" />
+		<long-string id="204" label="Source" />
+	</group>
 	<selection id="101" label="Output texture:|Extension refers to from image name|Replace with png|Replace with jpeg" />
 	<bool id="102" label="Output bones and skins" />
 	<bool id="103" label="Output vertex color" />
