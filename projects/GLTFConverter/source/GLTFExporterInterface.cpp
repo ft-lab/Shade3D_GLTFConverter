@@ -33,13 +33,13 @@ CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) :
 	// これはダイアログボックスの「ライセンスの選択」のリストと同じ並び.
 	m_licenseTypeList.clear();
 	m_licenseTypeList.push_back("All rights reserved");
-	m_licenseTypeList.push_back("CC BY");
-	m_licenseTypeList.push_back("CC BY-SA");
-	m_licenseTypeList.push_back("CC BY-NC");
-	m_licenseTypeList.push_back("CC BY-ND");
-	m_licenseTypeList.push_back("CC BY-NC-SA");
-	m_licenseTypeList.push_back("CC BY-NC-ND");
-	m_licenseTypeList.push_back("Public domain");
+	m_licenseTypeList.push_back("CC BY-4.0 (https://creativecommons.org/licenses/by/4.0/)");
+	m_licenseTypeList.push_back("CC BY-SA-4.0 (https://creativecommons.org/licenses/by-sa/4.0/)");
+	m_licenseTypeList.push_back("CC BY-NC-4.0 (https://creativecommons.org/licenses/by-nc/4.0/)");
+	m_licenseTypeList.push_back("CC BY-ND-4.0 (https://creativecommons.org/licenses/by-nd/4.0/)");
+	m_licenseTypeList.push_back("CC BY-NC-SA-4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)");
+	m_licenseTypeList.push_back("CC BY-NC-ND-4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/)");
+	m_licenseTypeList.push_back("CC0(Public domain) (https://creativecommons.org/publicdomain/zero/1.0/)");
 }
 
 CGLTFExporterInterface::~CGLTFExporterInterface ()

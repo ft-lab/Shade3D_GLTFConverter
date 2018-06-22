@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
 	<group label="Asset information">
-		<slong-string id="201" label="Title" />
-		<long-string id="202" label="Author" />
-		<long-string id="203" label="License" />
-		<long-string id="204" label="Source" />
+		<slong-string id="201" label="Title:" />
+		<long-string id="202" label="Author:" />
+		<selection id="203" label="Select license:|All rights reserved|CC BY|CC BY-SA|CC BY-NC|CC BY-ND|CC BY-NC-SA|CC BY-NC-ND|CC0(Public domain)|Other" />
+		<long-string id="204" label="License:" />
+		<custom width="10" height="4" />
+		<hbox>
+			<custom width="70" height="10" />
+			<long-text id="205" label="" lines="4" editable="false" />
+		</hbox>
+		<custom width="10" height="4" />
+		<long-string id="206" label="Source:" />
 	</group>
 	<selection id="101" label="Output texture:|Extension refers to from image name|Replace with png|Replace with jpeg" />
 	<bool id="102" label="Output bones and skins" />
