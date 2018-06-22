@@ -9,14 +9,14 @@
 	<string id="gltf_importer_title" value="glTF (gltf/glb) ..."/>
 	<string id="gltf_exporter_title" value="glTF (glb) ..."/>
 
-	<string id="license_All_rights_reserved" value="著作権がある状態です。" />
-	<string id="license_CC_BY" value="作品のクレジットを表示する必要あり。&#10;改変OK/営利OK。&#10;非営利/営利目的での二次利用OK。" />
-	<string id="license_CC_BY-SA" value="作品のクレジットを表示する必要あり。&#10;改変OK/営利OK/継承。&#10;改変時は元のライセンスと同じCCライセンスをつけることで、非営利/営利目的での二次利用OK。" />
-	<string id="license_CC_BY-NC" value="作品のクレジットを表示する必要あり。&#10;改変OK/非営利。&#10;非営利目的での改変/二次利用OK。" />
-	<string id="license_CC_BY-ND" value="作品のクレジットを表示する必要あり。&#10;改変禁止/営利OK。&#10;非営利/営利目的での二次利用OK。" />
-	<string id="license_CC_BY-NC-SA" value="作品のクレジットを表示する必要あり。&#10;改変OK/非営利/継承。&#10;改変時は元のライセンスと同じCCライセンスをつけることで、非営利目的での二次利用OK。" />
-	<string id="license_CC_BY-NC-ND" value="作品のクレジットを表示する必要あり。&#10;改変禁止/非営利。&#10;非営利目的での二次利用OK。&#10;" />
-	<string id="license_public_domain" value="著作権を放棄します。" />
-	<string id="license_other" value="その他のライセンス。" />
+	<string id="license_All_rights_reserved" value="Has copyright." />
+	<string id="license_CC_BY" value="You must give appropriate credit.&#10;remix,transform OK/commercial OK" />
+	<string id="license_CC_BY-SA" value="You must give appropriate credit.&#10;remix,transform OK/commercial OK/ShareAlike" />
+	<string id="license_CC_BY-NC" value="You must give appropriate credit.&#10;remix,transform OK/NonCommercial" />
+	<string id="license_CC_BY-ND" value="You must give appropriate credit.&#10;NoDerivatives/commercial OK" />
+	<string id="license_CC_BY-NC-SA" value="You must give appropriate credit.&#10;remix,transform OK/NonCommercial/ShareAlike" />
+	<string id="license_CC_BY-NC-ND" value="You must give appropriate credit.&#10;NoDerivatives/NonCommercial" />
+	<string id="license_public_domain" value="No Copyright." />
+	<string id="license_other" value="Other licenses." />
 </strings>
 

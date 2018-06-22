@@ -6,6 +6,7 @@
 #include "SceneData.h"
 #include "Shade3DUtil.h"
 #include "MathUtil.h"
+#include "StreamCtrl.h"
 
 enum
 {
@@ -85,6 +86,9 @@ void CGLTFImporterInterface::do_pre_import (const sxsdk::mat4 &t, void *path)
  */
 void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::stream_interface *stream, sxsdk::text_stream_interface *text_stream, void *)
 {
+	// streamに、ダイアログボックスのパラメータを保存.
+	StreamCtrl::saveImportDialogParam(shade, g_importParam);
+
 	// ファイル名を取得.
 	std::string fileName = "";
 	if (text_stream) {
@@ -132,6 +136,8 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 /****************************************************************/
 void CGLTFImporterInterface::initialize_dialog (sxsdk::dialog_interface& dialog, void*)
 {
+	// streamより、ダイアログボックスのパラメータを取得.
+	StreamCtrl::loadImportDialogParam(shade, g_importParam);
 }
 
 void CGLTFImporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *)

@@ -6,6 +6,7 @@
 #include "SceneData.h"
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
+#include "StreamCtrl.h"
 
 #include <iostream>
 #include <map>
@@ -67,6 +68,9 @@ const char *CGLTFExporterInterface::get_file_description (void *aux)
  */
 void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin_exporter, void *)
 {
+	// streamに、ダイアログボックスのパラメータを保存.
+	StreamCtrl::saveExportDialogParam(shade, m_exportParam);
+
 	m_shapeStack.clear();
 	m_currentDepth = 0;
 	m_sceneData.reset(new CSceneData());
@@ -657,6 +661,8 @@ int CGLTFExporterInterface::m_getLicenseStringToIndex (const std::string& str)
 
 void CGLTFExporterInterface::initialize_dialog (sxsdk::dialog_interface& dialog, void*)
 {
+	// streamより、ダイアログボックスのパラメータを取得.
+	StreamCtrl::loadExportDialogParam(shade, m_exportParam);
 }
 
 void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *)

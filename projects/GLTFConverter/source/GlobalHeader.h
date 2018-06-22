@@ -14,6 +14,10 @@
 #define GLTF_IMPORTER_INTERFACE_ID sx::uuid_class("29C48EA8-1851-4703-AF06-9DEB5A17FF49")
 #define GLTF_EXPORTER_INTERFACE_ID sx::uuid_class("40385ADE-D20F-4694-A817-27CE6B8A1016")
 
+// streamに保存するstreamのバージョン.
+#define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x100
+
 // 作業ディレクトリ名.
 #define GLTF_TEMP_DIR "shade3d_temp_gltf"
 
