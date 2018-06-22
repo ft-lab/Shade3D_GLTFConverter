@@ -233,21 +233,20 @@ namespace {
 	std::string getAssetExtrasStr (const CSceneData* sceneData) {
 		std::string str = "";
 
-		// TODO : urlエンコード.
 		if (sceneData->assetExtrasTitle != "") {
-			str += std::string("\"title\": \"") + sceneData->assetExtrasTitle + "\"";
+			str += std::string("\"title\": \"") + StringUtil::convHTMLEncode(sceneData->assetExtrasTitle) + "\"";
 		}
 		if (sceneData->assetExtrasAuthor != "") {
 			if (str != "") str += std::string(",\n"); 
-			str += std::string("\"author\": \"") + sceneData->assetExtrasAuthor + "\"";
+			str += std::string("\"author\": \"") + StringUtil::convHTMLEncode(sceneData->assetExtrasAuthor) + "\"";
 		}
 		if (sceneData->assetExtrasLicense != "") {
 			if (str != "") str += std::string(",\n"); 
-			str += std::string("\"license\": \"") + sceneData->assetExtrasLicense + "\"";
+			str += std::string("\"license\": \"") + StringUtil::convHTMLEncode(sceneData->assetExtrasLicense) + "\"";
 		}
 		if (sceneData->assetExtrasSource != "") {
 			if (str != "") str += std::string(",\n"); 
-			str += std::string("\"source\": \"") + sceneData->assetExtrasSource + "\"";
+			str += std::string("\"source\": \"") + StringUtil::convHTMLEncode(sceneData->assetExtrasSource) + "\"";
 		}
 		if (str != "") str = std::string("{\n") + str + std::string("\n}");
 

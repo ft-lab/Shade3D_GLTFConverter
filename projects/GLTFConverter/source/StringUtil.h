@@ -28,6 +28,27 @@ namespace StringUtil
 	 */
 	const std::string getFileExtension (const std::string& filePath);
 
+	/**
+	 * 文字列内の全置換.
+	 * @param[in] targetStr   対象の文字列.
+	 * @param[in] srcStr      置き換え前の文字列.
+	 * @param[in] dstStr      置き換え後の文字列.
+	 * @return 変換された文字列.
+	 */
+	std::string replaceString (const std::string& targetStr, const std::string& srcStr, const std::string& dstStr);
+
+	/**
+	 * テキストをHTML用に変換.
+	 *  & ==> &amp;  < ==> &lt; など.
+	 */
+	std::string convHTMLEncode (const std::string& str);
+
+	/**
+	 * HTML用のテキストを元に戻す.
+	 *  &amp; ==> &   &lt; ==> < など.
+	 */
+	std::string convHTMLDecode (const std::string& str);
+
 }
 
 #endif

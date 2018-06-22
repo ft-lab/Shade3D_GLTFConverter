@@ -490,19 +490,19 @@ namespace {
 		std::string keyName = "";
 		if ((keyName = findJSONKeyName(doc, "author")) != "") {
 			rapidjson::Value& v = doc[keyName.c_str()];
-			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasAuthor = std::string(v.GetString());
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasAuthor = StringUtil::convHTMLDecode(v.GetString());
 		}
 		if ((keyName = findJSONKeyName(doc, "license")) != "") {
 			rapidjson::Value& v = doc[keyName.c_str()];
-			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasLicense = std::string(v.GetString());
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasLicense = StringUtil::convHTMLDecode(v.GetString());
 		}
 		if ((keyName = findJSONKeyName(doc, "source")) != "") {
 			rapidjson::Value& v = doc[keyName.c_str()];
-			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasSource = std::string(v.GetString());
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasSource = StringUtil::convHTMLDecode(v.GetString());
 		}
 		if ((keyName = findJSONKeyName(doc, "title")) != "") {
 			rapidjson::Value& v = doc[keyName.c_str()];
-			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasTitle = std::string(v.GetString());
+			if (v.GetType() == rapidjson::kStringType) sceneData->assetExtrasTitle = StringUtil::convHTMLDecode(v.GetString());
 		}
 	}
 
