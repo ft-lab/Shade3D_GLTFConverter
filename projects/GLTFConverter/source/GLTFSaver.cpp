@@ -744,13 +744,24 @@ namespace {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
 
-		const std::string fileName = sceneData->getFileName(false);		// 拡張子を除いたファイル名を取得.
+		std::string fileName = sceneData->getFileName(false);		// 拡張子を除いたファイル名を取得.
+		// Windows環境の場合、.
+		// fileNameに日本語ディレクトリなどがあると出力に失敗するので、SJISに置き換える.
+	#if _WINDOWS
+		StringUtil::convUTF8ToSJIS(fileName, fileName);
+	#endif
 
 		// binの出力ファイル名.
-		const std::string binFileName = sceneData->getFileName(false) + std::string(".bin");
+		std::string binFileName = sceneData->getFileName(false) + std::string(".bin");
+	#if _WINDOWS
+		StringUtil::convUTF8ToSJIS(binFileName, binFileName);
+	#endif
 
 		// 出力ディレクトリ.
-		const std::string fileDir = sceneData->getFileDir();
+		std::string fileDir = sceneData->getFileDir();
+	#if _WINDOWS
+		StringUtil::convUTF8ToSJIS(fileDir, fileDir);
+	#endif
 
 		// ファイル拡張子 (gltf/glb).
 		const std::string fileExtension = sceneData->getFileExtension();
@@ -1190,7 +1201,6 @@ namespace {
 	void setImagesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade) {
 		const size_t imagesCou = sceneData->images.size();
 
-
 		std::vector<std::string> imageFileNameList;
 		imageFileNameList.resize(imagesCou, "");
 
@@ -1258,7 +1268,10 @@ namespace {
 		if (bufferBuilder) {
 			for (size_t i = 0; i < imagesCou; ++i) {
 				// ファイル出力した画像をいったん読み込み、bufferBuilderに格納する.
-				const std::string fileName = imageFileNameList[i];
+				std::string fileName = imageFileNameList[i];
+#if _WINDOWS
+				StringUtil::convUTF8ToSJIS(fileName, fileName);
+#endif
 
 				try {
 					std::shared_ptr<BinStreamReader> binStreamReader;
@@ -1395,6 +1408,15 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 	std::string json = "";
 	g_errorMessage = "";
 
+	// Windows環境の場合、fileNameに日本語ディレクトリなどがあると出力に失敗するので、.
+	// SJISに置き換える.
+	std::string filePath2 = fileName;
+#if _WINDOWS
+	StringUtil::convUTF8ToSJIS(fileName, filePath2);
+#endif
+	const std::string fileDir2  = StringUtil::getFileDir(filePath2);
+	const std::string fileName2 = StringUtil::getFileName(filePath2);
+
 	try {
 		GLTFDocument gltfDoc;
 		gltfDoc.images.Clear();
@@ -1403,11 +1425,11 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		gltfDoc.accessors.Clear();
 
 		// GLB出力用.
-		auto glbStreamFactory = std::make_unique<OutputGLBStreamFactory>(sceneData->getFileDir(), sceneData->getFileName());
+		auto glbStreamFactory = std::make_unique<OutputGLBStreamFactory>(fileDir2, fileName2);
 
 		std::unique_ptr<BufferBuilder> glbBuilder;
 		if (sceneData->getFileExtension() == "glb") {
-			auto glbWriter = std::make_unique<GLBResourceWriter2>(std::move(glbStreamFactory), sceneData->filePath);
+			auto glbWriter = std::make_unique<GLBResourceWriter2>(std::move(glbStreamFactory), filePath2);
 			glbBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
 			glbBuilder->AddBuffer(GLB_BUFFER_ID);
 		}
@@ -1470,7 +1492,7 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		} else {
 			// gltfファイルを出力.
 			std::string gltfJson = Serialize(gltfDoc, SerializeFlags::Pretty);
-			std::ofstream outStream(fileName.c_str(), std::ios::trunc | std::ios::out);
+			std::ofstream outStream(filePath2.c_str(), std::ios::trunc | std::ios::out);
 			outStream << gltfJson;
 			outStream.flush();
 		}

@@ -49,6 +49,11 @@ namespace StringUtil
 	 */
 	std::string convHTMLDecode (const std::string& str);
 
+	/**
+	 * UTF-8の文字列をSJISに変換.
+	 */
+	int convUTF8ToSJIS (const std::string& utf8Str, std::string& sjisStr);
+
 }
 
 #endif

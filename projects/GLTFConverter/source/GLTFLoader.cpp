@@ -87,7 +87,11 @@ namespace {
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			try {
-				const std::string fileDir = sceneData->getFileDir();
+				std::string fileDir = sceneData->getFileDir();
+				// Windows環境の場合、fileNameに日本語ディレクトリなどがあると読み込みに失敗するので、SJISに置き換える.
+#if _WINDOWS
+				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
+#endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(*binStreamReader));
 			} catch (...) {
@@ -723,7 +727,10 @@ namespace {
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			try {
-				const std::string fileDir = sceneData->getFileDir();
+				std::string fileDir = sceneData->getFileDir();
+#if _WINDOWS
+				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
+#endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(*binStreamReader));
 			} catch (...) {
@@ -1072,6 +1079,13 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 {
 	if (!sceneData) return false;
 
+	// Windows環境の場合、fileNameに日本語ディレクトリなどがあると読み込みに失敗するので、.
+	// SJISに置き換える.
+	std::string fileName2 = fileName;
+#if _WINDOWS
+	StringUtil::convUTF8ToSJIS(fileName, fileName2);
+#endif
+
 	g_errorMessage = "";
 	sceneData->clear();
 
@@ -1089,7 +1103,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	if (glbFile) {
 		try {
 			// glbファイルを読み込み.
-			auto glbStream = std::make_shared<std::ifstream>(fileName, std::ios::binary);
+			auto glbStream = std::make_shared<std::ifstream>(fileName2, std::ios::binary);
 			auto streamReader = std::make_unique<InStream>();
 			reader.reset(new GLBResourceReader(*streamReader, glbStream));
 
@@ -1108,7 +1122,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		// 拡張子gltfを読み込んだ場合は、.
 		// 読み込んだgltfファイル(json)からbuffers/imagesのuriを使ってbinや画像を別途読み込む必要がある.
 		try {
-			std::ifstream gltfStream(fileName);
+			std::ifstream gltfStream(fileName2);
 			if (!gltfStream) return false;
 
 			// json部を取得.
