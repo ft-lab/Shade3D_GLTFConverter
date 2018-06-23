@@ -102,6 +102,32 @@ Shade3Dでボーンを扱う際は、「軸の整列」の「自動で軸合わ�
 「頂点カラーを出力」チェックボックスをオンにすると、ポリゴンメッシュに割り当てられた頂点カラー情報も出力します。    
 「アニメーションを出力」チェックボックスをオンにすると、ボーン＋スキンのモーションを割り当てている場合にそのときのキーフレーム情報を出力します。    
 
+「Asset情報」で主にOculus Homeにglbファイルを持っていくときの情報を指定できます(ver.0.1.0.8 追加)。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_dlg_asset.png"/>     
+※ Oculus Homeでは全角の指定は文字化けしますので、半角英数字で指定する必要があります。    
+「タイトル」で3Dモデルの名前を指定します。    
+「作成者」で3Dモデルの作成者を指定します。    
+「ライセンス選択」でライセンスの種類を、All rights reserved、Creative Commons、Public domain、その他、から指定します。    
+その他の場合は、「ライセンス」に任意のテキストを入力できます。    
+「ライセンス選択」で選択されたときの説明文が表示されますので、もっとも適するライセンス形態を選ぶようにします。    
+「原型モデルの参照先」で、モデルデータを提供しているURLなどを指定します。    
+
+ライセンスの種類は以下のものがあります。    
+
+|ライセンスの種類|説明|    
+|----|----|    
+|All rights reserved|著作権を持ちます|   
+|CC BY-4.0 ( https://creativecommons.org/licenses/by/4.0/ )|作品のクレジットを表示する必要あり。改変OK/営利OK。|   
+|CC BY-SA-4.0 ( https://creativecommons.org/licenses/by-sa/4.0/ )|作品のクレジットを表示する必要あり。改変OK/営利OK/継承。|   
+|CC BY-NC-4.0 ( https://creativecommons.org/licenses/by-nc/4.0/ )|作品のクレジットを表示する必要あり。改変OK/非営利。|   
+|CC BY-ND-4.0 ( https://creativecommons.org/licenses/by-nd/4.0/ )|作品のクレジットを表示する必要あり。改変禁止/営利OK。|   
+|CC BY-NC-SA-4.0 ( https://creativecommons.org/licenses/by-nc-sa/4.0/ )|作品のクレジットを表示する必要あり。改変OK/非営利/継承。|   
+|CC BY-NC-ND-4.0 ( https://creativecommons.org/licenses/by-nc-nd/4.0/ )|作品のクレジットを表示する必要あり。改変禁止/非営利。|   
+|CC0(Public domain) ( https://creativecommons.org/publicdomain/zero/1.0/ )|著作権を放棄します|   
+
+「Creative Commons」については「 https://creativecommons.jp/licenses/ 」を参照してください。    
+「Public domain」については「 https://creativecommons.org/publicdomain/zero/1.0/ 」を参照してください。    
+
 ### インポートオプション
 
 インポート時にダイアログボックスが表示され、オプション指定できます。   
@@ -214,6 +240,10 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/06/23] ver.0.1.0.8   
+* Export : エクスポート時のダイアログボックスで、Asset情報として「タイトル」「作成者」「ライセンス」「原型モデルの参照先」を指定できるようにした
+* Export/Import : 出力/入力時のglTF/glbのファイルパスで全角のフォルダ名がある場合などに処理に失敗する問題を修正
 
 [2018/06/20] ver.0.1.0.7   
 * Export : 表面材質の「イメージ/拡散反射」で合成が「乗算」の場合は、Occlusionとして出力（暫定対応）
