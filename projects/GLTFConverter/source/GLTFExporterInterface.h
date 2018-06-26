@@ -303,6 +303,13 @@ private:
 	 */
 	int m_getLicenseStringToIndex (const std::string& str);
 
+	/**
+	 * surface情報より、RoughnessMetallicOcclusionをパックしたイメージを生成.
+	 * @param[in]  surface       対応するShade3Dのsurfaceクラス.
+	 * @param[out] materialData  マテリアル情報を返すクラス.
+	 */
+	sxsdk::image_interface* m_createRoughnessMetallicOcclusionImageFromMaterial (sxsdk::surface_class* surface, CMaterialData& materialData);
+
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);
 	~CGLTFExporterInterface ();

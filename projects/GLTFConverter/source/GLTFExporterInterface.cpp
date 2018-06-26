@@ -7,6 +7,7 @@
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
 #include "StreamCtrl.h"
+#include "ImagesBlend.h"
 
 #include <iostream>
 #include <map>
@@ -915,6 +916,30 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 	} catch (...) { }
 
 	return false;
+}
+
+/**
+ * surface情報より、RoughnessMetallicOcclusionをパックしたイメージを生成.
+ * glTFの場合は、Roughness/Metallicマップの (B)にMetallic、(G)にRoughness、(R)にOcclusionを格納することになる.
+  * @param[in]  surface       対応するShade3Dのsurfaceクラス.
+ * @param[out] materialData  マテリアル情報を返すクラス.
+ */
+sxsdk::image_interface* CGLTFExporterInterface::m_createRoughnessMetallicOcclusionImageFromMaterial (sxsdk::surface_class* surface, CMaterialData& materialData)
+{
+	try {
+		const int mappingLayerCou = surface->get_number_of_mapping_layers();
+		if (mappingLayerCou == 0) return NULL;
+
+		for (int i = 0; i < mappingLayerCou; ++i) {
+			sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+			const float weight = mappingLayer.get_weight();
+			if (MathUtil::isZero(weight)) continue;
+		}
+
+	} catch (...) { }
+
+	return NULL;
 }
 
 bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData)
