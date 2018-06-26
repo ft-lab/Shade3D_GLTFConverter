@@ -343,6 +343,7 @@ namespace {
 				}
 			}
 			if (materialD.metallicRoughnessImageIndex >= 0) {		// TODO : まだ途中.
+				material.metallicRoughness.metallicRoughnessTexture.textureId = std::to_string(materialD.metallicRoughnessImageIndex);
 				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
 			}
 			if (materialD.occlusionImageIndex >= 0) {				// TODO : まだ途中.
@@ -1206,7 +1207,7 @@ namespace {
 
 		for (size_t i = 0; i < imagesCou; ++i) {
 			const CImageData& imageD = sceneData->images[i];
-			if (!imageD.m_shadeMasterImage) continue;
+			if (!imageD.m_shadeMasterImage && !imageD.shadeImage) continue;
 			std::string fileName = StringUtil::getFileName(imageD.name);
 			if (fileName == "") fileName = std::string("image_") + std::to_string(i);
 
@@ -1230,7 +1231,7 @@ namespace {
 
 			try {
 				// 画像ファイルを指定の拡張子(jpg/png)で保存.
-				sxsdk::image_interface *image = imageD.m_shadeMasterImage->get_image();
+				sxsdk::image_interface *image = (imageD.m_shadeMasterImage) ? (imageD.m_shadeMasterImage->get_image()) : imageD.shadeImage;
 				if (!image) continue;
 				const std::string fileFullPath = (sceneData->getFileDir()) + std::string("/") + fileName;
 				image->save(fileFullPath.c_str());

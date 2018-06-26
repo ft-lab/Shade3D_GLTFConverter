@@ -18,6 +18,10 @@ bool MathUtil::isZero (const sxsdk::rgb_class& v, const float fMin)
 {
 	return (std::abs(v.red) < fMin && std::abs(v.green) < fMin && std::abs(v.blue) < fMin);
 }
+bool MathUtil::isZero (const sxsdk::rgba_class& v, const float fMin)
+{
+	return (std::abs(v.red) < fMin && std::abs(v.green) < fMin && std::abs(v.blue) < fMin  && std::abs(v.alpha) < fMin);
+}
 
 bool MathUtil::isZero (const sxsdk::quaternion_class& v, const float fMin)
 {
