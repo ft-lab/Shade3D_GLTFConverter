@@ -205,6 +205,13 @@ public:
 	std::string getUniqueMaterialName (const std::string& name);
 
 	/**
+	 * 他とかぶらないユニークなイメージ名を取得.
+	 * @param[in] name  格納したいイメージ名.
+	 * @return 他とはかぶらないイメージ名.
+	 */
+	std::string getUniqueImageName (const std::string& name);
+
+	/**
 	 * ローカル座標からワールド座標の変換行列を取得
 	 * @param[in] nodeIndex  ノード番号.
 	 * @return 変換行列.

@@ -832,15 +832,15 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			}
 		}
 
-		// Diffuseのテクスチャを持つ場合.
-		if (imageBlend.hasDiffuseImage()) {
+		// BaseColorのテクスチャを持つ場合.
+		if (imageBlend.getGLTFBaseColorImage()) {
 			int imageIndex = -1;
 			{
 				CImageData imageData;
-				imageData.shadeImage = imageBlend.getDiffuseImage();
+				imageData.shadeImage = imageBlend.getGLTFBaseColorImage();
 				imageData.width  = imageData.shadeImage->get_size().x;
 				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = std::string("baseColor");
+				imageData.name   = m_sceneData->getUniqueImageName("baseColor");
 				imageIndex = m_sceneData->findSameImage(imageData);
 				if (imageIndex < 0) {
 					imageIndex = (int)m_sceneData->images.size();
@@ -851,6 +851,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				const sx::vec<int,2> repeat = imageBlend.getDiffuseRepeat();
 				materialData.baseColorImageIndex = imageIndex;
 				materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+				materialData.baseColorTexCoord   = imageBlend.getDiffuseTexCoord();
 
 				// アルファ透過する場合.
 				if (imageBlend.getDiffuseAlphaTrans()) {
@@ -863,6 +864,28 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			}
 		}
 
+		// glTFとしてのRoughness/Metallicのテクスチャを持つ場合.
+		if (imageBlend.getGLTFMetallicRoughnessImage()) {
+			int imageIndex = -1;
+			{
+				CImageData imageData;
+				imageData.shadeImage = imageBlend.getGLTFMetallicRoughnessImage();
+				imageData.width  = imageData.shadeImage->get_size().x;
+				imageData.height = imageData.shadeImage->get_size().y;
+				imageData.name   = m_sceneData->getUniqueImageName("metallicRoughness");
+				imageIndex = m_sceneData->findSameImage(imageData);
+				if (imageIndex < 0) {
+					imageIndex = (int)m_sceneData->images.size();
+					m_sceneData->images.push_back(imageData);
+				}
+			}
+			if (imageIndex >= 0) {
+				const sx::vec<int,2> repeat(1, 1);
+				materialData.metallicRoughnessImageIndex = imageIndex;
+				materialData.metallicRoughnessTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+			}
+		}
+
 		// Normalのテクスチャを持つ場合.
 		if (imageBlend.hasNormalImage()) {
 			int imageIndex = -1;
@@ -871,7 +894,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				imageData.shadeImage = imageBlend.getNormalImage();
 				imageData.width  = imageData.shadeImage->get_size().x;
 				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = std::string("normal");
+				imageData.name   = m_sceneData->getUniqueImageName("normal");
 				imageIndex = m_sceneData->findSameImage(imageData);
 				if (imageIndex < 0) {
 					imageIndex = (int)m_sceneData->images.size();
@@ -882,6 +905,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				const sx::vec<int,2> repeat = imageBlend.getNormalRepeat();
 				materialData.normalImageIndex = imageIndex;
 				materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+				materialData.normalTexCoord   = imageBlend.getNormalTexCoord();
 			}
 		}
 
@@ -893,7 +917,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				imageData.shadeImage = imageBlend.getGlowImage();
 				imageData.width  = imageData.shadeImage->get_size().x;
 				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = std::string("emissive");
+				imageData.name   = m_sceneData->getUniqueImageName("emissive");
 				imageIndex = m_sceneData->findSameImage(imageData);
 				if (imageIndex < 0) {
 					imageIndex = (int)m_sceneData->images.size();
@@ -904,90 +928,12 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				const sx::vec<int,2> repeat = imageBlend.getGlowRepeat();
 				materialData.emissionImageIndex = imageIndex;
 				materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-			}
-		}
-
-		// Roughness/Reflectionイメージより、eRoughnessMetallic情報を格納.
-		if (imageBlend.hasRoughnessImage() || imageBlend.hasReflectionImage()) {
-			if (m_storeRoughnessMetallicImageFromMaterial(imageBlend.getRoughnessImage(), imageBlend.getReflectionImage(), materialData)) {
-				const sx::vec<int,2> repeat = (imageBlend.hasRoughnessImage()) ? imageBlend.getRoughnessRepeat() : imageBlend.getReflectionRepeat();
-				materialData.metallicRoughnessTexScale = sxsdk::vec2(repeat.x, repeat.y);
+				materialData.emissionTexCoord   = imageBlend.getGlowTexCoord();
 			}
 		}
 
 		return true;
 
-	} catch (...) { }
-
-	return false;
-}
-
-/**
- * surface情報より、RoughnessMetallicをパックしたイメージを生成.
- * @param[in]  roughnessImage   Shade3DからのRoughnessのイメージ.
- * @param[in]  reflectionImage  Shade3DからのReflectionのイメージ.
- * @param[out] materialData  マテリアル情報を返すクラス.
- */
-bool CGLTFExporterInterface::m_storeRoughnessMetallicImageFromMaterial (sxsdk::image_interface* roughnessImage, sxsdk::image_interface* reflectionImage, CMaterialData& materialData)
-{
-	if (!roughnessImage && !reflectionImage) return false;
-
-	const int width  = (roughnessImage) ? (roughnessImage->get_size().x) : (reflectionImage->get_size().x);
-	const int height = (roughnessImage) ? (roughnessImage->get_size().y) : (reflectionImage->get_size().y);
-
-	try {
-		// width x heightの白のイメージを生成.
-		const sxsdk::rgba_class whiteCol(1, 1, 1, 1);
-		compointer<sxsdk::image_interface> newImage(m_pScene->create_image_interface(sx::vec<int,2>(width, height)));
-		std::vector<sxsdk::rgba_class> lineD, lineD2;
-		lineD.resize(width, whiteCol);
-		lineD2.resize(width, whiteCol);
-		for (int y = 0; y < height; ++y) {
-			newImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-		}
-
-		// Shade3DのRoughnessマップはglTFのRoughnessとは逆の値が入っているため、1.0 - v としている.
-		if (roughnessImage) {
-			compointer<sxsdk::image_interface> image2(roughnessImage->duplicate_image(&(sx::vec<int,2>(width, height))));
-			for (int y = 0; y < height; ++y) {
-				newImage->get_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-				image2->get_pixels_rgba_float(0, y, width, 1, &(lineD2[0]));
-
-				for (int x = 0; x < width; ++x) lineD[x].green = 1.0f - lineD2[x].red;
-				newImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-			}
-		}
-
-		// ReflectionマップをMetallicとして格納.
-		if (reflectionImage) {
-			compointer<sxsdk::image_interface> image2(reflectionImage->duplicate_image(&(sx::vec<int,2>(width, height))));
-			for (int y = 0; y < height; ++y) {
-				newImage->get_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-				image2->get_pixels_rgba_float(0, y, width, 1, &(lineD2[0]));
-
-				for (int x = 0; x < width; ++x) lineD[x].blue = lineD2[x].red;
-				newImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-			}
-		}
-
-		int imageIndex = -1;
-		{
-			CImageData imageData;
-			imageData.shadeImage = newImage;
-			imageData.width  = imageData.shadeImage->get_size().x;
-			imageData.height = imageData.shadeImage->get_size().y;
-			imageData.name   = std::string("roughness-metallic");
-			imageIndex = m_sceneData->findSameImage(imageData);
-			if (imageIndex < 0) {
-				imageIndex = (int)m_sceneData->images.size();
-				m_sceneData->images.push_back(imageData);
-			}
-		}
-		if (imageIndex >= 0) {
-			materialData.metallicRoughnessImageIndex = imageIndex;
-		}
-
-		return true;
 	} catch (...) { }
 
 	return false;

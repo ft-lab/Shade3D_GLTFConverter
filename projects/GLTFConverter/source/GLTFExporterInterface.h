@@ -303,14 +303,6 @@ private:
 	 */
 	int m_getLicenseStringToIndex (const std::string& str);
 
-	/**
-	 * surface情報より、RoughnessMetallicをパックしたイメージを生成.
-	 * @param[in]  roughnessImage   Shade3DからのRoughnessのイメージ.
-	 * @param[in]  reflectionImage  Shade3DからのReflectionのイメージ.
-	 * @param[out] materialData  マテリアル情報を返すクラス.
-	 */
-	bool m_storeRoughnessMetallicImageFromMaterial (sxsdk::image_interface* roughnessImage, sxsdk::image_interface* reflectionImage, CMaterialData& materialData);
-
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);
 	~CGLTFExporterInterface ();
