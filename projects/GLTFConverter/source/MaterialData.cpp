@@ -21,14 +21,14 @@ void CMaterialData::clear ()
 	alphaMode   = 1;
 	doubleSided = false;
 	baseColorFactor = sxsdk::rgb_class(1, 1, 1);
-	emissionFactor  = sxsdk::rgb_class(0, 0, 0);
+	emissiveFactor  = sxsdk::rgb_class(0, 0, 0);
 	roughnessFactor  = 1.0f;
 	metallicFactor   = 0.0f;
 	occlusionStrength = 1.0f;
 
 	baseColorImageIndex         = -1;
 	normalImageIndex            = -1;
-	emissionImageIndex          = -1;
+	emissiveImageIndex          = -1;
 	metallicRoughnessImageIndex = -1;
 	occlusionImageIndex         = -1;
 
@@ -36,13 +36,13 @@ void CMaterialData::clear ()
 
 	baseColorTexCoord         = 0;
 	normalTexCoord            = 0;
-	emissionTexCoord          = 0;
+	emissiveTexCoord          = 0;
 	metallicRoughnessTexCoord = 0;
 	occlusionTexCoord         = 0;
 
 	baseColorTexScale         = sxsdk::vec2(1, 1);
 	normalTexScale            = sxsdk::vec2(1, 1);
-	emissionTexScale          = sxsdk::vec2(1, 1);
+	emissiveTexScale          = sxsdk::vec2(1, 1);
 	metallicRoughnessTexScale = sxsdk::vec2(1, 1);
 	occlusionTexScale         = sxsdk::vec2(1, 1);
 }
@@ -65,25 +65,25 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->alphaMode) != v.alphaMode) return false;
 	if ((this->doubleSided) != v.doubleSided) return false;
 	if (!MathUtil::isZero((this->baseColorFactor) - v.baseColorFactor)) return false;
-	if (!MathUtil::isZero((this->emissionFactor) - v.emissionFactor)) return false;
+	if (!MathUtil::isZero((this->emissiveFactor) - v.emissiveFactor)) return false;
 	if (!MathUtil::isZero((this->roughnessFactor) - v.roughnessFactor)) return false;
 	if (!MathUtil::isZero((this->metallicFactor) - v.metallicFactor)) return false;
 	if (!MathUtil::isZero((this->occlusionStrength) - v.occlusionStrength)) return false;
 	if ((this->baseColorImageIndex) != v.baseColorImageIndex) return false;
 	if ((this->normalImageIndex) != v.normalImageIndex) return false;
-	if ((this->emissionImageIndex) != v.emissionImageIndex) return false;
+	if ((this->emissiveImageIndex) != v.emissiveImageIndex) return false;
 	if ((this->metallicRoughnessImageIndex) != v.metallicRoughnessImageIndex) return false;
 	if ((this->occlusionImageIndex) != v.occlusionImageIndex) return false;
 
 	if ((this->baseColorTexCoord) != v.baseColorTexCoord) return false;
 	if ((this->normalTexCoord) != v.normalTexCoord) return false;
-	if ((this->emissionTexCoord) != v.emissionTexCoord) return false;
+	if ((this->emissiveTexCoord) != v.emissiveTexCoord) return false;
 	if ((this->metallicRoughnessTexCoord) != v.metallicRoughnessTexCoord) return false;
 	if ((this->occlusionTexCoord) != v.occlusionTexCoord) return false;
 
 	if ((this->baseColorTexScale)         != v.baseColorTexScale) return false;
 	if ((this->normalTexScale)            != v.normalTexScale) return false;
-	if ((this->emissionTexScale)          != v.emissionTexScale) return false;
+	if ((this->emissiveTexScale)          != v.emissiveTexScale) return false;
 	if ((this->metallicRoughnessTexScale) != v.metallicRoughnessTexScale) return false;
 	if ((this->occlusionTexScale)         != v.occlusionTexScale) return false;
 

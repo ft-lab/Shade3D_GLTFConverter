@@ -810,7 +810,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	try {
 		materialData.baseColorFactor = sxsdk::rgb_class(0.8f, 0.8f, 0.8f);
-		materialData.emissionFactor  = sxsdk::rgb_class(0, 0, 0);
+		materialData.emissiveFactor  = sxsdk::rgb_class(0, 0, 0);
 		materialData.metallicFactor  = 0.0f;
 		materialData.roughnessFactor = 1.0f;
 
@@ -819,7 +819,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		}
 
 		if (surface->get_has_glow()) {
-			materialData.emissionFactor = (surface->get_glow_color()) * (surface->get_glow());
+			materialData.emissiveFactor = (surface->get_glow_color()) * (surface->get_glow());
 		}
 
 		if (surface->get_has_reflection()) {
@@ -892,9 +892,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							storeNormalImage = true;
 
 						} else if (mType == sxsdk::enums::glow_mapping) {
-							materialData.emissionImageIndex = imageIndex;
-							materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-							materialData.emissionTexCoord   = imageBlend.getTexCoord(mType);
+							materialData.emissiveImageIndex = imageIndex;
+							materialData.emissiveTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.emissiveTexCoord   = imageBlend.getTexCoord(mType);
 							storeEmissiveImage = true;
 						}
 					}
@@ -935,9 +935,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							storeNormalImage = true;
 
 						} else if (mType == sxsdk::enums::glow_mapping) {
-							materialData.emissionImageIndex = imageIndex;
-							materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-							materialData.emissionTexCoord   = imageBlend.getTexCoord(mType);
+							materialData.emissiveImageIndex = imageIndex;
+							materialData.emissiveTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.emissiveTexCoord   = imageBlend.getTexCoord(mType);
 							storeEmissiveImage = true;
 						}
 					}

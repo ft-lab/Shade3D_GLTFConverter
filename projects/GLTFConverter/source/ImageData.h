@@ -25,7 +25,7 @@ public:
 		gltf_image_mask_roughness = 0x0004,			// Roughness.
 		gltf_image_mask_metallic = 0x0008,			// Metallic.
 		gltf_image_mask_occlusion = 0x0010,			// Occlusion.
-		gltf_image_mask_emission = 0x0020,			// Emission (RGB).
+		gltf_image_mask_emissive = 0x0020,			// Emissive (RGB).
 	};
 
 public:

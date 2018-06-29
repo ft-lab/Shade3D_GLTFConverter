@@ -283,7 +283,7 @@ namespace {
 		for (size_t i = 0; i < mCou; ++i) {
 			const CMaterialData& materialD = sceneData->materials[i];
 			if (materialD.baseColorTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
-			if (materialD.emissionTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.emissiveTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
 			if (materialD.normalTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
 			if (materialD.metallicRoughnessTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
 			if (materialD.occlusionTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
@@ -303,7 +303,7 @@ namespace {
 			material.name        = materialD.name;
 			material.doubleSided = materialD.doubleSided;
 			material.alphaMode   = ALPHA_OPAQUE;
-			material.emissiveFactor = Color3(materialD.emissionFactor.red, materialD.emissionFactor.green, materialD.emissionFactor.blue);
+			material.emissiveFactor = Color3(materialD.emissiveFactor.red, materialD.emissiveFactor.green, materialD.emissiveFactor.blue);
 
 			material.metallicRoughness.baseColorFactor = Color4(materialD.baseColorFactor.red, materialD.baseColorFactor.green, materialD.baseColorFactor.blue, 1.0f);
 			material.metallicRoughness.metallicFactor  = materialD.metallicFactor;
@@ -321,13 +321,13 @@ namespace {
 				}
 			}
 
-			if (materialD.emissionImageIndex >= 0) {
-				material.emissiveTexture.textureId =  std::to_string(materialD.emissionImageIndex);
-				material.emissiveTexture.texCoord  = (size_t)materialD.emissionTexCoord;
+			if (materialD.emissiveImageIndex >= 0) {
+				material.emissiveTexture.textureId =  std::to_string(materialD.emissiveImageIndex);
+				material.emissiveTexture.texCoord  = (size_t)materialD.emissiveTexCoord;
 
 				// テクスチャのTiling情報を指定.
 				{
-					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.emissionTexScale);
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.emissiveTexScale);
 					if (str != "") material.emissiveTexture.extensions["KHR_texture_transform"] = str;
 				}
 			}

@@ -626,8 +626,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			}
 
 			// 発光をマッピングレイヤとして追加.
-			if (materialD.emissionImageIndex >= 0) {
-				surface->set_glow_color(materialD.emissionFactor);
+			if (materialD.emissiveImageIndex >= 0) {
+				surface->set_glow_color(materialD.emissiveFactor);
 				surface->set_glow(1.0f);
 
 				surface->append_mapping_layer();
@@ -637,21 +637,21 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_type(sxsdk::enums::glow_mapping);
 
 				// テクスチャ画像を割り当て.
-				if (sceneData->images[materialD.emissionImageIndex].shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.emissionImageIndex].shadeMasterImage->get_image());
+				if (sceneData->images[materialD.emissiveImageIndex].shadeMasterImage) {
+					compointer<sxsdk::image_interface> image(sceneData->images[materialD.emissiveImageIndex].shadeMasterImage->get_image());
 					mLayer.set_image_interface(image);
 				}
 
 				mLayer.set_blur(true);
-				mLayer.set_uv_mapping(materialD.emissionTexCoord);
-				mLayer.set_repetition_x(std::max(1, (int)materialD.emissionTexScale.x));
-				mLayer.set_repetition_y(std::max(1, (int)materialD.emissionTexScale.y));
+				mLayer.set_uv_mapping(materialD.emissiveTexCoord);
+				mLayer.set_repetition_x(std::max(1, (int)materialD.emissiveTexScale.x));
+				mLayer.set_repetition_y(std::max(1, (int)materialD.emissiveTexScale.y));
 
 			} else {
-				if (MathUtil::isZero(materialD.emissionFactor)) {
+				if (MathUtil::isZero(materialD.emissiveFactor)) {
 					surface->set_glow(0.0f);
 				} else {
-					surface->set_glow_color(materialD.emissionFactor);
+					surface->set_glow_color(materialD.emissiveFactor);
 					surface->set_glow(1.0f);
 				}
 			}

@@ -534,7 +534,7 @@ namespace {
 			}
 			{
 				Color3 col = material.emissiveFactor;
-				dstMaterialData.emissionFactor = sxsdk::rgb_class(col.r, col.g, col.b);
+				dstMaterialData.emissiveFactor = sxsdk::rgb_class(col.r, col.g, col.b);
 			}
 			dstMaterialData.metallicFactor    = material.metallicRoughness.metallicFactor;
 			dstMaterialData.roughnessFactor   = material.metallicRoughness.roughnessFactor;
@@ -588,7 +588,7 @@ namespace {
 				}
 			}
 
-			// EmissionのテクスチャIDを取得.
+			// emissiveのテクスチャIDを取得.
 			if (material.emissiveTexture.textureId != "") {
 				// テクスチャIDを取得.
 				const int textureID = std::stoi(material.emissiveTexture.textureId);
@@ -596,9 +596,9 @@ namespace {
 				// イメージIDを取得.
 				const Texture& texture = gltfDoc.textures[textureID];
 				if (texture.imageId != "") {
-					dstMaterialData.emissionImageIndex = std::stoi(texture.imageId);
+					dstMaterialData.emissiveImageIndex = std::stoi(texture.imageId);
 				}
-				dstMaterialData.emissionTexCoord = (int)material.emissiveTexture.texCoord;
+				dstMaterialData.emissiveTexCoord = (int)material.emissiveTexture.texCoord;
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.emissiveTexture.extensions.size() > 0) {
@@ -606,7 +606,7 @@ namespace {
 					if (textureTransformStr != "") {
 						sxsdk::vec2 offset, scale;
 						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.emissionTexScale = scale;
+						dstMaterialData.emissiveTexScale = scale;
 					}
 				}
 			}
@@ -671,11 +671,11 @@ namespace {
 					imageD.imageMask = CImageData::gltf_image_mask_base_color;
 				}
 			}
-			if (materialD.emissionImageIndex >= 0) {
-				CImageData& imageD = sceneData->images[materialD.emissionImageIndex];
+			if (materialD.emissiveImageIndex >= 0) {
+				CImageData& imageD = sceneData->images[materialD.emissiveImageIndex];
 				if (imageD.name == "") {
-					imageD.name = materialD.name + std::string("_emission");
-					imageD.imageMask = CImageData::gltf_image_mask_emission;
+					imageD.name = materialD.name + std::string("_emissive");
+					imageD.imageMask = CImageData::gltf_image_mask_emissive;
 				}
 			}
 			if (materialD.normalImageIndex >= 0) {
