@@ -122,16 +122,21 @@ std::string CSceneData::outputTempImage (const int imageIndex, const std::string
 
 	// フルパスファイル名.
 	std::string fileName = tempPath + std::string("/") + name;
+	std::string fileName2 = fileName;
+#if _WINDOWS
+	// ファイル名がUTF-8だと読み込めないため、UTF-8に変換.
+	StringUtil::convUTF8ToSJIS(fileName2, fileName2);
+#endif
 
 	try {
-		std::ofstream outStream(fileName, std::ios::out | std::ios::binary | std::ios::trunc);
+		std::ofstream outStream(fileName2, std::ios::out | std::ios::binary | std::ios::trunc);
 		outStream.write((char *)&(imageD.imageDatas[0]), imageD.imageDatas.size());
 		outStream.flush();
 	} catch (...) {
 		return "";
 	}
 
-	return fileName;
+	return fileName;	// ここのファイル名はUTF-8.
 }
 
 /**
