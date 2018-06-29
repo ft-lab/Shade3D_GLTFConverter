@@ -22,6 +22,11 @@ namespace MathUtil {
 	 */
 	sxsdk::vec3 calcTriangleNormal (const sxsdk::vec3& v1, const sxsdk::vec3& v2, const sxsdk::vec3& v3);
 
+	/**
+	 * 三角形の面積を計算.
+	 */
+	double calcTriangleArea (const sxsdk::vec3& v1, const sxsdk::vec3& v2, const sxsdk::vec3& v3);
+
 }
 
 #endif

@@ -40,31 +40,88 @@ void CTempMeshData::clear ()
  */
 void CTempMeshData::optimize ()
 {
-	const size_t versCou = vertices.size();
-
-	std::vector<int> useVersList;
-	useVersList.resize(versCou, -1);
-
-	for (size_t i = 0; i < triangleIndices.size(); ++i) {
-		useVersList[ triangleIndices[i] ] = 1;
-	}
+	// 面積が0の面を削除.
 	{
-		int iPos = 0;
-		for (size_t i = 0; i < versCou; ++i) {
-			if (useVersList[i] > 0) useVersList[i] = iPos++;
+		const float fMin = (float)(1e-5);
+		const size_t triCou = triangleIndices.size() / 3;
+		std::vector<int> removeTriIndexList;
+		const float scale = 1000.0f;
+		{
+			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				const int i1 = triangleIndices[iPos + 0];
+				const int i2 = triangleIndices[iPos + 1];
+				const int i3 = triangleIndices[iPos + 2];
+				if (i1 == i2 || i1 == i3 || i2 == i3) {
+					removeTriIndexList.push_back(i);
+					continue;
+				}
+				const sxsdk::vec3 v1 = vertices[i1] * scale;
+				const sxsdk::vec3 v2 = vertices[i2] * scale;
+				const sxsdk::vec3 v3 = vertices[i3] * scale;
+				if (MathUtil::isZero(v1 - v2, fMin) || MathUtil::isZero(v2 - v3, fMin) || MathUtil::isZero(v1 - v3, fMin)) {
+					removeTriIndexList.push_back(i);
+					continue;
+				}
+				if (MathUtil::calcTriangleArea(v1, v2, v3) < fMin) {
+					removeTriIndexList.push_back(i);
+					continue;
+				}
+			}
+		}
+
+		if (!removeTriIndexList.empty()) {
+			const int rCou = (int)removeTriIndexList.size();
+			for (int i = rCou - 1; i >= 0; --i) {
+				const int triIndex = removeTriIndexList[i];
+				const int iPos = triIndex * 3;
+				for (int j = 0; j < 3; ++j) triangleIndices.erase(triangleIndices.begin() + iPos);
+				if (!triangleFaceGroupIndex.empty()) {
+					for (int j = 0; j < 3; ++j) triangleFaceGroupIndex.erase(triangleFaceGroupIndex.begin() + iPos);
+				}
+				if (!triangleNormals.empty()) {
+					for (int j = 0; j < 3; ++j) triangleNormals.erase(triangleNormals.begin() + iPos);
+				}
+				if (!triangleUV0.empty()) {
+					for (int j = 0; j < 3; ++j) triangleUV0.erase(triangleUV0.begin() + iPos);
+				}
+				if (!triangleUV1.empty()) {
+					for (int j = 0; j < 3; ++j) triangleUV1.erase(triangleUV1.begin() + iPos);
+				}
+				if (!triangleColor0.empty()) {
+					for (int j = 0; j < 3; ++j) triangleColor0.erase(triangleColor0.begin() + iPos);
+				}
+			}
 		}
 	}
 
-	for (size_t i = 0; i < triangleIndices.size(); ++i) {
-		triangleIndices[i] = useVersList[ triangleIndices[i] ];
-	}
+	// 不要頂点を削除.
+	{
+		const size_t versCou = vertices.size();
 
-	for (int i = (int)versCou - 1; i >= 0; --i) {
-		if (useVersList[i] < 0) {
-			useVersList.erase(useVersList.begin() + i);
-			vertices.erase(vertices.begin() + i);
-			if (!skinWeights.empty()) skinWeights.erase(skinWeights.begin() + i);
-			if (!skinJointsHandle.empty()) skinJointsHandle.erase(skinJointsHandle.begin() + i);
+		std::vector<int> useVersList;
+		useVersList.resize(versCou, -1);
+
+		for (size_t i = 0; i < triangleIndices.size(); ++i) {
+			useVersList[ triangleIndices[i] ] = 1;
+		}
+		{
+			int iPos = 0;
+			for (size_t i = 0; i < versCou; ++i) {
+				if (useVersList[i] > 0) useVersList[i] = iPos++;
+			}
+		}
+
+		for (size_t i = 0; i < triangleIndices.size(); ++i) {
+			triangleIndices[i] = useVersList[ triangleIndices[i] ];
+		}
+
+		for (int i = (int)versCou - 1; i >= 0; --i) {
+			if (useVersList[i] < 0) {
+				useVersList.erase(useVersList.begin() + i);
+				vertices.erase(vertices.begin() + i);
+				if (!skinWeights.empty()) skinWeights.erase(skinWeights.begin() + i);
+				if (!skinJointsHandle.empty()) skinJointsHandle.erase(skinJointsHandle.begin() + i);
+			}
 		}
 	}
 }

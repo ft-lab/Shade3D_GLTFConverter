@@ -433,6 +433,17 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 {
 	if (m_skip) return;
 
+	// 面積がない場合はスキップ.
+	if (n_list <= 2) return;
+	if (n_list == 3) {
+		const float fMin = (float)(1e-5);
+		const float scale = 1000.0f;
+		const sxsdk::vec3 v1 = m_meshData.vertices[ list[0] ] * scale;
+		const sxsdk::vec3 v2 = m_meshData.vertices[ list[1] ] * scale;
+		const sxsdk::vec3 v3 = m_meshData.vertices[ list[2] ] * scale;
+		if (MathUtil::calcTriangleArea(v1, v2, v3) < fMin) return;
+	}
+
 	std::vector<int> indicesList;
 	std::vector<sxsdk::vec3> normalsList;
 	std::vector<sxsdk::vec2> uvs0List, uvs1List;

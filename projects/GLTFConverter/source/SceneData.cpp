@@ -124,7 +124,7 @@ std::string CSceneData::outputTempImage (const int imageIndex, const std::string
 	std::string fileName = tempPath + std::string("/") + name;
 	std::string fileName2 = fileName;
 #if _WINDOWS
-	// ファイル名がUTF-8だと読み込めないため、UTF-8に変換.
+	// ファイル名がUTF-8だと読み込めないため、SJISに変換.
 	StringUtil::convUTF8ToSJIS(fileName2, fileName2);
 #endif
 
