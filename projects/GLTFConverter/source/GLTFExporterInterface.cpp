@@ -806,7 +806,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	// diffuse/reflection/roughness/glow/normalのイメージをあらかじめ合成する.
 	CImagesBlend imageBlend(m_pScene, surface);
-	imageBlend.blendImages();
+	imageBlend.blendImages();	// 複数のマッピングレイヤのイメージを合成.
 
 	try {
 		materialData.baseColorFactor = sxsdk::rgb_class(0.8f, 0.8f, 0.8f);
@@ -832,103 +832,175 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			}
 		}
 
-		// BaseColorのテクスチャを持つ場合.
-		if (imageBlend.getGLTFBaseColorImage()) {
-			int imageIndex = -1;
-			{
-				CImageData imageData;
-				imageData.shadeImage = imageBlend.getGLTFBaseColorImage();
-				imageData.width  = imageData.shadeImage->get_size().x;
-				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = m_sceneData->getUniqueImageName("baseColor");
-				imageIndex = m_sceneData->findSameImage(imageData);
-				if (imageIndex < 0) {
-					imageIndex = (int)m_sceneData->images.size();
-					m_sceneData->images.push_back(imageData);
+		bool storeDiffuseImage, storeNormalImage, storeEmissiveImage;
+		storeDiffuseImage = storeNormalImage = storeEmissiveImage = false;
+
+		// 無加工のDiffuse、Normal/Emissiveイメージを格納.
+		{
+			sxsdk::enums::mapping_type mappingTypes[] = {
+				sxsdk::enums::diffuse_mapping,
+				sxsdk::enums::normal_mapping,
+				sxsdk::enums::glow_mapping
+			};
+			std::string mappingNames[] = {
+				"baseColor",
+				"normal",
+				"emissive"
+			};
+
+			for (int i = 0; i < 3; ++i) {
+				const sxsdk::enums::mapping_type mType = mappingTypes[i];
+				if (mType == sxsdk::enums::diffuse_mapping) {
+					if (imageBlend.hasImage(sxsdk::enums::reflection_mapping)) continue;
 				}
-			}
-			if (imageIndex >= 0) {
-				const sx::vec<int,2> repeat = imageBlend.getDiffuseRepeat();
-				materialData.baseColorImageIndex = imageIndex;
-				materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-				materialData.baseColorTexCoord   = imageBlend.getDiffuseTexCoord();
 
-				// アルファ透過する場合.
-				if (imageBlend.getDiffuseAlphaTrans()) {
-					materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-					materialData.alphaCutOff = 0.9f;
+				// マスターイメージを参照する場合 (マッピングレイヤで単一の加工無しテクスチャとして参照).
+				if (imageBlend.getSingleMasterImage(mType)) {
+					CImageData imageData;
+					imageData.shadeMasterImage = imageBlend.getSingleMasterImage(mType);
+					compointer<sxsdk::image_interface> image(imageData.shadeMasterImage->get_image());
+					imageData.width  = image->get_size().x;
+					imageData.height = image->get_size().y;
+					imageData.name   = m_sceneData->getUniqueImageName(imageData.shadeMasterImage->get_name());
+					int imageIndex = m_sceneData->findSameImage(imageData);
+					if (imageIndex < 0) {
+						imageIndex = (int)m_sceneData->images.size();
+						m_sceneData->images.push_back(imageData);
+					}
+					if (imageIndex >= 0) {
+						const sx::vec<int,2> repeat = imageBlend.getImageRepeat(mType);
 
-					CImageData& imageData = m_sceneData->images[imageIndex];
-					imageData.useBaseColorAlpha = true;
+						if (mType == sxsdk::enums::diffuse_mapping) {
+							materialData.baseColorImageIndex = imageIndex;
+							materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.baseColorTexCoord   = imageBlend.getTexCoord(mType);
+
+							// アルファ透過する場合.
+							if (imageBlend.getDiffuseAlphaTrans()) {
+								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+								materialData.alphaCutOff = 0.9f;
+
+								CImageData& imageData = m_sceneData->images[imageIndex];
+								imageData.useBaseColorAlpha = true;
+							}
+							storeDiffuseImage = true;
+
+						} else if (mType == sxsdk::enums::normal_mapping) {
+							materialData.normalImageIndex = imageIndex;
+							materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.normalTexCoord   = imageBlend.getTexCoord(mType);
+							storeNormalImage = true;
+
+						} else if (mType == sxsdk::enums::glow_mapping) {
+							materialData.emissionImageIndex = imageIndex;
+							materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.emissionTexCoord   = imageBlend.getTexCoord(mType);
+							storeEmissiveImage = true;
+						}
+					}
+
+				} else if (imageBlend.getImage(mType)) {
+					// 合成したイメージを参照する場合.
+					CImageData imageData;
+					imageData.shadeImage = imageBlend.getImage(mType);
+					imageData.width  = imageData.shadeImage->get_size().x;
+					imageData.height = imageData.shadeImage->get_size().y;
+					imageData.name   = m_sceneData->getUniqueImageName(mappingNames[i]);
+					int imageIndex = m_sceneData->findSameImage(imageData);
+					if (imageIndex < 0) {
+						imageIndex = (int)m_sceneData->images.size();
+						m_sceneData->images.push_back(imageData);
+					}
+					if (imageIndex >= 0) {
+						const sx::vec<int,2> repeat(1, 1);
+						if (mType == sxsdk::enums::diffuse_mapping) {
+							materialData.baseColorImageIndex = imageIndex;
+							materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.baseColorTexCoord   = imageBlend.getTexCoord(mType);
+
+							// アルファ透過する場合.
+							if (imageBlend.getDiffuseAlphaTrans()) {
+								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+								materialData.alphaCutOff = 0.9f;
+
+								CImageData& imageData = m_sceneData->images[imageIndex];
+								imageData.useBaseColorAlpha = true;
+							}
+							storeDiffuseImage = true;
+
+						} else if (mType == sxsdk::enums::normal_mapping) {
+							materialData.normalImageIndex = imageIndex;
+							materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.normalTexCoord   = imageBlend.getTexCoord(mType);
+							storeNormalImage = true;
+
+						} else if (mType == sxsdk::enums::glow_mapping) {
+							materialData.emissionImageIndex = imageIndex;
+							materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+							materialData.emissionTexCoord   = imageBlend.getTexCoord(mType);
+							storeEmissiveImage = true;
+						}
+					}
 				}
 			}
 		}
 
-		// glTFとしてのRoughness/Metallicのテクスチャを持つ場合.
-		if (imageBlend.getGLTFMetallicRoughnessImage()) {
-			int imageIndex = -1;
-			{
-				CImageData imageData;
-				imageData.shadeImage = imageBlend.getGLTFMetallicRoughnessImage();
-				imageData.width  = imageData.shadeImage->get_size().x;
-				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = m_sceneData->getUniqueImageName("metallicRoughness");
-				imageIndex = m_sceneData->findSameImage(imageData);
-				if (imageIndex < 0) {
-					imageIndex = (int)m_sceneData->images.size();
-					m_sceneData->images.push_back(imageData);
-				}
-			}
-			if (imageIndex >= 0) {
-				const sx::vec<int,2> repeat(1, 1);
-				materialData.metallicRoughnessImageIndex = imageIndex;
-				materialData.metallicRoughnessTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-			}
-		}
+		// roughness/reflectionテクスチャを持つ場合は、合成.
+		if (imageBlend.hasImage(sxsdk::enums::roughness_mapping) || imageBlend.hasImage(sxsdk::enums::reflection_mapping)) {
+			imageBlend.calcGLTFImages();		// glTF用のイメージを作成.
 
-		// Normalのテクスチャを持つ場合.
-		if (imageBlend.hasNormalImage()) {
-			int imageIndex = -1;
-			{
-				CImageData imageData;
-				imageData.shadeImage = imageBlend.getNormalImage();
-				imageData.width  = imageData.shadeImage->get_size().x;
-				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = m_sceneData->getUniqueImageName("normal");
-				imageIndex = m_sceneData->findSameImage(imageData);
-				if (imageIndex < 0) {
-					imageIndex = (int)m_sceneData->images.size();
-					m_sceneData->images.push_back(imageData);
+			// BaseColorのテクスチャを持つ場合.
+			if (!storeDiffuseImage && imageBlend.getGLTFBaseColorImage()) {
+				int imageIndex = -1;
+				{
+					CImageData imageData;
+					imageData.shadeImage = imageBlend.getGLTFBaseColorImage();
+					imageData.width  = imageData.shadeImage->get_size().x;
+					imageData.height = imageData.shadeImage->get_size().y;
+					imageData.name   = m_sceneData->getUniqueImageName("baseColor");
+					imageIndex = m_sceneData->findSameImage(imageData);
+					if (imageIndex < 0) {
+						imageIndex = (int)m_sceneData->images.size();
+						m_sceneData->images.push_back(imageData);
+					}
 				}
-			}
-			if (imageIndex >= 0) {
-				const sx::vec<int,2> repeat = imageBlend.getNormalRepeat();
-				materialData.normalImageIndex = imageIndex;
-				materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-				materialData.normalTexCoord   = imageBlend.getNormalTexCoord();
-			}
-		}
+				if (imageIndex >= 0) {
+					const sx::vec<int,2> repeat = imageBlend.getImageRepeat(sxsdk::enums::diffuse_mapping);
+					materialData.baseColorImageIndex = imageIndex;
+					materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+					materialData.baseColorTexCoord   = imageBlend.getTexCoord(sxsdk::enums::diffuse_mapping);
 
-		// Glowのテクスチャを持つ場合.
-		if (imageBlend.hasGlowImage()) {
-			int imageIndex = -1;
-			{
-				CImageData imageData;
-				imageData.shadeImage = imageBlend.getGlowImage();
-				imageData.width  = imageData.shadeImage->get_size().x;
-				imageData.height = imageData.shadeImage->get_size().y;
-				imageData.name   = m_sceneData->getUniqueImageName("emissive");
-				imageIndex = m_sceneData->findSameImage(imageData);
-				if (imageIndex < 0) {
-					imageIndex = (int)m_sceneData->images.size();
-					m_sceneData->images.push_back(imageData);
+					// アルファ透過する場合.
+					if (imageBlend.getDiffuseAlphaTrans()) {
+						materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+						materialData.alphaCutOff = 0.9f;
+
+						CImageData& imageData = m_sceneData->images[imageIndex];
+						imageData.useBaseColorAlpha = true;
+					}
 				}
 			}
-			if (imageIndex >= 0) {
-				const sx::vec<int,2> repeat = imageBlend.getGlowRepeat();
-				materialData.emissionImageIndex = imageIndex;
-				materialData.emissionTexScale   = sxsdk::vec2(repeat.x, repeat.y);
-				materialData.emissionTexCoord   = imageBlend.getGlowTexCoord();
+
+			// glTFとしてのRoughness/Metallicのテクスチャを持つ場合.
+			if (imageBlend.getGLTFMetallicRoughnessImage()) {
+				int imageIndex = -1;
+				{
+					CImageData imageData;
+					imageData.shadeImage = imageBlend.getGLTFMetallicRoughnessImage();
+					imageData.width  = imageData.shadeImage->get_size().x;
+					imageData.height = imageData.shadeImage->get_size().y;
+					imageData.name   = m_sceneData->getUniqueImageName("metallicRoughness");
+					imageIndex = m_sceneData->findSameImage(imageData);
+					if (imageIndex < 0) {
+						imageIndex = (int)m_sceneData->images.size();
+						m_sceneData->images.push_back(imageData);
+					}
+				}
+				if (imageIndex >= 0) {
+					const sx::vec<int,2> repeat(1, 1);
+					materialData.metallicRoughnessImageIndex = imageIndex;
+					materialData.metallicRoughnessTexScale   = sxsdk::vec2(repeat.x, repeat.y);
+				}
 			}
 		}
 

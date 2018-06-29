@@ -18,8 +18,21 @@ private:
 	compointer<sxsdk::image_interface> m_roughnessImage;		// Roughnessの画像.
 	compointer<sxsdk::image_interface> m_glowImage;				// Glowの画像.
 
-	compointer<sxsdk::image_interface> m_gltfBaseColorImage;	// glTFとしてエクスポートするBaseColorの画像.
+	compointer<sxsdk::image_interface> m_gltfBaseColorImage;			// glTFとしてエクスポートするBaseColorの画像.
 	compointer<sxsdk::image_interface> m_gltfMetallicRoughnessImage;	// glTFとしてエクスポートするMetallic/Roughnessの画像.
+
+	bool m_hasDiffuseImage;										// diffuseのイメージを持つか.
+	bool m_hasReflectionImage;									// reflectionのイメージを持つか.
+	bool m_hasRoughnessImage;									// roughnessのイメージを持つか.
+	bool m_hasNormalImage;										// normalのイメージを持つか.
+	bool m_hasGlowImage;										// glowのイメージを持つか.
+
+	// 以下、マッピングレイヤで1枚のみの加工不要のテクスチャである場合のマスターサーフェスクラスの参照.
+	sxsdk::master_image_class* m_diffuseMasterImage;			// Diffuseのマスターイメージクラス.
+	sxsdk::master_image_class* m_reflectionMasterImage;			// Reflectionのマスターイメージクラス.
+	sxsdk::master_image_class* m_roughnessMasterImage;			// Roughnessのマスターイメージクラス.
+	sxsdk::master_image_class* m_normalMasterImage;				// Normalのマスターイメージクラス.
+	sxsdk::master_image_class* m_glowMasterImage;				// Glowのマスターイメージクラス.
 
 	sx::vec<int,2> m_diffuseRepeat;								// Diffuseの反復回数.
 	sx::vec<int,2> m_normalRepeat;								// Normalの反復回数.
@@ -39,13 +52,29 @@ private:
 private:
 	/**
 	 * 指定のテクスチャの合成処理.
+	 * @param[in] mappingType  マッピングの種類.
 	 */
 	bool m_blendImages (const sxsdk::enums::mapping_type mappingType);
 
 	/**
-	 * 各種イメージより、glTFにエクスポートするBaseColor/Roughness/Metallicを復元.
+	 * Diffuseのアルファ透明を使用しているかチェック.
 	 */
-	bool m_calcGLTFImages ();
+	bool m_checkDiffuseAlphaTrans ();
+
+	/**
+	 * 指定のテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.
+	 * @param[in]  mappingType   マッピングの種類.
+	 * @param[out] ppMasterImage master imageの参照を返す.
+	 * @param[out] uvTexCoord    UV用の使用テクスチャ層番号を返す.
+	 * @param[out] texRepeat     繰り返し回数.
+	 * @param[out] hasImage      イメージを持つか (単数または複数).
+	 */
+	bool m_checkSingleImage (const sxsdk::enums::mapping_type mappingType,
+		sxsdk::master_image_class** ppMasterImage,
+		int& uvTexCoord,
+		sx::vec<int,2>& texRepeat,
+		bool& hasImage);
+
 
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
@@ -56,40 +85,34 @@ public:
 	void blendImages ();
 
 	/**
-	 * 各種イメージを持つか.
+	 * 各種イメージより、glTFにエクスポートするBaseColor/Roughness/Metallicを復元.
 	 */
-	bool hasDiffuseImage () const { return m_diffuseImage != NULL; }
-	bool hasNormalImage () const { return m_normalImage != NULL; }
-	bool hasReflectionImage () const { return m_reflectionImage != NULL; }
-	bool hasRoughnessImage () const { return m_roughnessImage != NULL; }
-	bool hasGlowImage () const { return m_glowImage != NULL; }
+	bool calcGLTFImages ();
+
+	/**
+	 * 各種イメージを持つか (単一または複数).
+	 */
+	bool hasImage (const sxsdk::enums::mapping_type mappingType) const;
+
+	/**
+	 * 単一テクスチャを参照する場合のマスターイメージクラスを取得.
+	 */
+	sxsdk::master_image_class* getSingleMasterImage (const sxsdk::enums::mapping_type mappingType);
 
 	/**
 	 * イメージを取得.
 	 */
-	compointer<sxsdk::image_interface> getDiffuseImage () { return m_diffuseImage; }
-	compointer<sxsdk::image_interface> getNormalImage () { return m_normalImage; }
-	compointer<sxsdk::image_interface> getReflectionImage () { return m_reflectionImage; }
-	compointer<sxsdk::image_interface> getRoughnessImage () { return m_roughnessImage; }
-	compointer<sxsdk::image_interface> getGlowImage () { return m_glowImage; }
+	compointer<sxsdk::image_interface> getImage (const sxsdk::enums::mapping_type mappingType);
 
 	/**
 	 * イメージのUV層番号を取得.
 	 */
-	int getDiffuseTexCoord () { return m_diffuseTexCoord; }
-	int getNormalTexCoord () { return m_normalTexCoord; }
-	int getReflectionTexCoord () { return m_reflectionTexCoord; }
-	int getRoughnessTexCoord () { return m_roughnessTexCoord; }
-	int getGlowTexCoord () { return m_glowTexCoord; }
+	int getTexCoord (const sxsdk::enums::mapping_type mappingType);
 
 	/**
 	 * イメージの反復回数を取得.
 	 */
-	sx::vec<int,2> getDiffuseRepeat () { return m_diffuseRepeat; }
-	sx::vec<int,2> getNormalRepeat () { return m_normalRepeat; }
-	sx::vec<int,2> getReflectionRepeat () { return m_reflectionRepeat; }
-	sx::vec<int,2> getRoughnessRepeat () { return m_roughnessRepeat; }
-	sx::vec<int,2> getGlowRepeat () { return m_glowRepeat; }
+	sx::vec<int,2> getImageRepeat (const sxsdk::enums::mapping_type mappingType);
 
 	/**
 	 * アルファ透明を使用しているか.
@@ -106,8 +129,6 @@ public:
 	 */
 	compointer<sxsdk::image_interface> getGLTFBaseColorImage () { return m_gltfBaseColorImage; }
 	compointer<sxsdk::image_interface> getGLTFMetallicRoughnessImage () { return m_gltfMetallicRoughnessImage; }
-	compointer<sxsdk::image_interface> getGLTFEmissiveImage () { return m_glowImage; }
-	compointer<sxsdk::image_interface> getGLTFNormalImage () { return m_normalImage; }
 };
 
 #endif

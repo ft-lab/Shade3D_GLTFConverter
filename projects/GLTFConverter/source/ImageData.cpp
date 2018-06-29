@@ -23,7 +23,7 @@ void CImageData::clear ()
 	useBaseColorAlpha = false;
 	imageMask = CImageData::gltf_image_mask_none;
 
-	m_shadeMasterImage = NULL;
+	shadeMasterImage = NULL;
 
 	if (shadeImage) shadeImage->Release();
 	shadeImage = NULL;
@@ -37,8 +37,8 @@ bool CImageData::isSame (const CImageData &v) const
 	if ((this->width) == 0 || v.width == 0 || (this->height) == 0 || v.height == 0) return false;
 	if ((this->width) != v.width || (this->height) != v.height) return false;
 
-	if ((this->m_shadeMasterImage) && (v.m_shadeMasterImage)) {
-		if (this->m_shadeMasterImage->get_handle() == v.m_shadeMasterImage->get_handle()) return true;
+	if ((this->shadeMasterImage) && (v.shadeMasterImage)) {
+		if (this->shadeMasterImage->get_handle() == v.shadeMasterImage->get_handle()) return true;
 	}
 	if ((this->shadeImage) && v.shadeImage) {
 		const int width  = this->shadeImage->get_size().x;

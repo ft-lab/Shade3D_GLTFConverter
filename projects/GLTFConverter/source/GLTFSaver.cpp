@@ -1207,7 +1207,7 @@ namespace {
 
 		for (size_t i = 0; i < imagesCou; ++i) {
 			const CImageData& imageD = sceneData->images[i];
-			if (!imageD.m_shadeMasterImage && !imageD.shadeImage) continue;
+			if (!imageD.shadeMasterImage && !imageD.shadeImage) continue;
 			std::string fileName = StringUtil::getFileName(imageD.name);
 			if (fileName == "") fileName = std::string("image_") + std::to_string(i);
 
@@ -1231,7 +1231,7 @@ namespace {
 
 			try {
 				// 画像ファイルを指定の拡張子(jpg/png)で保存.
-				sxsdk::image_interface *image = (imageD.m_shadeMasterImage) ? (imageD.m_shadeMasterImage->get_image()) : imageD.shadeImage;
+				sxsdk::image_interface *image = (imageD.shadeMasterImage) ? (imageD.shadeMasterImage->get_image()) : imageD.shadeImage;
 				if (!image) continue;
 				const std::string fileFullPath = (sceneData->getFileDir()) + std::string("/") + fileName;
 				image->save(fileFullPath.c_str());

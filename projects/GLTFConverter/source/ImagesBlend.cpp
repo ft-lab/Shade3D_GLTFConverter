@@ -3,6 +3,7 @@
  */
 #include "ImagesBlend.h"
 #include "MathUtil.h"
+#include "Shade3DUtil.h"
 
 CImagesBlend::CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface) : m_pScene(scene), m_surface(surface)
 {
@@ -27,19 +28,124 @@ void CImagesBlend::blendImages ()
 	m_diffuseAlphaTrans = false;
 	m_normalWeight = 1.0f;
 
-	// Shade3Dでの表面材質のマッピングレイヤごとに、各種イメージを合成.
-	m_blendImages(sxsdk::enums::diffuse_mapping);
-	m_blendImages(sxsdk::enums::normal_mapping);
-	m_blendImages(sxsdk::enums::reflection_mapping);
-	m_blendImages(sxsdk::enums::roughness_mapping);
-	m_blendImages(sxsdk::enums::glow_mapping);
+	m_hasDiffuseImage    = false;
+	m_hasReflectionImage = false;
+	m_hasRoughnessImage  = false;
+	m_hasNormalImage     = false;
+	m_hasGlowImage       = false;
 
-	// glTF用のイメージに変換.
-	m_calcGLTFImages();
+	// Shade3Dでの表面材質のマッピングレイヤで、加工無しの画像が参照されているかチェック.
+	m_checkSingleImage(sxsdk::enums::diffuse_mapping, &m_diffuseMasterImage, m_diffuseTexCoord, m_diffuseRepeat, m_hasDiffuseImage);
+	m_checkSingleImage(sxsdk::enums::normal_mapping, &m_normalMasterImage, m_normalTexCoord, m_normalRepeat, m_hasNormalImage);
+	m_checkSingleImage(sxsdk::enums::reflection_mapping, &m_reflectionMasterImage, m_reflectionTexCoord, m_reflectionRepeat, m_hasReflectionImage);
+	m_checkSingleImage(sxsdk::enums::roughness_mapping, &m_roughnessMasterImage, m_roughnessTexCoord, m_roughnessRepeat, m_hasRoughnessImage);
+	m_checkSingleImage(sxsdk::enums::glow_mapping, &m_glowMasterImage, m_glowTexCoord, m_glowRepeat, m_hasGlowImage);
+
+	// Diffuseのアルファ透明を使用しているかチェック.
+	m_diffuseAlphaTrans = m_checkDiffuseAlphaTrans();
+
+	// Shade3Dでの表面材質のマッピングレイヤごとに、各種イメージを合成.
+	if (!m_diffuseMasterImage && m_hasDiffuseImage) m_blendImages(sxsdk::enums::diffuse_mapping);
+	if (!m_normalMasterImage && m_hasNormalImage) m_blendImages(sxsdk::enums::normal_mapping);
+	if (!m_reflectionMasterImage && m_hasReflectionImage) m_blendImages(sxsdk::enums::reflection_mapping);
+	if (!m_roughnessMasterImage && m_hasRoughnessImage) m_blendImages(sxsdk::enums::roughness_mapping);
+	if (!m_glowMasterImage && m_hasGlowImage) m_blendImages(sxsdk::enums::glow_mapping);
+}
+
+/**
+ * 指定のテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.
+ * @param[in]  mappingType   マッピングの種類.
+ * @param[out] ppMasterImage master imageの参照を返す.
+ * @param[out] uvTexCoord    UV用の使用テクスチャ層番号を返す.
+ * @param[out] texRepeat     繰り返し回数.
+ * @param[out] hasImage      イメージを持つか (単数または複数).
+ */
+bool CImagesBlend::m_checkSingleImage (const sxsdk::enums::mapping_type mappingType, sxsdk::master_image_class** ppMasterImage,
+		int& uvTexCoord, sx::vec<int,2>& texRepeat, bool& hasImage)
+{
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+	bool singleImage = false;
+	int counter = 0;
+	sxsdk::master_image_class* pRetMasterImage = NULL;
+	*ppMasterImage = NULL;
+	texRepeat = sx::vec<int,2>(1, 1);
+	hasImage = false;
+
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+		if (mappingLayer.get_type() != mappingType) continue;
+		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
+		const float weight  = mappingLayer.get_weight();
+		if (MathUtil::isZero(weight)) continue;
+
+		compointer<sxsdk::image_interface> image(mappingLayer.get_image_interface());
+		if (!image || (image->get_size().x) <= 0 || (image->get_size().y) <= 0) continue;
+
+		const bool flipColor = mappingLayer.get_flip_color();			// 色反転.
+		const bool flipH     = mappingLayer.get_horizontal_flip();		// 左右反転.
+		const bool flipV     = mappingLayer.get_vertical_flip();		// 上下反転.
+		const int channelMix = mappingLayer.get_channel_mix();			// イメージのチャンネル.
+		const bool useChannelMix = (channelMix == sxsdk::enums::mapping_grayscale_alpha_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_red_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_green_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_blue_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_average_mode);
+
+		if (flipColor || flipH || flipV || useChannelMix) {
+			counter++;
+			continue;
+		}
+
+		// マスターイメージを持つか調べる.
+		pRetMasterImage = Shade3DUtil::getMasterImageFromImage(m_pScene, image);
+		if (pRetMasterImage) {
+			if (counter == 0) {
+				singleImage = true;
+				uvTexCoord  = mappingLayer.get_uv_mapping();
+				const int repeatX = mappingLayer.get_repetition_x();
+				const int repeatY = mappingLayer.get_repetition_y();
+				texRepeat = sx::vec<int,2>(repeatX, repeatY);
+			}
+		}
+
+		counter++;
+		if (counter >= 2) break;
+	}
+	if (counter >= 1) hasImage = true;
+	if (singleImage && counter == 1) {
+		*ppMasterImage = pRetMasterImage;
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Diffuseのアルファ透明を使用しているかチェック.
+ */
+bool CImagesBlend::m_checkDiffuseAlphaTrans ()
+{
+	bool alphaTrans = false;
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+		if (mappingLayer.get_type() != sxsdk::enums::diffuse_mapping) continue;
+		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
+		if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
+			alphaTrans = true;
+			break;
+		}
+	}
+	return alphaTrans;
 }
 
 /**
  * 指定のテクスチャの合成処理.
+ * @param[in] mappingType  マッピングの種類.
  */
 bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 {
@@ -49,16 +155,24 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 	int newWidth, newHeight;
 	int newRepeatX, newRepeatY;
 	int newTexCoord;
+	sxsdk::master_image_class* pNewMasterImage = NULL;
+	std::string newTexName;
 	int counter = 0;
 	std::vector<sxsdk::rgba_class> rgbaLine0, rgbaLine;
 	sxsdk::rgba_class col, whiteCol;
 	whiteCol = sxsdk::rgba_class(1, 1, 1, 1);
+	bool singleSimpleMapping = false;				// 1枚のテクスチャのみの参照で、色反転や左右反転/上下反転などがない場合は.
+													// そのときのマスターイメージを採用 (ベイクする必要なしの場合、true).
 
 	// Diffuse時にアルファ透明を使用する場合はそのレイヤ番号を取得.
 	int diffuseAlphaLayerIndex = -1;
 	if (mappingType == sxsdk::enums::diffuse_mapping) {
 		for (int i = 0; i < layersCou; ++i) {
 			sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+			if (mappingLayer.get_type() != sxsdk::enums::diffuse_mapping) continue;
+			if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
 			if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
 				diffuseAlphaLayerIndex = i;
 				m_diffuseAlphaTrans = true;
@@ -89,24 +203,6 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 			const int width  = image->get_size().x;
 			const int height = image->get_size().y;
 			if (width <= 1 || height <= 1) continue;
-			if (!newImage) {
-				newImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-				newWidth    = width;
-				newHeight   = height;
-				newRepeatX  = mappingLayer.get_repetition_x();
-				newRepeatY  = mappingLayer.get_repetition_y();
-				newTexCoord = mappingLayer.get_uv_mapping();
-				rgbaLine.resize(newWidth);
-				rgbaLine0.resize(newWidth);
-			}
-			if (newRepeatX != mappingLayer.get_repetition_x() || newRepeatY != mappingLayer.get_repetition_y()) continue;
-			if (newTexCoord != mappingLayer.get_uv_mapping()) continue;
-			compointer<sxsdk::image_interface> image2(image->create_duplicate_image_interface(&(newImage->get_size())));
-
-			// アルファ値を保持するバッファを作成.
-			if (i == diffuseAlphaLayerIndex) {
-				alphaBuff.resize(newWidth * newHeight, 255);
-			}
 
 			const bool flipColor = mappingLayer.get_flip_color();			// 色反転.
 			const bool flipH     = mappingLayer.get_horizontal_flip();		// 左右反転.
@@ -117,6 +213,34 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 										channelMix == sxsdk::enums::mapping_grayscale_green_mode ||
 										channelMix == sxsdk::enums::mapping_grayscale_blue_mode ||
 										channelMix == sxsdk::enums::mapping_grayscale_average_mode);
+
+			if (!newImage) {
+				newImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
+				newWidth    = width;
+				newHeight   = height;
+				newRepeatX  = mappingLayer.get_repetition_x();
+				newRepeatY  = mappingLayer.get_repetition_y();
+				newTexCoord = mappingLayer.get_uv_mapping();
+				rgbaLine.resize(newWidth);
+				rgbaLine0.resize(newWidth);
+
+				// マスターイメージを持つか調べる.
+				pNewMasterImage = Shade3DUtil::getMasterImageFromImage(m_pScene, image);
+
+				if (pNewMasterImage) {
+					// そのまま画像を採用する可能性があるかどうか.
+					singleSimpleMapping = (!flipColor && !flipH && !flipV && !useChannelMix);
+					newTexName = pNewMasterImage->get_name();
+				}
+			}
+			if (newRepeatX != mappingLayer.get_repetition_x() || newRepeatY != mappingLayer.get_repetition_y()) continue;
+			if (newTexCoord != mappingLayer.get_uv_mapping()) continue;
+			sxsdk::image_interface* image2 = image->duplicate_image(&(newImage->get_size()));
+
+			// アルファ値を保持するバッファを作成.
+			if (i == diffuseAlphaLayerIndex) {
+				alphaBuff.resize(newWidth * newHeight, 255);
+			}
 
 			for (int y = 0; y < newHeight; ++y) {
 				if (flipV) {
@@ -239,6 +363,11 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 	}
 	if (!newImage) return false;
 
+	// 複数のテクスチャをベイクした場合.
+	if (counter >= 2) {
+		if (singleSimpleMapping) singleSimpleMapping = false;
+	}
+
 	// アルファ透明のアルファ値で、アルファ値を上書き.
 	if (!alphaBuff.empty()) {
 		for (int y = 0, iPos = 0; y < newHeight; ++y, iPos += newWidth) {
@@ -282,13 +411,23 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 /**
  * 各種イメージより、glTFにエクスポートするBaseColor/Roughness/Metallicを復元.
  */
-bool CImagesBlend::m_calcGLTFImages ()
+bool CImagesBlend::calcGLTFImages ()
 {
 	const sxsdk::rgba_class whiteCol(1, 1, 1, 1);
 	const sxsdk::rgba_class blackCol(0, 0, 0, 1);
 
 	if (m_gltfMetallicRoughnessImage) m_gltfMetallicRoughnessImage->Release();
 	if (m_gltfBaseColorImage) m_gltfBaseColorImage->Release();
+
+	if (!m_diffuseImage && m_diffuseMasterImage) {
+		m_diffuseImage = m_diffuseMasterImage->get_image()->duplicate_image();
+	}
+	if (!m_reflectionImage && m_reflectionMasterImage) {
+		m_reflectionImage = m_reflectionMasterImage->get_image()->duplicate_image();
+	}
+	if (!m_roughnessImage && m_roughnessMasterImage) {
+		m_roughnessImage = m_roughnessMasterImage->get_image()->duplicate_image();
+	}
 	if (!m_roughnessImage && !m_diffuseImage && !m_reflectionImage) return false;
 
 	// Diffuseのテクスチャだけ持つ場合、そのまま返す.
@@ -323,7 +462,7 @@ bool CImagesBlend::m_calcGLTFImages ()
 	if (m_diffuseImage) {
 		const sx::vec<int,2> size = m_diffuseImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_diffuseImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			sxsdk::image_interface* image = m_diffuseImage->duplicate_image(&(sx::vec<int,2>(width, height)));
 			m_diffuseImage->Release();
 			m_diffuseImage = image;
 		}
@@ -331,7 +470,7 @@ bool CImagesBlend::m_calcGLTFImages ()
 	if (m_reflectionImage) {
 		const sx::vec<int,2> size = m_reflectionImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_reflectionImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			sxsdk::image_interface* image = m_reflectionImage->duplicate_image(&(sx::vec<int,2>(width, height)));
 			m_reflectionImage->Release();
 			m_reflectionImage = image;
 		}
@@ -339,7 +478,7 @@ bool CImagesBlend::m_calcGLTFImages ()
 	if (m_roughnessImage) {
 		const sx::vec<int,2> size = m_roughnessImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_roughnessImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			sxsdk::image_interface* image = m_roughnessImage->duplicate_image(&(sx::vec<int,2>(width, height)));
 			m_roughnessImage->Release();
 			m_roughnessImage = image;
 		}
@@ -350,6 +489,7 @@ bool CImagesBlend::m_calcGLTFImages ()
 
 	// Roughnessテクスチャの生成.
 	lineD.resize(width);
+	lineD2.resize(width);
 	if (m_roughnessImage) {
 		for (int y = 0; y < height; ++y) {
 			m_roughnessImage->get_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
@@ -367,21 +507,20 @@ bool CImagesBlend::m_calcGLTFImages ()
 	}
 
 	// BaseColor/Metallicのテクスチャを白でクリア.
-	for (int y = 0; y < height; ++y) {
+	{
 		for (int x = 0; x < width; ++x) lineD[x] = whiteCol;
-		m_gltfBaseColorImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
-	}
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) lineD[x] = whiteCol;
-		gltfMetallicImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
+		for (int y = 0; y < height; ++y) {
+			m_gltfBaseColorImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
+		}
+		for (int y = 0; y < height; ++y) {
+			gltfMetallicImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
+		}
 	}
 
 	// Diffuse/Reflectionテクスチャより、glTFのBaseColor/Metallicを計算.
-	if (m_diffuseImage || m_reflectionImage) {
+	if (m_diffuseImage && m_reflectionImage) {
 		const float fMin = (float)(1e-4);
 		float f;
-		lineD.resize(width);
-		lineD2.resize(width);
 		baseColorLine.resize(width);
 		metallicLine.resize(width);
 		for (int y = 0; y < height; ++y) {
@@ -444,6 +583,10 @@ bool CImagesBlend::m_calcGLTFImages ()
 			m_gltfBaseColorImage->set_pixels_rgba_float(0, y, width, 1, &(baseColorLine[0]));
 			gltfMetallicImage->set_pixels_rgba_float(0, y, width, 1, &(metallicLine[0]));
 		}
+	} else if (m_diffuseImage && !m_reflectionImage) {
+		// diffuseのイメージをそのままBaseColorにする.
+		m_gltfBaseColorImage->Release();
+		m_gltfBaseColorImage = m_diffuseImage->duplicate_image();
 	}
 
 	// Metallic(B)/Roughness(G)のテクスチャを合成.
@@ -458,4 +601,69 @@ bool CImagesBlend::m_calcGLTFImages ()
 
 	return true;
 
+}
+
+/**
+ * 各種イメージを持つか (単一または複数).
+ */
+bool CImagesBlend::hasImage (const sxsdk::enums::mapping_type mappingType) const
+{
+	if (mappingType == sxsdk::enums::diffuse_mapping) return m_hasDiffuseImage;
+	if (mappingType == sxsdk::enums::reflection_mapping) return m_hasReflectionImage;
+	if (mappingType == sxsdk::enums::roughness_mapping) return m_hasRoughnessImage;
+	if (mappingType == sxsdk::enums::normal_mapping) return m_hasNormalImage;
+	if (mappingType == sxsdk::enums::glow_mapping) return m_hasGlowImage;
+	return false;
+}
+
+/**
+ * 単一テクスチャを参照する場合のマスターイメージクラスを取得.
+ */
+sxsdk::master_image_class* CImagesBlend::getSingleMasterImage (const sxsdk::enums::mapping_type mappingType)
+{
+	if (mappingType == sxsdk::enums::diffuse_mapping) return m_diffuseMasterImage;
+	if (mappingType == sxsdk::enums::reflection_mapping) return m_reflectionMasterImage;
+	if (mappingType == sxsdk::enums::roughness_mapping) return m_roughnessMasterImage;
+	if (mappingType == sxsdk::enums::normal_mapping) return m_normalMasterImage;
+	if (mappingType == sxsdk::enums::glow_mapping) return m_glowMasterImage;
+	return NULL;
+}
+
+/**
+ * イメージを取得.
+ */
+compointer<sxsdk::image_interface> CImagesBlend::getImage (const sxsdk::enums::mapping_type mappingType)
+{
+	if (mappingType == sxsdk::enums::diffuse_mapping) return m_diffuseImage;
+	if (mappingType == sxsdk::enums::reflection_mapping) return m_reflectionImage;
+	if (mappingType == sxsdk::enums::roughness_mapping) return m_roughnessImage;
+	if (mappingType == sxsdk::enums::normal_mapping) return m_normalImage;
+	if (mappingType == sxsdk::enums::glow_mapping) return m_glowImage;
+	return compointer<sxsdk::image_interface>();
+}
+
+/**
+ * イメージのUV層番号を取得.
+ */
+int CImagesBlend::getTexCoord (const sxsdk::enums::mapping_type mappingType)
+{
+	if (mappingType == sxsdk::enums::diffuse_mapping) return m_diffuseTexCoord;
+	if (mappingType == sxsdk::enums::reflection_mapping) return m_reflectionTexCoord;
+	if (mappingType == sxsdk::enums::roughness_mapping) return m_roughnessTexCoord;
+	if (mappingType == sxsdk::enums::normal_mapping) return m_normalTexCoord;
+	if (mappingType == sxsdk::enums::glow_mapping) return m_glowTexCoord;
+	return 0;
+}
+
+/**
+ * イメージの反復回数を取得.
+ */
+sx::vec<int,2> CImagesBlend::getImageRepeat (const sxsdk::enums::mapping_type mappingType)
+{
+	if (mappingType == sxsdk::enums::diffuse_mapping) return m_diffuseRepeat;
+	if (mappingType == sxsdk::enums::reflection_mapping) return m_reflectionRepeat;
+	if (mappingType == sxsdk::enums::roughness_mapping) return m_roughnessRepeat;
+	if (mappingType == sxsdk::enums::normal_mapping) return m_normalRepeat;
+	if (mappingType == sxsdk::enums::glow_mapping) return m_glowRepeat;
+	return sx::vec<int,2>(1, 1);
 }

@@ -34,7 +34,7 @@ public:
 	std::vector<unsigned char> imageDatas;		// 画像情報。これは、jpeg/pngのフォーマットそのままに入る.
 	int width, height;							// 画像サイズ.
 
-	sxsdk::master_image_class* m_shadeMasterImage;	// Shade3Dでのマスターイメージクラス.
+	sxsdk::master_image_class* shadeMasterImage;	// Shade3Dでのマスターイメージクラス.
 	compointer<sxsdk::image_interface> shadeImage;	// Shade3Dでのイメージ (合成したもの)。エクスポータで使用.
 
 	int imageMask;						// テクスチャとして使用している情報.
@@ -52,7 +52,7 @@ public:
 		this->height     = v.height;
 		this->imageMask  = v.imageMask;
 		this->useBaseColorAlpha = v.useBaseColorAlpha;
-		this->m_shadeMasterImage = v.m_shadeMasterImage;
+		this->shadeMasterImage  = v.shadeMasterImage;
 		this->shadeImage = v.shadeImage;
 
 		return (*this);

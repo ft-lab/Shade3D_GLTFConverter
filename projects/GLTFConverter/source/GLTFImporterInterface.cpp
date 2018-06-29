@@ -529,7 +529,7 @@ void CGLTFImporterInterface::m_createGLTFImages (sxsdk::scene_interface *scene, 
 			masterImage.load_image(fileName.c_str());
 			sxsdk::image_interface* image = masterImage.get_image();
 
-			imageD.m_shadeMasterImage = &masterImage;
+			imageD.shadeMasterImage = &masterImage;
 			imageD.width  = image->get_size().x;
 			imageD.height = image->get_size().y;
 
@@ -589,8 +589,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
 				// テクスチャ画像を割り当て.
-				if (sceneData->images[materialD.baseColorImageIndex].m_shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].m_shadeMasterImage->get_image());
+				if (sceneData->images[materialD.baseColorImageIndex].shadeMasterImage) {
+					compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
 					mLayer.set_image_interface(image);
 				}
 
@@ -614,8 +614,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_type(sxsdk::enums::normal_mapping);
 
 				// テクスチャ画像を割り当て.
-				if (sceneData->images[materialD.normalImageIndex].m_shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.normalImageIndex].m_shadeMasterImage->get_image());
+				if (sceneData->images[materialD.normalImageIndex].shadeMasterImage) {
+					compointer<sxsdk::image_interface> image(sceneData->images[materialD.normalImageIndex].shadeMasterImage->get_image());
 					mLayer.set_image_interface(image);
 				}
 
@@ -637,8 +637,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_type(sxsdk::enums::glow_mapping);
 
 				// テクスチャ画像を割り当て.
-				if (sceneData->images[materialD.emissionImageIndex].m_shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.emissionImageIndex].m_shadeMasterImage->get_image());
+				if (sceneData->images[materialD.emissionImageIndex].shadeMasterImage) {
+					compointer<sxsdk::image_interface> image(sceneData->images[materialD.emissionImageIndex].shadeMasterImage->get_image());
 					mLayer.set_image_interface(image);
 				}
 
@@ -672,8 +672,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
 						// テクスチャ画像を割り当て.
-						if (imageD.m_shadeMasterImage) {
-							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+						if (imageD.shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.shadeMasterImage->get_image());
 							mLayer.set_image_interface(image);
 
 							// Metallicは[B]の要素を参照.
@@ -698,8 +698,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_type(sxsdk::enums::reflection_mapping);
 
 						// テクスチャ画像を割り当て.
-						if (imageD.m_shadeMasterImage) {
-							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+						if (imageD.shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.shadeMasterImage->get_image());
 							mLayer.set_image_interface(image);
 
 							// Metallicは[B]の要素を参照.
@@ -722,8 +722,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						const CImageData& imageBaseColorD = sceneData->images[materialD.baseColorImageIndex];
 
 						// テクスチャ画像を割り当て.
-						if (imageBaseColorD.m_shadeMasterImage) {
-							compointer<sxsdk::image_interface> image(imageBaseColorD.m_shadeMasterImage->get_image());
+						if (imageBaseColorD.shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageBaseColorD.shadeMasterImage->get_image());
 							mLayer.set_image_interface(image);
 
 							mLayer.set_blend_mode(7);		// 乗算合成.
@@ -744,8 +744,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_type(sxsdk::enums::roughness_mapping);
 
 						// テクスチャ画像を割り当て.
-						if (imageD.m_shadeMasterImage) {
-							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+						if (imageD.shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.shadeMasterImage->get_image());
 							mLayer.set_image_interface(image);
 
 							// Roughnessは[G]の要素を参照.
@@ -767,8 +767,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
 						// テクスチャ画像を割り当て.
-						if (imageD.m_shadeMasterImage) {
-							compointer<sxsdk::image_interface> image(imageD.m_shadeMasterImage->get_image());
+						if (imageD.shadeMasterImage) {
+							compointer<sxsdk::image_interface> image(imageD.shadeMasterImage->get_image());
 							mLayer.set_image_interface(image);
 
 							// Occlusionは[R]の要素を参照.
@@ -795,8 +795,8 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
 					// テクスチャ画像を割り当て.
-					if (sceneData->images[materialD.occlusionImageIndex].m_shadeMasterImage) {
-						compointer<sxsdk::image_interface> image(sceneData->images[materialD.occlusionImageIndex].m_shadeMasterImage->get_image());
+					if (sceneData->images[materialD.occlusionImageIndex].shadeMasterImage) {
+						compointer<sxsdk::image_interface> image(sceneData->images[materialD.occlusionImageIndex].shadeMasterImage->get_image());
 						mLayer.set_image_interface(image);
 
 						mLayer.set_blend_mode(7);		// 乗算合成.
