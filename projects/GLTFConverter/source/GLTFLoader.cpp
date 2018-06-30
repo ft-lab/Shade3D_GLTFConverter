@@ -666,24 +666,18 @@ namespace {
 
 			if (materialD.baseColorImageIndex >= 0) {
 				CImageData& imageD = sceneData->images[materialD.baseColorImageIndex];
-				if (imageD.name == "") {
-					imageD.name = materialD.name + std::string("_baseColor");
-					imageD.imageMask = CImageData::gltf_image_mask_base_color;
-				}
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_baseColor");
+				imageD.imageMask = CImageData::gltf_image_mask_base_color;
 			}
 			if (materialD.emissiveImageIndex >= 0) {
 				CImageData& imageD = sceneData->images[materialD.emissiveImageIndex];
-				if (imageD.name == "") {
-					imageD.name = materialD.name + std::string("_emissive");
-					imageD.imageMask = CImageData::gltf_image_mask_emissive;
-				}
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_emissive");
+				imageD.imageMask = CImageData::gltf_image_mask_emissive;
 			}
 			if (materialD.normalImageIndex >= 0) {
 				CImageData& imageD = sceneData->images[materialD.normalImageIndex];
-				if (imageD.name == "") {
-					imageD.name = materialD.name + std::string("_normal");
-					imageD.imageMask = CImageData::gltf_image_mask_normal;
-				}
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_normal");
+				imageD.imageMask = CImageData::gltf_image_mask_normal;
 			}
 			if (materialD.metallicRoughnessImageIndex >= 0) {
 				CImageData& imageD = sceneData->images[materialD.metallicRoughnessImageIndex];
@@ -701,10 +695,8 @@ namespace {
 
 			if (materialD.occlusionImageIndex >= 0) {
 				CImageData& imageD = sceneData->images[materialD.occlusionImageIndex];
-				if (imageD.name == "") {
-					imageD.name = materialD.name + std::string("_occlusion");
-					imageD.imageMask = CImageData::gltf_image_mask_occlusion;
-				}
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_occlusion");
+				imageD.imageMask = CImageData::gltf_image_mask_occlusion;
 			}
 		}
 		for (size_t i = 0; i < imagesSize; ++i) {
