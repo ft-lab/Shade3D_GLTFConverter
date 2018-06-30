@@ -538,35 +538,10 @@ bool CImagesBlend::calcGLTFImages ()
 				col1 = lineD[x];
 				const float reflection = lineD2[x].red;
 
-				baseColorCol = blackCol;
-				// 計算したb1/b2のどちらかは必ず0になる.
-				{
-					const float bV = -(col1.red + reflection * 0.5f);
-					const float c = std::abs(bV);
-					if (c > fMin) {
-						const float b1 = (-bV - c) * 0.5f;
-						const float b2 = (-bV + c) * 0.5f;
-						baseColorCol.red = std::min(std::max(b1, b2), 1.0f);
-					}
-				}
-				{
-					const float bV = -(col1.green + reflection * 0.5f);
-					const float c = std::abs(bV);
-					if (c > fMin) {
-						const float b1 = (-bV - c) * 0.5f;
-						const float b2 = (-bV + c) * 0.5f;
-						baseColorCol.green = std::min(std::max(b1, b2), 1.0f);
-					}
-				}
-				{
-					const float bV = -(col1.blue + reflection * 0.5f);
-					const float c = std::abs(bV);
-					if (c > fMin) {
-						const float b1 = (-bV - c) * 0.5f;
-						const float b2 = (-bV + c) * 0.5f;
-						baseColorCol.blue = std::min(std::max(b1, b2), 1.0f);
-					}
-				}
+				baseColorCol.red   = std::max(std::min(col1.red   + reflection, 1.0f), 0.0f);
+				baseColorCol.green = std::max(std::min(col1.green + reflection, 1.0f), 0.0f);
+				baseColorCol.blue  = std::max(std::min(col1.blue  + reflection, 1.0f), 0.0f);
+
 				metallicCol = blackCol;
 				if (baseColorCol.red   > 0.0f) metallicCol.red   = std::min(reflection / baseColorCol.red, 1.0f);
 				if (baseColorCol.green > 0.0f) metallicCol.green = std::min(reflection / baseColorCol.green, 1.0f);

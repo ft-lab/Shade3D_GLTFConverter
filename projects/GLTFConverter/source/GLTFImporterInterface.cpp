@@ -567,7 +567,21 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			materialD.shadeMasterSurface = &masterSurface;
 
 			sxsdk::surface_class* surface = masterSurface.get_surface();
-			surface->set_diffuse_color(materialD.baseColorFactor);
+
+			// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
+			{
+				const sxsdk::rgb_class whiteCol(1, 1, 1);
+				const sxsdk::rgb_class col = materialD.baseColorFactor;
+				const float metallicV  = materialD.metallicFactor;
+				const float metallicV2 = 1.0f - metallicV;
+				const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
+
+				surface->set_diffuse_color(materialD.baseColorFactor);
+				if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
+					surface->set_diffuse(metallicV2);
+					surface->set_reflection_color(reflectionCol);
+				}
+			}
 
 			// 光沢を調整.
 			float highlightV = std::min(materialD.metallicFactor, 0.3f);
@@ -681,7 +695,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 							mLayer.set_blend_mode(7);		// 乗算合成.
 							mLayer.set_flip_color(true);
-							mLayer.set_weight(0.5f);
+							mLayer.set_weight(materialD.metallicFactor);
 						}
 						mLayer.set_blur(true);
 						mLayer.set_uv_mapping(materialD.metallicRoughnessTexCoord);

@@ -826,7 +826,14 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		materialData.roughnessFactor = 1.0f;
 
 		if (surface->get_has_diffuse()) {
-			materialData.baseColorFactor = (surface->get_diffuse_color()) * (surface->get_diffuse());
+			// 反射が大きい場合にbaseColorを黒にするとglTFとして見たときは黒くなるため、reflectionも考慮.
+			sxsdk::rgb_class col = (surface->get_diffuse_color()) * (surface->get_diffuse());
+			sxsdk::rgb_class reflectionCol = surface->get_reflection_color();
+			const float reflectionV  = std::max(std::min(1.0f, surface->get_reflection()), 0.0f);
+			const float reflectionV2 = 1.0f - reflectionV;
+			col = col * reflectionV2 + reflectionCol * reflectionV;
+
+			materialData.baseColorFactor = col;
 		}
 
 		if (surface->get_has_glow()) {

@@ -342,11 +342,11 @@ namespace {
 					if (str != "") material.normalTexture.extensions["KHR_texture_transform"] = str;
 				}
 			}
-			if (materialD.metallicRoughnessImageIndex >= 0) {		// TODO : まだ途中.
+			if (materialD.metallicRoughnessImageIndex >= 0) {
 				material.metallicRoughness.metallicRoughnessTexture.textureId = std::to_string(materialD.metallicRoughnessImageIndex);
 				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
 			}
-			if (materialD.occlusionImageIndex >= 0) {				// TODO : まだ途中.
+			if (materialD.occlusionImageIndex >= 0) {
 				material.occlusionTexture.textureId = std::to_string(materialD.occlusionImageIndex);
 				material.occlusionTexture.texCoord  = (size_t)materialD.occlusionTexCoord;
 
