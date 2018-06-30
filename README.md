@@ -43,7 +43,7 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * メッシュ情報の入出力
 * シーンの階層構造の入出力
 * マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を入力
-* マテリアル/テクスチャイメージとして、BaseColor(基本色)/Normal(法線)/Emissive(発光)を出力 (※1)
+* マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)を出力
 * ボーンやスキン情報の入出力
 * ポリゴンメッシュの頂点カラーの入出力 (頂点カラー0のみ) ver.0.1.0.3で追加。    
 頂点カラーとしてRGBAの要素を使用しています。
@@ -51,7 +51,6 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * ボーンを使用したスキンアニメーション情報の入出力。ver.0.1.0.6で追加。   
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
-※1 : ver.0.1.0.0では、エクスポート時のMetallic/Roughness/Occlusion出力はまだ未実装です。   
 
 ### エクスポート時のdoubleSidedの対応について
 
@@ -147,7 +146,7 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 拡散反射色として、glTFのBaseColor(RGB)の値が反映されます。   
 光沢1として、glTFのMetallic Factorの値が反映されます。このとき、0.3以下の場合は0.3となります。   
 光沢1のサイズは0.7固定です。   
-発光色として、glTFの Emissive Factorの値が反映されます。   
+発光色として、glTFのEmissive Factorの値が反映されます。   
 反射値として、glTFのMetallic Factorの値が反映されます。   
 荒さ値として、glTFのRoughness Factorの値が反映されます。   
 
@@ -159,7 +158,7 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 |BaseColor(RGB) |イメージ/拡散反射|通常|1.0|—|   
 |Normal(RGB) |イメージ/法線|通常|1.0|—|   
 |Emissive(RGB) |イメージ/発光|通常|1.0|—|   
-|Roughness MetallicのMetallic(B)|イメージ/拡散反射|乗算|0.5|o|   
+|Roughness MetallicのMetallic(B)|イメージ/拡散反射|乗算|Metallic Factorの値 (※ ver.0.1.0.9 仕様変更)|o|   
 |Roughness MetallicのMetallic(B)|イメージ/反射|通常|1.0|—|   
 |Base Color(RGB) |イメージ/反射|乗算|1.0|-|   
 |Roughness MetallicのRoughness(G)|イメージ/荒さ|通常|1.0|o|   
@@ -171,14 +170,56 @@ glTFでは、Roughness Metallicモデルの場合は「Roughness(G) Metallic(B)�
 別途Occlusionイメージがある場合は、そのイメージが拡散反射の乗算としてマッピングレイヤに追加されます。   
 Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算として表現されます。    
 
-### エクスポート時の表面材質のマッピングレイヤについて
+### 表面材質（マテリアル）の拡散反射値と反射値の関係 (ver.0.1.0.9 対応)
 
-「イメージ/拡散反射」のマッピングレイヤで合成が「乗算」の場合は、glTFのOcclusion(RGB)のテクスチャとして反映しています。    
-それ以外の「イメージ/拡散反射」のマッピングレイヤはbaseColorのテクスチャとしました。    
-「イメージ/法線」のマッピングレイヤはnormalのテクスチャとして反映しています。    
-「イメージ/発光」のマッピングレイヤはemissiveのテクスチャとして反映しています。    
+Shade3Dでは、鏡のような反射を表現する場合は拡散反射値を暗くする必要があります。    
+glTFではBaseColorを暗くすると鏡のような反射にはならないため、インポート時(glTFからShade3Dへの変換)は以下のように変換しています。    
 
-これ以外の「荒さ」「反射」は、本来はRoughness/Metallicに反映する必要があるものですが、まだ未調整です。    
+    const sxsdk::rgb_class whiteCol(1, 1, 1);
+    const sxsdk::rgb_class col = glTFのBaseColor Factor;
+    const float metallicV  = glTFのMetallic Factor;
+    const float metallicV2 = 1.0f - metallicV;
+    const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
+
+「拡散反射色」はglTFのBaseColor Factorを採用。    
+Roughness Metallicテクスチャがない場合は「拡散反射値」は「1.0 - glTFのMetallic Factor」を採用し、「反射色」は上記で計算したreflectionColを採用。    
+Roughness Metallicテクスチャがある場合は「拡散反射値」は1.0、「反射色」は白を採用。    
+「反射値」はglTFのMetallic Factorを採用。     
+
+エクスポート時(Shade3DからglTFへの変換)は以下のように変換しています。    
+
+    sxsdk::rgb_class col = (surface->get_diffuse_color()) * (surface->get_diffuse());    
+    sxsdk::rgb_class reflectionCol = surface->get_reflection_color();    
+    const float reflectionV  = std::max(std::min(1.0f, surface->get_reflection()), 0.0f);    
+    const float reflectionV2 = 1.0f - reflectionV;    
+    col = col * reflectionV2 + reflectionCol * reflectionV;    
+
+glTFのBaseColor Factorとして上記で計算したcolを採用。    
+glTFのMetallic FactorとしてShade3Dの反射値を採用。    
+
+### エクスポート時の表面材質のマッピングレイヤについて (ver.0.1.0.9 対応)
+
+拡散反射の乗算合成としてOcclusionを指定している場合、glTF出力時にはBaseColorにベイクされます。    
+別途、glTFのOcclusionテクスチャは出力していません。    
+マッピングレイヤの「イメージ/拡散反射」「イメージ/発光」「イメージ/反射」「イメージ/荒さ」を複数指定している場合、glTF出力用に1枚にベイクされます。    
+「イメージ/法線」は1枚のみ参照します。    
+この場合、以下の指定が使用できます。    
+
+「合成」は、「通常」「加算」「減算」「乗算」「比較（明）」「比較（暗）」を指定できます。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_blend_mode.png"/>     
+「色反転」、イメージタブの「左右反転」「上下反転」のチェックボックスを指定できます。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_mapping_layer_01.png"/>     
+「チャンネル合成」の指定は、「イメージ/拡散反射」の場合は「アルファ乗算済み」「アルファ透明」を指定できます。    
+「グレイスケール（平均）」「グレイスケール(R)」「グレイスケール(G)」「グレイスケール(B)」「グレイスケール(A)」を指定できます。    
+
+なお、「反復」の指定はver.0.1.0.9でいったん仕様外にしました。正しく動作しません。    
+
+「イメージ/拡散反射」「イメージ/反射」のマッピングレイヤを元に、glTFのBaseColor/Metallicを計算しています。    
+「イメージ/荒さ」のマッピングレイヤを元に、glTFのRoughnessを計算しています。    
+「イメージ/発光」のマッピングレイヤはglTFのEmissiveのテクスチャとして反映しています。    
+「イメージ/法線」のマッピングレイヤはglTFのNormalのテクスチャとして反映しています。    
+
+「頂点カラー/拡散反射」を指定できます(ただし、頂点カラー1のみ使用)。    
 
 ## 制限事項
 
@@ -187,12 +228,10 @@ Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算と
 * エクスポートされたポリゴンメッシュはすべて三角形分割されます。   
 * レンダリングブーリアンには対応していません。  
 * 表面材質のマッピングレイヤは、イメージマッピングのみ対応しています。ソリッドテクスチャの出力には対応していません。また、マッピングはUVのみ使用できます。 
-* 表面材質の色反転など、細かい指定には対応していません。   
 * BaseColorのAlpha要素（Opasity）のインポート/エクスポートは、表面材質のマッピングレイヤの「アルファ透明」を参照します (ver.0.1.0.4 追加)。
 * スキンは「頂点ブレンド」の割り当てのみに対応しています。
 * ジョイントは、ボールジョイント/ボーンジョイントのみに対応しています。
-* 表面材質のマッピングレイヤでの反復指定には暫定対応しています(ver.0.1.0.6 追加)。    
-glTFのextensionのKHR_texture_transformを使用。    
+* 表面材質のマッピングレイヤでの反復指定は仕様外にしました(ver.0.1.0.9 仕様変更)。    
 * アニメーションは、ボーン+スキンでのモーション指定のみに対応しています(ver.0.1.0.6 追加)。    
 * ボーンの変換行列では移動要素のみを指定するようにしてください。回転/せん断/スケールの指定には対応していません。    
 
@@ -205,9 +244,6 @@ glTFのextensionのKHR_texture_transformを使用。
 * テクスチャイメージとして使用できるファイルフォーマットは、pngまたはjpegのみです。   
 * UV層は0/1番目を使用できます(ver.0.1.0.1 追加)。   
 * ポリゴンメッシュの頂点に割り当てる頂点カラーは、頂点カラー番号0のみを乗算合成として使用できます (ver.0.1.0.3 追加)。
-* マテリアルに割り当てているテクスチャのタイリング（反復/繰り返し指定）をglTFのextensionのKHR_texture_transformとして出力していますが(ver.0.1.0.6 追加)、    
-まだ規格としては固まっていないため今は暫定です。    
-後々仕様変更される可能性があります。    
 
 ## 注意事項    
 
@@ -247,6 +283,16 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/06/30] ver.0.1.0.9   
+* Export : マスターイメージ名で同じものがある場合、イメージが上書きされて意図しないマッピングになる問題を修正
+* Export : Shade3DのDiffuse/Reflection/Roughnessテクスチャイメージより、BaseColor/Roughness/Metallicにコンバートする処理を実装
+* Export : 複数のテクスチャがある場合に1枚にベイクする処理を実装
+* Export : 表面材質のマッピングレイヤの「反復」の対応はいったん仕様外に。
+* Export : 面積がゼロの面は出力しないようにした
+* Import : マテリアル名で全角の名前を指定していた場合、うまくイメージが読み込めない問題を修正
+* Import : テクスチャイメージのガンマ補正をかける場合、BaseColorのみを補正するようにした (それ以外はLinear)
+* Import : インポート時のテクスチャイメージのガンマ補正が効かない場合があった問題を修正
 
 [2018/06/23] ver.0.1.0.8   
 * Export : エクスポート時のダイアログボックスで、Asset情報として「タイトル」「作成者」「ライセンス」「原型モデルの参照先」を指定できるようにした
