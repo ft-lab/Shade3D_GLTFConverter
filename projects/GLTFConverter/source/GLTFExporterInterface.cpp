@@ -485,8 +485,10 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 		for (int i = 0; i < 3; ++i) {
 			m_meshData.triangleNormals.push_back(normalsList[i]);
 		}
-		for (int i = 0; i < 3; ++i) {
-			m_meshData.triangleUV0.push_back(uvs0List[i]);
+		if (n_uvs >= 1) {
+			for (int i = 0; i < 3; ++i) {
+				m_meshData.triangleUV0.push_back(uvs0List[i]);
+			}
 		}
 		if (n_uvs >= 2) {
 			for (int i = 0; i < 3; ++i) {
