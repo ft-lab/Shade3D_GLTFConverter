@@ -734,30 +734,41 @@ namespace {
 		for (size_t i = 0; i < imagesSize; ++i) {
 			sceneData->images.push_back(CImageData());
 			CImageData& dstImageData = sceneData->images.back();
-
+			std::string nameUTF8 = dstImageData.name;		// UTF8としてのファイル名.
 			const Image& image = gltfDoc.images[i];
+			Image image2(image);
+#if _WINDOWS
+			StringUtil::convUTF8ToSJIS(image2.uri, image2.uri);
+#endif
 			if (!reader) {
-				if (image.uri == "") continue;
+				if (image2.uri == "") continue;
 				// 画像ファイルの拡張子を取得.
-				const std::string extStr = StringUtil::getFileExtension(image.uri);
+				const std::string extStr = StringUtil::getFileExtension(image2.uri);
 				if (extStr != "") {
-					dstImageData.name     = StringUtil::getFileName(image.uri);
+					dstImageData.name     = StringUtil::getFileName(image2.uri);
 					dstImageData.mimeType = std::string("image/") + extStr;
+					nameUTF8 = image.uri;
 				}
 			} else {
-				dstImageData.name     = StringUtil::getFileName(image.name);
-				dstImageData.mimeType = image.mimeType;
+				dstImageData.name     = StringUtil::getFileName(image2.name);
+				dstImageData.mimeType = image2.mimeType;
+				nameUTF8 = image.name;
 			}
 
 			// 画像バッファを取得.
 			try {
-			const std::vector<uint8_t> imageData = (reader) ? (reader->ReadBinaryData(gltfDoc, image)) : (binReader->ReadBinaryData(gltfDoc, image));
+				const std::vector<uint8_t> imageData = (reader) ? (reader->ReadBinaryData(gltfDoc, image2)) : (binReader->ReadBinaryData(gltfDoc, image2));
 				const size_t dCou = imageData.size();
 				dstImageData.imageDatas.resize(dCou);
 				for (int i = 0; i < dCou; ++i) dstImageData.imageDatas[i] = imageData[i];
 			} catch (GLTFException e) {
 				//g_errorMessage = std::string(e.what());
 				dstImageData.clear();
+			}
+
+			// イメージ名をUTF－8のものに入れ替え.
+			if (!reader) {
+				dstImageData.name = nameUTF8;
 			}
 		}
 	}

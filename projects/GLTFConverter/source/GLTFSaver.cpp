@@ -1281,7 +1281,13 @@ namespace {
 					binStreamReader.reset(new BinStreamReader(StringUtil::getFileDir(fileName)));
 					binReader.reset(new GLTFResourceReader(*binStreamReader));
 
-					auto data = binReader->ReadBinaryData(gltfDoc, gltfDoc.images[i]);
+					// uriはSJISに変換.
+					Image image2(gltfDoc.images[i]);
+#if _WINDOWS
+					StringUtil::convUTF8ToSJIS(image2.uri, image2.uri);
+#endif
+
+					auto data = binReader->ReadBinaryData(gltfDoc, image2);
 					auto imageBufferView = bufferBuilder->AddBufferView(data);
 
 					Image newImage(gltfDoc.images[i]);
@@ -1293,6 +1299,7 @@ namespace {
 					if (extStr == "jpg" || extStr == "jpeg") newImage.mimeType += "jpeg";
 					else newImage.mimeType += "png";
 
+					newImage.name = newImage.uri;
 					newImage.uri.clear();
 					gltfDoc.images.Replace(newImage);
 
