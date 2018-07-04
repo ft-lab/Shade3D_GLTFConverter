@@ -533,8 +533,8 @@ void CGLTFImporterInterface::m_createGLTFImages (sxsdk::scene_interface *scene, 
 			imageD.width  = image->get_size().x;
 			imageD.height = image->get_size().y;
 
-			// ガンマの指定 (BaseColorのみ).
-			if (imageD.imageMask & CImageData::gltf_image_mask_base_color) {
+			// ガンマの指定 (BaseColor/Emissiveのみ).
+			if ((imageD.imageMask & CImageData::gltf_image_mask_base_color) || (imageD.imageMask & CImageData::gltf_image_mask_emissive)) {
 				if (g_importParam.gamma == 1) {
 					masterImage.set_gamma(1.0f / 2.2f);
 				}
