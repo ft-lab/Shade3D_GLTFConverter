@@ -291,7 +291,7 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 [2018/07/05] ver.0.1.0.10   
 * Export : UVが存在しない場合は、UVを出力しないように修正
-* Export : Node階層で、glTF構造のSkinリストにない終端Nodeはパートのままとした (以前はボーンに変換していた)
+* Import : Node階層で、glTF構造のSkinリストにない終端Nodeはパートのままとした (以前はボーンに変換していた)
 * Import : 「イメージのガンマ補正」を有効にした場合に、Emissiveのテクスチャイメージにもガンマ補正をかけるようにした
 * Import/Export : イメージ名に全角文字が入っていると不正になる問題を修正
 
