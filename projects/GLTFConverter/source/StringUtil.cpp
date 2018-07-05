@@ -59,11 +59,12 @@ const std::string StringUtil::getFileDir (const std::string& filePath)
 }
 
 /**
- * ファイルパスから拡張子を取得 (gltfまたはglb).
+ * ファイルパスから拡張子を取得.
  * @param[in] filePath      ファイルフルパス.
  */
 const std::string StringUtil::getFileExtension (const std::string& filePath)
 {
+	if (filePath == "") return "";
 	std::string fileNameS = getFileName(filePath);
 	const int iPos = fileNameS.find_last_of(".");
 	if (iPos == std::string::npos) return "";

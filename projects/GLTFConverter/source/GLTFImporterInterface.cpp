@@ -7,6 +7,7 @@
 #include "Shade3DUtil.h"
 #include "MathUtil.h"
 #include "StreamCtrl.h"
+#include "StringUtil.h"
 
 enum
 {
@@ -560,7 +561,18 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 		const size_t materialsCou = sceneData->materials.size();
 		for (size_t i = 0; i < materialsCou; ++i) {
 			CMaterialData& materialD = sceneData->materials[i];
-			const std::string name = (materialD.name == "") ? (std::string("material_") + std::to_string(i)) : materialD.name;
+
+			const std::string materialName = materialD.name;
+
+			std::string name = (materialName == "") ? (std::string("material_") + std::to_string(i)) : materialName;
+			if (materialD.doubleSided) {	// doubleSidedの場合は、マスターサーフェス名に「doubleSided」をつける.
+				std::string name2 = name;
+				std::transform(name2.begin(), name2.end(), name2.begin(), ::tolower);
+				const int iPos = name2.find("doublesided");
+				if (iPos == std::string::npos) {
+					name += "_doubleSided";
+				}
+			}
 
 			sxsdk::master_surface_class& masterSurface = scene->create_master_surface(name.c_str());
 			masterSurface.set_name(name.c_str());

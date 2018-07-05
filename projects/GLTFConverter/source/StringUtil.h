@@ -23,7 +23,7 @@ namespace StringUtil
 	const std::string getFileDir (const std::string& filePath);
 
 	/**
-	 * ファイルパスから拡張子を取得 (gltfまたはglb).
+	 * ファイルパスから拡張子を取得.
 	 * @param[in] filePath      ファイルフルパス.
 	 */
 	const std::string getFileExtension (const std::string& filePath);
