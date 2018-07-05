@@ -35,6 +35,8 @@ public:
 	sxsdk::quaternion_class rotation;	// 回転.
 
 	bool isBone;					// ボーンノードとして使用している場合はtrue (skinsのjoints要素で参照されているかで判別).
+	bool isEndBone;					// スキンが割り当てられていない終端ノードの場合.
+
 	void* pShapeHandle;				// Import/Export時のShade3Dでの形状のhandleの参照 (パートまたはボーン).
 
 public:
@@ -53,6 +55,7 @@ public:
 		this->scale           = v.scale;
 		this->rotation        = v.rotation;
 		this->isBone          = v.isBone;
+		this->isEndBone       = v.isEndBone;
 		this->pShapeHandle    = v.pShapeHandle;
 
 		return (*this);

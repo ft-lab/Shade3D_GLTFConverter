@@ -873,7 +873,15 @@ namespace {
 		CNodeData& nodeD = sceneData->nodes[nodeIndex];
 
 		const bool setBone2 = setBone || nodeD.isBone;
-		if (!nodeD.isBone && nodeD.meshIndex < 0) nodeD.isBone = setBone2;
+		if (!nodeD.isBone && nodeD.meshIndex < 0) {
+			if (nodeD.childNodeIndex < 0) {		// 終端の場合.
+				if (!nodeD.isBone) {
+					nodeD.isEndBone = true;
+				}
+			} else {
+				nodeD.isBone = setBone2;
+			}
+		}
 
 		if (nodeD.childNodeIndex >= 0) {
 			int nodeIndex2 = nodeD.childNodeIndex;

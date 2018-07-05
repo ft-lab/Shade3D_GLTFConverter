@@ -29,6 +29,7 @@ void CNodeData::clear ()
 	childNodeIndex = -1;
 	parentNodeIndex = -1;
 	isBone = false;
+	isEndBone = false;
 	pShapeHandle = NULL;
 
 	translation = sxsdk::vec3(0, 0, 0);
