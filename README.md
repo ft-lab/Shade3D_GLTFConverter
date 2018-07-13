@@ -56,6 +56,12 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
+### インポート時のdoubleSidedのマテリアルについて (ver.0.1.0.11 - )
+
+インポート時にdoubleSidedの属性を持つマテリアルは、    
+Shade3Dのマスターサーフェス名に「_doubleSided」が付きます。    
+なお、Shade3DのレンダリングではdoubleSidedでなくても両面が表示されることになります。    
+
 ### エクスポート時のdoubleSidedの対応について
 
 glTFフォーマットでは、デフォルトでは表面のみ表示されます。   
@@ -288,6 +294,10 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/07/13] ver.0.1.0.11   
+* Import : マテリアルがdoubleSidedの場合は、マスターサーフェス名に「_doubleSided」を追加
+* Export : 微小の面がある場合に、頂点カラーが正しく出力されないことがある問題を修正
 
 [2018/07/05] ver.0.1.0.10   
 * Export : UVが存在しない場合は、UVを出力しないように修正
