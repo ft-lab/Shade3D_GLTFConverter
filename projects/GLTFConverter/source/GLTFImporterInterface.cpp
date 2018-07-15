@@ -812,12 +812,13 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			}
 
 			// Occlusionをマッピングレイヤとして追加.
+			// COcclusionTextureShaderInterfaceで作成したOcclusionのマッピングレイヤに、乗算合成で割り当てるとする.
 			if (materialD.occlusionImageIndex >= 0) {
 				if (materialD.occlusionImageIndex != materialD.metallicRoughnessImageIndex) {
 					surface->append_mapping_layer();
 					const int layerIndex = surface->get_number_of_mapping_layers() - 1;
 					sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
-					mLayer.set_pattern(sxsdk::enums::image_pattern);
+					mLayer.set_pattern_uuid(OCCLUSION_SHADER_INTERFACE_ID);		// Occlusionのレイヤ.
 					mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
 					// テクスチャ画像を割り当て.
@@ -830,7 +831,6 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 					mLayer.set_blur(true);
 					mLayer.set_weight(materialD.occlusionStrength);
-					mLayer.set_uv_mapping(materialD.occlusionTexCoord);
 					mLayer.set_repetition_x(std::max(1, (int)materialD.occlusionTexScale.x));
 					mLayer.set_repetition_y(std::max(1, (int)materialD.occlusionTexScale.y));
 				}
