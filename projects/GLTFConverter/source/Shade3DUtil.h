@@ -89,6 +89,11 @@ namespace Shade3DUtil
 	 * @return モーションポイントのインデックス。見つからなければ-1.
 	 */
 	int findMotionPoint (sxsdk::motion_interface* motion, const float keyFrameV);
+
+	/**
+	 * 指定のマッピングレイヤがOcclusion用のレイヤかどうか.
+	 */
+	bool isOcclusionMappingLayer (sxsdk::mapping_layer_class* mappingLayer);
 }
 
 #endif

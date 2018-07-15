@@ -6,6 +6,7 @@
 #include "GlobalHeader.h"
 #include "GLTFImporterInterface.h"
 #include "GLTFExporterInterface.h"
+#include "OcclusionShaderInterface.h"
 
 //**************************************************//
 //	グローバル関数									//
@@ -26,6 +27,11 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
 			u = new CGLTFExporterInterface(*shade);
 		}
 	}
+	if (iid == shader_iid) {
+		if (i == 0) {
+			u = new COcclusionTextureShaderInterface(*shade);
+		}
+	}
 
 	if (u) {
 		u->AddRef();
@@ -40,6 +46,7 @@ extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_i
 
 	if (iid == importer_iid) return 1;
 	if (iid == exporter_iid) return 1;
+	if (iid == shader_iid) return 1;
 
 	return 0;
 }
@@ -58,6 +65,11 @@ extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxs
 			return CGLTFExporterInterface::name(shade);
 		}
 	}
+	if (iid == shader_iid) {
+		if (i == 0) {
+			return COcclusionTextureShaderInterface::name(shade);
+		}
+	}
 
 	return 0;
 }
@@ -74,6 +86,11 @@ extern "C" SXSDKEXPORT sx::uuid_class STDCALL get_uuid (const IID &iid, int i, v
 	if (iid == exporter_iid) {
 		if (i == 0) {
 			return GLTF_EXPORTER_INTERFACE_ID;
+		}
+	}
+	if (iid == shader_iid) {
+		if (i == 0) {
+			return OCCLUSION_SHADER_INTERFACE_ID;
 		}
 	}
 

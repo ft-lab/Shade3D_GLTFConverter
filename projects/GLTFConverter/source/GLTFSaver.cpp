@@ -346,9 +346,11 @@ namespace {
 				material.metallicRoughness.metallicRoughnessTexture.textureId = std::to_string(materialD.metallicRoughnessImageIndex);
 				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
 			}
+
 			if (materialD.occlusionImageIndex >= 0) {
 				material.occlusionTexture.textureId = std::to_string(materialD.occlusionImageIndex);
 				material.occlusionTexture.texCoord  = (size_t)materialD.occlusionTexCoord;
+				material.occlusionTexture.strength  = materialD.occlusionStrength;
 
 				// テクスチャのTiling情報を指定.
 				{

@@ -400,3 +400,15 @@ int Shade3DUtil::findMotionPoint (sxsdk::motion_interface* motion, const float k
 
 	return -1;
 }
+
+/**
+ * 指定のマッピングレイヤがOcclusion用のレイヤかどうか.
+ */
+bool Shade3DUtil::isOcclusionMappingLayer (sxsdk::mapping_layer_class* mappingLayer)
+{
+	try {
+		const sx::uuid_class uuid = mappingLayer->get_pattern_uuid();
+		return (uuid == OCCLUSION_SHADER_INTERFACE_ID);
+	} catch (...) { }
+	return false;
+}

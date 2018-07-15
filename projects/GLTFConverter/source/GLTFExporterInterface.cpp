@@ -1013,6 +1013,24 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			}
 		}
 
+		// Occlusionテクスチャを持つ場合.
+		if (imageBlend.getOcclusionMasterImage()) {
+			materialData.occlusionStrength = imageBlend.getOcclusionWeight();
+
+			CImageData imageData;
+			imageData.shadeMasterImage = imageBlend.getOcclusionMasterImage();
+			compointer<sxsdk::image_interface> image(imageData.shadeMasterImage->get_image());
+			imageData.width  = image->get_size().x;
+			imageData.height = image->get_size().y;
+			imageData.name   = m_sceneData->getUniqueImageName(imageData.shadeMasterImage->get_name());
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+			materialData.occlusionImageIndex = imageIndex;
+		}
+
 		return true;
 
 	} catch (...) { }

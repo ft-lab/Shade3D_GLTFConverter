@@ -13,6 +13,7 @@
  */
 #define GLTF_IMPORTER_INTERFACE_ID sx::uuid_class("29C48EA8-1851-4703-AF06-9DEB5A17FF49")
 #define GLTF_EXPORTER_INTERFACE_ID sx::uuid_class("40385ADE-D20F-4694-A817-27CE6B8A1016")
+#define OCCLUSION_SHADER_INTERFACE_ID sx::uuid_class("509D92F5-D9F9-4335-B070-0FBDEE179523")
 
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
@@ -89,6 +90,24 @@ public:
 		meshAngleThreshold    = 50.0f;
 		meshImportVertexColor = true;
 		importAnimation       = true;
+	}
+};
+
+/**
+ * OcclusionのShader情報.
+ */
+class COcclusionShaderData
+{
+public:
+	float weight;			// 強さ.
+
+public:
+	COcclusionShaderData () {
+		clear();
+	}
+
+	void clear () {
+		weight = 1.0f;
 	}
 };
 

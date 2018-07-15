@@ -8,6 +8,7 @@
 	<string id="title" value="gltf"/>
 	<string id="gltf_importer_title" value="glTF (gltf/glb) ..."/>
 	<string id="gltf_exporter_title" value="glTF (glb) ..."/>
+	<string id="occlusion_shader_title" value="Occlusion (glTF)"/>
 
 	<string id="license_All_rights_reserved" value="著作権がある状態です。" />
 	<string id="license_CC_BY" value="作品のクレジットを表示する必要あり。&#10;改変OK/営利OK。&#10;非営利/営利目的での二次利用OK。" />

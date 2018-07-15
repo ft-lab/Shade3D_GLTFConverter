@@ -26,13 +26,15 @@ void CImagesBlend::blendImages ()
 	m_glowTexCoord        = 0;
 
 	m_diffuseAlphaTrans = false;
-	m_normalWeight = 1.0f;
+	m_normalWeight    = 1.0f;
+	m_occlusionWeight = 1.0f;
 
 	m_hasDiffuseImage    = false;
 	m_hasReflectionImage = false;
 	m_hasRoughnessImage  = false;
 	m_hasNormalImage     = false;
 	m_hasGlowImage       = false;
+	m_hasOcclusionImage  = false;
 
 	// Shade3Dでの表面材質のマッピングレイヤで、加工無しの画像が参照されているかチェック.
 	m_checkSingleImage(sxsdk::enums::diffuse_mapping, &m_diffuseMasterImage, m_diffuseTexCoord, m_diffuseRepeat, m_hasDiffuseImage);
@@ -40,6 +42,10 @@ void CImagesBlend::blendImages ()
 	m_checkSingleImage(sxsdk::enums::reflection_mapping, &m_reflectionMasterImage, m_reflectionTexCoord, m_reflectionRepeat, m_hasReflectionImage);
 	m_checkSingleImage(sxsdk::enums::roughness_mapping, &m_roughnessMasterImage, m_roughnessTexCoord, m_roughnessRepeat, m_hasRoughnessImage);
 	m_checkSingleImage(sxsdk::enums::glow_mapping, &m_glowMasterImage, m_glowTexCoord, m_glowRepeat, m_hasGlowImage);
+
+	// マッピングレイヤのOcclusion情報を取得.
+	m_occlusionWeight = 1.0f;
+	m_checkOcclusionSingleImage(&m_occlusionMasterImage, m_occlusionTexCoord, m_occlusionRepeat, m_hasOcclusionImage);
 
 	// Diffuseのアルファ透明を使用しているかチェック.
 	m_diffuseAlphaTrans = m_checkDiffuseAlphaTrans();
@@ -103,6 +109,80 @@ bool CImagesBlend::m_checkSingleImage (const sxsdk::enums::mapping_type mappingT
 		if (pRetMasterImage) {
 			if (counter == 0) {
 				singleImage = true;
+				uvTexCoord  = mappingLayer.get_uv_mapping();
+				const int repeatX = mappingLayer.get_repetition_x();
+				const int repeatY = mappingLayer.get_repetition_y();
+				texRepeat = sx::vec<int,2>(repeatX, repeatY);
+			}
+		}
+
+		counter++;
+		if (counter >= 2) break;
+	}
+	if (counter >= 1) hasImage = true;
+	if (singleImage && counter == 1) {
+		*ppMasterImage = pRetMasterImage;
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Occlusionのテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.
+ * ※ OcclusionレイヤはShade3D ver.17/18段階では存在しないため COcclusionTextureShaderInterface クラスで与えている.
+ * @param[out] ppMasterImage master imageの参照を返す.
+ * @param[out] uvTexCoord    UV用の使用テクスチャ層番号を返す.
+ * @param[out] texRepeat     繰り返し回数.
+ * @param[out] hasImage      イメージを持つか (単数または複数).
+ */
+bool CImagesBlend::m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMasterImage,
+	int& uvTexCoord,
+	sx::vec<int,2>& texRepeat,
+	bool& hasImage)
+{
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+	bool singleImage = false;
+	int counter = 0;
+	sxsdk::master_image_class* pRetMasterImage = NULL;
+	*ppMasterImage = NULL;
+	texRepeat = sx::vec<int,2>(1, 1);
+	hasImage = false;
+
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+
+		// Occlusionレイヤで拡散反射かどうか.
+		if (!Shade3DUtil::isOcclusionMappingLayer(&mappingLayer)) continue;
+		if (mappingLayer.get_type() != sxsdk::enums::diffuse_mapping) continue;
+
+		const float weight  = mappingLayer.get_weight();
+		if (MathUtil::isZero(weight)) continue;
+
+		compointer<sxsdk::image_interface> image(mappingLayer.get_image_interface());
+		if (!image || (image->get_size().x) <= 0 || (image->get_size().y) <= 0) continue;
+
+		const bool flipColor = mappingLayer.get_flip_color();			// 色反転.
+		const bool flipH     = mappingLayer.get_horizontal_flip();		// 左右反転.
+		const bool flipV     = mappingLayer.get_vertical_flip();		// 上下反転.
+		const int channelMix = mappingLayer.get_channel_mix();			// イメージのチャンネル.
+		const bool useChannelMix = (channelMix == sxsdk::enums::mapping_grayscale_alpha_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_red_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_green_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_blue_mode ||
+									channelMix == sxsdk::enums::mapping_grayscale_average_mode);
+
+		if (flipColor || flipH || flipV || useChannelMix) {
+			counter++;
+			continue;
+		}
+
+		// マスターイメージを持つか調べる.
+		pRetMasterImage = Shade3DUtil::getMasterImageFromImage(m_pScene, image);
+		if (pRetMasterImage) {
+			if (counter == 0) {
+				singleImage = true;
+				m_occlusionWeight = weight;
 				uvTexCoord  = mappingLayer.get_uv_mapping();
 				const int repeatX = mappingLayer.get_repetition_x();
 				const int repeatY = mappingLayer.get_repetition_y();
