@@ -178,8 +178,23 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 (R)(G)(B)は、テクスチャイメージのRGB要素のどれを参照するかを表します。   
 glTFでは、Roughness Metallicモデルの場合は「Roughness(G) Metallic(B)」がパックされている、もしくは、   
 「Occlusion(R) Roughness(G) Metallic(B)」がパックされて1枚のイメージになっています。   
-別途Occlusionイメージがある場合は、そのイメージが拡散反射の乗算としてマッピングレイヤに追加されます。   
+別途Occlusionイメージがある場合は、「Occlusion (glTF)/拡散反射」の乗算としてマッピングレイヤに追加されます(後述)。   
 Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算として表現されます。    
+
+### Occlusionのマッピングレイヤ (ver.0.1.0.12 対応)
+
+glTFでRoughness MetallicのOcclusion(R)要素を使用せず、単体のOcclusionテクスチャイメージを持つ場合、    
+インポート時はglTF Converterプラグインで用意している「Occlusion (glTF)」のレイヤが使用されます。    
+これは、「Occlusion (glTF)/拡散反射」として「乗算」合成を割り当てて使用します。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_occlusion_01.png"/>     
+レンダリングした場合、「イメージ/拡散反射」のマッピングレイヤと同じ挙動になります。    
+
+Occlusionテクスチャイメージがマッピングレイヤで指定されている場合は、    
+エクスポート時にOcclusionテクスチャとして出力されます。     
+
+制限事項として、Occlusionマッピングレイヤは表面材質のマッピングレイヤで1レイヤのみ指定できます。    
+UV1のみを使用、投影は「ラップ（UVマッピング）」になります。    
+「適用率」の指定が、glTFのocclusionTexture.strengthになります。    
 
 ### 表面材質（マテリアル）の拡散反射値と反射値の関係 (ver.0.1.0.9 対応)
 
@@ -294,6 +309,10 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/07/15] ver.0.1.0.12   
+* 表面材質のマッピングレイヤとして、「Occlusion (glTF)」の種類を追加。    
+* Import/Export : Occlusionテクスチャイメージの割り当ては、表面材質のマッピングレイヤの「Occlusion (glTF)/拡散反射」を使用するようにした。
 
 [2018/07/13] ver.0.1.0.11   
 * Import : マテリアルがdoubleSidedの場合は、マスターサーフェス名に「_doubleSided」を追加
