@@ -1029,6 +1029,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				m_sceneData->images.push_back(imageData);
 			}
 			materialData.occlusionImageIndex = imageIndex;
+			materialData.occlusionTexCoord   = imageBlend.getOcclusionTexCoord();
 		}
 
 		return true;

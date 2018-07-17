@@ -94,6 +94,11 @@ namespace Shade3DUtil
 	 * 指定のマッピングレイヤがOcclusion用のレイヤかどうか.
 	 */
 	bool isOcclusionMappingLayer (sxsdk::mapping_layer_class* mappingLayer);
+
+	/**
+	 * 選択形状(active_shape)での、Occlusion用のmapping_layer_classを取得.
+	 */
+	sxsdk::mapping_layer_class* getActiveShapeOcclusionMappingLayer (sxsdk::scene_interface* scene);
 }
 
 #endif

@@ -831,6 +831,15 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 					mLayer.set_blur(true);
 					mLayer.set_weight(materialD.occlusionStrength);
+					
+					// shader_interfaceのマッピングレイヤではUV層の指定ができないため、mapping_layerのstreamに保持.
+					//mLayer.set_uv_mapping(materialD.occlusionTexCoord);
+					{
+						COcclusionShaderData data;
+						data.uvIndex = materialD.occlusionTexCoord;
+						StreamCtrl::saveOcclusionParam(mLayer, data);
+					}
+
 					mLayer.set_repetition_x(std::max(1, (int)materialD.occlusionTexScale.x));
 					mLayer.set_repetition_y(std::max(1, (int)materialD.occlusionTexScale.y));
 				}

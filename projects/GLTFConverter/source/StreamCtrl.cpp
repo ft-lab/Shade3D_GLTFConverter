@@ -138,6 +138,7 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
  */
 void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDlgParam& data)
 {
+	data.clear();
 	try {
 		compointer<sxsdk::preference_interface> preference(shade.get_preference_interface());
 		if (!preference) return;
@@ -186,3 +187,60 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 	} catch (...) { }
 }
 
+/**
+ * Occlusion Shader(マッピングレイヤ)情報を保存.
+ */
+void StreamCtrl::saveOcclusionParam (sxsdk::stream_interface* stream, const COcclusionShaderData& data)
+{
+	try {
+		if (!stream) return;
+		stream->set_pointer(0);
+		stream->set_size(0);
+
+		int iVersion = OCCLUSION_PARAM_DLG_STREAM_VERSION;
+		stream->write_int(iVersion);
+
+		stream->write_int(data.uvIndex);
+
+	} catch (...) { }
+}
+
+void StreamCtrl::saveOcclusionParam (sxsdk::mapping_layer_class& mappingLayer, const COcclusionShaderData& data)
+{
+	try {
+		compointer<sxsdk::stream_interface> stream(mappingLayer.create_attribute_stream_interface_with_uuid(OCCLUSION_SHADER_INTERFACE_ID));
+		if (!stream) return;
+		saveOcclusionParam(stream, data);
+	} catch (...) { }
+}
+
+/**
+ * Occlusion Shader(マッピングレイヤ)情報を取得.
+ */
+bool StreamCtrl::loadOcclusionParam (sxsdk::stream_interface* stream, COcclusionShaderData& data)
+{
+	data.clear();
+	try {
+		if (!stream) return false;
+		stream->set_pointer(0);
+
+		int iVersion;
+		stream->read_int(iVersion);
+
+		stream->read_int(data.uvIndex);
+
+		return true;
+	} catch (...) { }
+	return false;
+}
+
+bool StreamCtrl::loadOcclusionParam (sxsdk::mapping_layer_class& mappingLayer, COcclusionShaderData& data)
+{
+	data.clear();
+	try {
+		compointer<sxsdk::stream_interface> stream(mappingLayer.get_attribute_stream_interface_with_uuid(OCCLUSION_SHADER_INTERFACE_ID));
+		if (!stream) return false;
+		return loadOcclusionParam(stream, data);
+	} catch (...) { }
+	return false;
+}

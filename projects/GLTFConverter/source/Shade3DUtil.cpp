@@ -412,3 +412,29 @@ bool Shade3DUtil::isOcclusionMappingLayer (sxsdk::mapping_layer_class* mappingLa
 	} catch (...) { }
 	return false;
 }
+
+/**
+ * 選択形状(active_shape)での、Occlusion用のmapping_layer_classを取得.
+ */
+sxsdk::mapping_layer_class* Shade3DUtil::getActiveShapeOcclusionMappingLayer (sxsdk::scene_interface* scene)
+{
+	try {
+		sxsdk::shape_class& shape = scene->active_shape();
+		if (!shape.get_has_surface_attributes()) return NULL;
+		sxsdk::surface_class* surface = shape.get_surface();
+		if (!surface) return NULL;
+		const int layersCou = surface->get_number_of_mapping_layers();
+
+		sxsdk::mapping_layer_class* mRetLayer = NULL;
+		for (int i = 0; i < layersCou; ++i) {
+			sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(i);
+			if (Shade3DUtil::isOcclusionMappingLayer(&mLayer)) {
+				mRetLayer = &mLayer;
+				break;
+			}
+		}
+		return mRetLayer;
+
+	} catch (...) { }
+	return NULL;
+}

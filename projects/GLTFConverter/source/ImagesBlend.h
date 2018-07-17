@@ -154,6 +154,11 @@ public:
 	sxsdk::master_image_class* getOcclusionMasterImage () { return m_occlusionMasterImage; }
 
 	/**
+	 * OcclusionのUV層番号を取得.
+	 */
+	int getOcclusionTexCoord () { return m_occlusionTexCoord; }
+
+	/**
 	 * glTFとしてのイメージを取得.
 	 */
 	compointer<sxsdk::image_interface> getGLTFBaseColorImage () { return m_gltfBaseColorImage; }

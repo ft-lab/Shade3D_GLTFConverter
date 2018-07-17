@@ -4,6 +4,7 @@
 #include "ImagesBlend.h"
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
+#include "StreamCtrl.h"
 
 CImagesBlend::CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface) : m_pScene(scene), m_surface(surface)
 {
@@ -24,6 +25,7 @@ void CImagesBlend::blendImages ()
 	m_reflectionTexCoord  = 0;
 	m_roughnessTexCoord   = 0;
 	m_glowTexCoord        = 0;
+	m_occlusionTexCoord   = 0;
 
 	m_diffuseAlphaTrans = false;
 	m_normalWeight    = 1.0f;
@@ -148,6 +150,7 @@ bool CImagesBlend::m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMa
 	*ppMasterImage = NULL;
 	texRepeat = sx::vec<int,2>(1, 1);
 	hasImage = false;
+	uvTexCoord = 0;
 
 	for (int i = 0; i < layersCou; ++i) {
 		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
@@ -183,7 +186,17 @@ bool CImagesBlend::m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMa
 			if (counter == 0) {
 				singleImage = true;
 				m_occlusionWeight = weight;
-				uvTexCoord  = mappingLayer.get_uv_mapping();
+
+				// UV層番号は、カスタムのshader_interfaceではmapping_layer_classから取得できないため、.
+				// streamに保持しているのを取得.
+				//uvTexCoord  = mappingLayer.get_uv_mapping();
+				try {
+					compointer<sxsdk::stream_interface> stream(mappingLayer.get_attribute_stream_interface_with_uuid(OCCLUSION_SHADER_INTERFACE_ID));
+					COcclusionShaderData occlusionD;
+					StreamCtrl::loadOcclusionParam(stream, occlusionD);
+					uvTexCoord = occlusionD.uvIndex;
+				} catch (...) { }
+
 				const int repeatX = mappingLayer.get_repetition_x();
 				const int repeatY = mappingLayer.get_repetition_y();
 				texRepeat = sx::vec<int,2>(repeatX, repeatY);

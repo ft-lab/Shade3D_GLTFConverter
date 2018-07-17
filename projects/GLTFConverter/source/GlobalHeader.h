@@ -18,6 +18,7 @@
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
 #define GLTF_EXPORTER_DLG_STREAM_VERSION		0x100
+#define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x100
 
 // 作業ディレクトリ名.
 #define GLTF_TEMP_DIR "shade3d_temp_gltf"
@@ -99,7 +100,7 @@ public:
 class COcclusionShaderData
 {
 public:
-	float weight;			// 強さ.
+	int uvIndex;			// UV層番号 (0 or 1).
 
 public:
 	COcclusionShaderData () {
@@ -107,7 +108,7 @@ public:
 	}
 
 	void clear () {
-		weight = 1.0f;
+		uvIndex = 0;
 	}
 };
 

@@ -12,7 +12,10 @@
 class COcclusionTextureShaderInterface : public sxsdk::shader_interface
 {
 private:
+	sxsdk::shade_interface* m_shade;
+	COcclusionShaderData m_data;		// Shader情報.
 
+private:
 	/**
 	 * Shaderで参照する情報.
 	 */
@@ -61,6 +64,34 @@ private:
 	 * レンダリング終了時に呼ばれる.
 	 */
 	virtual void post_rendering (bool &b, sxsdk::rendering_context_interface *rendering_context);
+
+	/**
+	 * パラメータの指定.
+	 */
+	virtual bool ask (sxsdk::stream_interface *stream, void *);
+
+	//--------------------------------------------------.
+	//  ダイアログのイベント処理用.
+	//--------------------------------------------------.
+	/**
+	 * ダイアログの初期化.
+	 */
+	virtual void initialize_dialog (sxsdk::dialog_interface &d, void * = 0);
+
+	/** 
+	 * ダイアログのイベントを受け取る.
+	 */
+	virtual bool respond (sxsdk::dialog_interface &d, sxsdk::dialog_item_class &item, int action, void * = 0);
+
+	/**
+	 * ダイアログのデータを設定する.
+	 */
+	virtual void load_dialog_data (sxsdk::dialog_interface &d, void * = 0);
+
+	/**
+	 * 値の変更を保存するときに呼ばれる.
+	 */
+	virtual void save_dialog_data (sxsdk::dialog_interface &d, void * = 0);
 
 public:
 	COcclusionTextureShaderInterface (sxsdk::shade_interface& _shade);

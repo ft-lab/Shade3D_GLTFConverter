@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dialog default_button="true" title="Occlusion">
+	<vbox>
+		<selection id="101" label="UV : |UV1|UV2" />
+	</vbox>
+</dialog>
