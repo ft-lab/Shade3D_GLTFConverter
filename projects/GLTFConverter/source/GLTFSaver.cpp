@@ -368,6 +368,8 @@ namespace {
 					material.alphaMode   = (AlphaMode)3;		// ALPHA_MASK.
 					material.alphaCutoff = materialD.alphaCutOff;
 				}
+				// 透明度をBaseColorのAlphaに反映.
+				material.metallicRoughness.baseColorFactor.a = 1.0f - materialD.transparency;
 			}
 
 			gltfDoc.materials.Append(material);

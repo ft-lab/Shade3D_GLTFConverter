@@ -580,21 +580,6 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 			sxsdk::surface_class* surface = masterSurface.get_surface();
 
-			// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
-			{
-				const sxsdk::rgb_class whiteCol(1, 1, 1);
-				const sxsdk::rgb_class col = materialD.baseColorFactor;
-				const float metallicV  = materialD.metallicFactor;
-				const float metallicV2 = 1.0f - metallicV;
-				const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
-
-				surface->set_diffuse_color(materialD.baseColorFactor);
-				if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
-					surface->set_diffuse(metallicV2);
-					surface->set_reflection_color(reflectionCol);
-				}
-			}
-
 			// 光沢を調整.
 			float highlightV = std::min(materialD.metallicFactor, 0.3f);
 			if (materialD.roughnessFactor < 1.0f) {
@@ -606,11 +591,12 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			// ALPHA_MASK : アルファを考慮.
 			const bool alphaMask = (materialD.alphaMode == 3);
 
-			// ALPHA_BLEND : アルファを考慮、アルファ値より、transparencyの固定値をゲットして反映させる.
+			// ALPHA_BLEND : 透明度を考慮.
 			const bool alphaBlend = (materialD.alphaMode == 2);
 
 			bool needAlpha = false;
-			float transparency = 0.0f;
+			const float transparency = alphaBlend ? materialD.transparency : 0.0f;
+			surface->set_transparency(transparency);
 
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
@@ -622,17 +608,14 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				// テクスチャ画像を割り当て.
 				if (sceneData->images[materialD.baseColorImageIndex].shadeMasterImage) {
+					compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
+					mLayer.set_image_interface(image);
 
+					// ALPHA_BLENDのときに、イメージのAlpha要素で透過がある場合.
 					if (alphaBlend) {
-						// imageのalpha要素から透明度を逆算する.
-						if (Shade3DUtil::convMasterImageWithTransparency(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage, transparency, needAlpha)) {
-							compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
-							mLayer.set_image_interface(image);
-							if (transparency > 0.0f) surface->set_transparency(transparency);
+						if (Shade3DUtil::hasImageAlpha(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage)) {
+							needAlpha = true;
 						}
-					} else {
-						compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
-						mLayer.set_image_interface(image);
 					}
 				}
 
@@ -644,6 +627,21 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				// DiffuseのマッピングをAlpha透過にする.
 				if (alphaMask || needAlpha) {
 					mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
+				}
+			}
+
+			// Shade3DでのDiffuseを黒にしないと反射や透過に透明感が出ないので補正.
+			{
+				const sxsdk::rgb_class whiteCol(1, 1, 1);
+				const sxsdk::rgb_class col = materialD.baseColorFactor;
+				const float metallicV  = std::max(materialD.metallicFactor, transparency);
+				const float metallicV2 = 1.0f - metallicV;
+				const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
+
+				surface->set_diffuse_color(materialD.baseColorFactor);
+				if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
+					surface->set_diffuse(metallicV2);
+					surface->set_reflection_color(reflectionCol);
 				}
 			}
 

@@ -465,15 +465,14 @@ compointer<sxsdk::image_interface> Shade3DUtil::duplicateImageWithAlpha (sxsdk::
 }
 
 /**
- * 指定のマスターイメージのAlpha情報より、transparencyを分離.
- * @param[in/out] masterImage  マスターイメージ。アルファは補正される.
- * @param[out]    transparency imageのAlphaから逆算した透明度の値.
- * @param[out]    needAlpha    imageにAlpha値が必要か.
+ * 指定のマスターイメージがAlpha情報を持つかどうか.
+ * @param[in] masterImage  マスターイメージ.
+ * @return アルファ要素が1.0でないものがある場合はtrueを返す.
  */
-bool Shade3DUtil::convMasterImageWithTransparency (sxsdk::master_image_class* masterImage, float& transparency, bool& needAlpha)
+bool Shade3DUtil::hasImageAlpha (sxsdk::master_image_class* masterImage)
 {
-	transparency = 0.0f;
-	needAlpha = false;
+	bool hasAlpha = false;
+
 	if (!masterImage) return false;
 	try {
 		compointer<sxsdk::image_interface> image(masterImage->get_image());
@@ -483,44 +482,19 @@ bool Shade3DUtil::convMasterImageWithTransparency (sxsdk::master_image_class* ma
 		std::vector<sxsdk::rgba_class> lineD;
 		lineD.resize(wid);
 
-		// 画像から、アルファの最小と最大を取得.
-		float minAlpha, maxAlpha;
-		minAlpha = -1.0f;
-		maxAlpha = -1.0f;
 		for (int y = 0; y < hei; ++y) {
 			image->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
 			for (int x = 0; x < wid; ++x) {
 				const float a = lineD[x].alpha;
-				if (minAlpha < 0.0f || minAlpha > a) minAlpha = a;
-				if (maxAlpha < 0.0f || maxAlpha < a) maxAlpha = a;
+				if (!MathUtil::isZero(a - 1.0f)) {
+					hasAlpha = true;
+					break;
+				}
 			}
+			if (hasAlpha) break;
 		}
-		if (!MathUtil::isZero(maxAlpha - minAlpha)) needAlpha = true;
-
-		// 最大値が1.0の場合は、透明度は存在せず.
-		if (MathUtil::isZero(maxAlpha - 1.0f)) {
-			transparency = 0.0f;
-			return true;
-		}
-		if (MathUtil::isZero(maxAlpha)) {
-			transparency = 1.0f;
-			return true;
-		}
-
-		transparency = 1.0f - maxAlpha;
-
-		// Alpha値を補正.
-		const float a0 = 1.0f / maxAlpha;
-		for (int y = 0; y < hei; ++y) {
-			image->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
-			for (int x = 0; x < wid; ++x) {
-				lineD[x].alpha *= a0;
-			}
-			image->set_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
-		}
-		image->update();
-
-		return true;
+		return hasAlpha;
 	} catch (...) { }
 	return false;
 }
+

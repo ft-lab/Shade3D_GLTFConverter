@@ -106,12 +106,11 @@ namespace Shade3DUtil
 	compointer<sxsdk::image_interface> duplicateImageWithAlpha (sxsdk::image_interface* image, const float alpha);
 
 	/**
-	 * 指定のマスターイメージのAlpha情報より、transparencyを分離.
-	 * @param[in/out] masterImage  マスターイメージ。アルファは補正される.
-	 * @param[out]    transparency imageのAlphaから逆算した透明度の値.
-	 * @param[out]    needAlpha    imageにAlpha値が必要か.
+	 * 指定のマスターイメージがAlpha情報を持つかどうか.
+	 * @param[in] masterImage  マスターイメージ.
+	 * @return アルファ要素が1.0でないものがある場合はtrueを返す.
 	 */
-	bool convMasterImageWithTransparency (sxsdk::master_image_class* masterImage, float& transparency, bool& needAlpha);
+	bool hasImageAlpha (sxsdk::master_image_class* masterImage);
 }
 
 #endif

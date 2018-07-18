@@ -818,10 +818,11 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		materialData.transparency    = 0.0f;
 
 		if (surface->get_has_diffuse()) {
-			// 反射が大きい場合にbaseColorを黒にするとglTFとして見たときは黒くなるため、reflectionも考慮.
+			// 反射または透明度が大きい場合にbaseColorを黒にするとglTFとして見たときは黒くなるため、reflection/transparencyも考慮.
 			sxsdk::rgb_class col = (surface->get_diffuse_color()) * (surface->get_diffuse());
 			sxsdk::rgb_class reflectionCol = surface->get_reflection_color();
-			const float reflectionV  = std::max(std::min(1.0f, surface->get_reflection()), 0.0f);
+			const float transparency = surface->get_transparency();
+			const float reflectionV  = std::max(std::min(1.0f, std::max(surface->get_reflection(), transparency)), 0.0f);
 			const float reflectionV2 = 1.0f - reflectionV;
 			col = col * reflectionV2 + reflectionCol * reflectionV;
 
@@ -876,15 +877,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 					imageData.height = image->get_size().y;
 					imageData.name   = m_sceneData->getUniqueImageName(pMasterImage->get_name());
 
-					if (materialData.transparency > 0.0f) {
-						// 透明度がある場合は、BaseColorのAlpha値にtransparencyを乗算する.
-						const float alphaV = 1.0f - std::max(0.0f, std::min(1.0f, materialData.transparency));
-						imageData.shadeImage = Shade3DUtil::duplicateImageWithAlpha(image, alphaV);
-						imageData.shadeMasterImage = NULL;
-
-					} else {
-						imageData.shadeMasterImage = pMasterImage;
-					}
+					imageData.shadeMasterImage = pMasterImage;
 
 					int imageIndex = m_sceneData->findSameImage(imageData);
 					if (imageIndex < 0) {
@@ -901,13 +894,13 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 							if (materialData.transparency > 0.0f) {
 								materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-								CImageData& imageData = m_sceneData->images[imageIndex];
-								imageData.useBaseColorAlpha = true;
 
 							} else if (imageBlend.getDiffuseAlphaTrans()) {
 								// アルファ透過する場合.
 								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
 								materialData.alphaCutOff = 0.9f;
+							}
+							if (imageBlend.getDiffuseAlphaTrans()) {
 								CImageData& imageData = m_sceneData->images[imageIndex];
 								imageData.useBaseColorAlpha = true;
 							}
@@ -932,14 +925,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 					// 合成したイメージを参照する場合.
 					CImageData imageData;
 
-					if (materialData.transparency > 0.0f) {
-						// 透明度がある場合は、BaseColorのAlpha値にtransparencyを乗算する.
-						const float alphaV = 1.0f - std::max(0.0f, std::min(1.0f, materialData.transparency));
-						imageData.shadeImage = Shade3DUtil::duplicateImageWithAlpha(imageBlend.getImage(mType), alphaV);
-
-					} else {
-						imageData.shadeImage = imageBlend.getImage(mType);
-					}
+					imageData.shadeImage = imageBlend.getImage(mType);
 
 					imageData.width  = imageData.shadeImage->get_size().x;
 					imageData.height = imageData.shadeImage->get_size().y;
@@ -958,12 +944,12 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 							if (materialData.transparency > 0.0f) {
 								materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-								CImageData& imageData = m_sceneData->images[imageIndex];
-								imageData.useBaseColorAlpha = true;
 
 							} else if (imageBlend.getDiffuseAlphaTrans()) {
 								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
 								materialData.alphaCutOff = 0.9f;
+							}
+							if (imageBlend.getDiffuseAlphaTrans()) {
 								CImageData& imageData = m_sceneData->images[imageIndex];
 								imageData.useBaseColorAlpha = true;
 							}
