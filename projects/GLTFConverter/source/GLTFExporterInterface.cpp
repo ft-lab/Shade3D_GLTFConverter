@@ -892,14 +892,6 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 							materialData.baseColorTexCoord   = imageBlend.getTexCoord(mType);
 
-							if (materialData.transparency > 0.0f) {
-								materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-
-							} else if (imageBlend.getDiffuseAlphaTrans()) {
-								// アルファ透過する場合.
-								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-								materialData.alphaCutOff = 0.9f;
-							}
 							if (imageBlend.getDiffuseAlphaTrans()) {
 								CImageData& imageData = m_sceneData->images[imageIndex];
 								imageData.useBaseColorAlpha = true;
@@ -942,13 +934,6 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 							materialData.baseColorTexCoord   = imageBlend.getTexCoord(mType);
 
-							if (materialData.transparency > 0.0f) {
-								materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-
-							} else if (imageBlend.getDiffuseAlphaTrans()) {
-								materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-								materialData.alphaCutOff = 0.9f;
-							}
 							if (imageBlend.getDiffuseAlphaTrans()) {
 								CImageData& imageData = m_sceneData->images[imageIndex];
 								imageData.useBaseColorAlpha = true;
@@ -971,6 +956,14 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 					}
 				}
 			}
+		}
+		if (materialData.transparency > 0.0f) {
+			materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
+
+		} else if (imageBlend.getDiffuseAlphaTrans()) {
+			// アルファ透過する場合.
+			materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
+			materialData.alphaCutOff = 0.9f;
 		}
 
 		// roughness/reflectionテクスチャを持つ場合は、合成.
