@@ -45,6 +45,8 @@ void CMaterialData::clear ()
 	emissiveTexScale          = sxsdk::vec2(1, 1);
 	metallicRoughnessTexScale = sxsdk::vec2(1, 1);
 	occlusionTexScale         = sxsdk::vec2(1, 1);
+
+	transparency = 0.0f;
 }
 
 /**
@@ -86,6 +88,8 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->emissiveTexScale)          != v.emissiveTexScale) return false;
 	if ((this->metallicRoughnessTexScale) != v.metallicRoughnessTexScale) return false;
 	if ((this->occlusionTexScale)         != v.occlusionTexScale) return false;
+
+	if (!MathUtil::isZero((this->transparency) - v.transparency)) return false;
 
 	return true;
 }

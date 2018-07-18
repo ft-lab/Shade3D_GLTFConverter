@@ -438,3 +438,89 @@ sxsdk::mapping_layer_class* Shade3DUtil::getActiveShapeOcclusionMappingLayer (sx
 	} catch (...) { }
 	return NULL;
 }
+
+/**
+ * 指定のimageにアルファ値を乗算したimageを複製.
+ */
+compointer<sxsdk::image_interface> Shade3DUtil::duplicateImageWithAlpha (sxsdk::image_interface* image, const float alpha)
+{
+	try {
+		compointer<sxsdk::image_interface> image2(image->duplicate_image());
+		const int wid = image->get_size().x;
+		const int hei = image->get_size().y;
+		std::vector<sxsdk::rgba_class> lineD;
+		lineD.resize(wid);
+
+		for (int y = 0; y < hei; ++y) {
+			image2->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+			for (int x = 0; x < wid; ++x) {
+				lineD[x].alpha *= alpha;
+			}
+			image2->set_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+		}
+		return image2;
+
+	} catch (...) { }
+	return compointer<sxsdk::image_interface>();
+}
+
+/**
+ * 指定のマスターイメージのAlpha情報より、transparencyを分離.
+ * @param[in/out] masterImage  マスターイメージ。アルファは補正される.
+ * @param[out]    transparency imageのAlphaから逆算した透明度の値.
+ * @param[out]    needAlpha    imageにAlpha値が必要か.
+ */
+bool Shade3DUtil::convMasterImageWithTransparency (sxsdk::master_image_class* masterImage, float& transparency, bool& needAlpha)
+{
+	transparency = 0.0f;
+	needAlpha = false;
+	if (!masterImage) return false;
+	try {
+		compointer<sxsdk::image_interface> image(masterImage->get_image());
+		if (!image) return false;
+		const int wid = image->get_size().x;
+		const int hei = image->get_size().y;
+		std::vector<sxsdk::rgba_class> lineD;
+		lineD.resize(wid);
+
+		// 画像から、アルファの最小と最大を取得.
+		float minAlpha, maxAlpha;
+		minAlpha = -1.0f;
+		maxAlpha = -1.0f;
+		for (int y = 0; y < hei; ++y) {
+			image->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+			for (int x = 0; x < wid; ++x) {
+				const float a = lineD[x].alpha;
+				if (minAlpha < 0.0f || minAlpha > a) minAlpha = a;
+				if (maxAlpha < 0.0f || maxAlpha < a) maxAlpha = a;
+			}
+		}
+		if (!MathUtil::isZero(maxAlpha - minAlpha)) needAlpha = true;
+
+		// 最大値が1.0の場合は、透明度は存在せず.
+		if (MathUtil::isZero(maxAlpha - 1.0f)) {
+			transparency = 0.0f;
+			return true;
+		}
+		if (MathUtil::isZero(maxAlpha)) {
+			transparency = 1.0f;
+			return true;
+		}
+
+		transparency = 1.0f - maxAlpha;
+
+		// Alpha値を補正.
+		const float a0 = 1.0f / maxAlpha;
+		for (int y = 0; y < hei; ++y) {
+			image->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+			for (int x = 0; x < wid; ++x) {
+				lineD[x].alpha *= a0;
+			}
+			image->set_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+		}
+		image->update();
+
+		return true;
+	} catch (...) { }
+	return false;
+}

@@ -361,8 +361,13 @@ namespace {
 
 			// アルファ合成のパラメータを渡す.
 			if (materialD.alphaMode != ALPHA_OPAQUE) {
-				material.alphaMode   = (AlphaMode)3;		// ALPHA_MASK.
-				material.alphaCutoff = materialD.alphaCutOff;
+				if (materialD.alphaMode == ALPHA_BLEND) {
+					material.alphaMode   = (AlphaMode)2;		// ALPHA_BLEND.
+
+				} else {
+					material.alphaMode   = (AlphaMode)3;		// ALPHA_MASK.
+					material.alphaCutoff = materialD.alphaCutOff;
+				}
 			}
 
 			gltfDoc.materials.Append(material);

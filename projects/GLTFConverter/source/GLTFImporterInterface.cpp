@@ -603,8 +603,14 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			surface->set_highlight(highlightV);
 			surface->set_highlight_size(0.7f);
 
-			// ALPHA_BLEND/ALPHA_MASK : アルファを考慮.
-			const bool alphaBlend = (materialD.alphaMode == 2 || materialD.alphaMode == 3);
+			// ALPHA_MASK : アルファを考慮.
+			const bool alphaMask = (materialD.alphaMode == 3);
+
+			// ALPHA_BLEND : アルファを考慮、アルファ値より、transparencyの固定値をゲットして反映させる.
+			const bool alphaBlend = (materialD.alphaMode == 2);
+
+			bool needAlpha = false;
+			float transparency = 0.0f;
 
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
@@ -616,8 +622,18 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 				// テクスチャ画像を割り当て.
 				if (sceneData->images[materialD.baseColorImageIndex].shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
-					mLayer.set_image_interface(image);
+
+					if (alphaBlend) {
+						// imageのalpha要素から透明度を逆算する.
+						if (Shade3DUtil::convMasterImageWithTransparency(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage, transparency, needAlpha)) {
+							compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
+							mLayer.set_image_interface(image);
+							if (transparency > 0.0f) surface->set_transparency(transparency);
+						}
+					} else {
+						compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
+						mLayer.set_image_interface(image);
+					}
 				}
 
 				mLayer.set_blur(true);
@@ -626,7 +642,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_repetition_y(std::max(1, (int)materialD.baseColorTexScale.y));
 
 				// DiffuseのマッピングをAlpha透過にする.
-				if (alphaBlend) {
+				if (alphaMask || needAlpha) {
 					mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
 				}
 			}

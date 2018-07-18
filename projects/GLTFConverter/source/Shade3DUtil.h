@@ -99,6 +99,19 @@ namespace Shade3DUtil
 	 * 選択形状(active_shape)での、Occlusion用のmapping_layer_classを取得.
 	 */
 	sxsdk::mapping_layer_class* getActiveShapeOcclusionMappingLayer (sxsdk::scene_interface* scene);
+
+	/**
+	 * 指定のimageにアルファ値を乗算したimageを複製.
+	 */
+	compointer<sxsdk::image_interface> duplicateImageWithAlpha (sxsdk::image_interface* image, const float alpha);
+
+	/**
+	 * 指定のマスターイメージのAlpha情報より、transparencyを分離.
+	 * @param[in/out] masterImage  マスターイメージ。アルファは補正される.
+	 * @param[out]    transparency imageのAlphaから逆算した透明度の値.
+	 * @param[out]    needAlpha    imageにAlpha値が必要か.
+	 */
+	bool convMasterImageWithTransparency (sxsdk::master_image_class* masterImage, float& transparency, bool& needAlpha);
 }
 
 #endif

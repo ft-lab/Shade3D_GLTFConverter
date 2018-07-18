@@ -52,6 +52,7 @@ public:
 	sxsdk::vec2 metallicRoughnessTexScale;
 	sxsdk::vec2 occlusionTexScale;
 
+	float transparency;					// Shade3Dでの透明度.
 
 public:
 	CMaterialData ();
@@ -87,6 +88,8 @@ public:
 		this->emissiveTexScale          = v.emissiveTexScale;
 		this->metallicRoughnessTexScale = v.metallicRoughnessTexScale;
 		this->occlusionTexScale         = v.occlusionTexScale;
+
+		this->transparency = v.transparency;
 
 		return (*this);
     }
