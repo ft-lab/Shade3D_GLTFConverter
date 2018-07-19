@@ -630,11 +630,11 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 			}
 
-			// Shade3DでのDiffuseを黒にしないと反射や透過に透明感が出ないので補正.
+			// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
 			{
 				const sxsdk::rgb_class whiteCol(1, 1, 1);
 				const sxsdk::rgb_class col = materialD.baseColorFactor;
-				const float metallicV  = std::max(materialD.metallicFactor, transparency);
+				const float metallicV  = materialD.metallicFactor;
 				const float metallicV2 = 1.0f - metallicV;
 				const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
 
