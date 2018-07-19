@@ -47,11 +47,12 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * メッシュ情報の入出力
 * シーンの階層構造の入出力
 * マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を入力
-* マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)を出力
+* マテリアル/テクスチャイメージとして、BaseColor(基本色)/Metallic(メタリック)/Roughness(荒さ)/Normal(法線)/Emissive(発光)/Occlusion(遮蔽)を出力
 * ボーンやスキン情報の入出力
 * ポリゴンメッシュの頂点カラーの入出力 (頂点カラー0のみ) ver.0.1.0.3で追加。    
 頂点カラーとしてRGBAの要素を使用しています。
 * テクスチャマッピングの「アルファ透明」の入出力。ver.0.1.0.4で追加。  
+* 表面材質の「透明」の入出力。ver.0.1.0.13で追加。    
 * ボーンを使用したスキンアニメーション情報の入出力。ver.0.1.0.6で追加。   
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
@@ -75,6 +76,12 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 <img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_alpha_blend.png"/>     
 
 この場合、エクスポート時のオプションで「テクスチャ出力」を「jpegに置き換え」としたときも、png形式で出力されます。
+
+### エクスポート時の「透明」の対応について (ver.0.1.0.13 - )
+
+表面材質の「透明」が0.0よりも大きい場合、    
+「1.0 - 透明」の値がglTFのpbrMetallicRoughnessのbaseColorFactorのAlphaに格納されます。    
+このとき、glTFのalphaMode:BLENDが使用されます。    
 
 ### エクスポート時のボーンとスキンについて
 
@@ -160,6 +167,7 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 発光色として、glTFのEmissive Factorの値が反映されます。   
 反射値として、glTFのMetallic Factorの値が反映されます。   
 荒さ値として、glTFのRoughness Factorの値が反映されます。   
+透明値として、glTFのpbrMetallicRoughnessのbaseColorFactorの「1.0 - Alpha」が反映されます(ver.0.1.0.13 -)。     
 
 マッピングレイヤは以下の情報が格納されます。   
 複雑化しているのは、PBR表現をなんとかShade3Dの表面材質でそれらしく似せようとしているためです。    
@@ -193,8 +201,17 @@ Occlusionテクスチャイメージがマッピングレイヤで指定され�
 エクスポート時にOcclusionテクスチャとして出力されます。     
 
 制限事項として、Occlusionマッピングレイヤは表面材質のマッピングレイヤで1レイヤのみ指定できます。    
-UV1のみを使用、投影は「ラップ（UVマッピング）」になります。    
+UV1/UV2のいずれかを指定できます(ver.0.1.0.13-)。投影は「ラップ（UVマッピング）」になります。    
 「適用率」の指定が、glTFのocclusionTexture.strengthになります。    
+
+UV1/UV2の選択は、「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
+
+### Occlusionのマッピングレイヤをインポートした場合の注意事項 (ver.0.1.0.13 - )
+
+glTFインポート時、「Occlusion (glTF)/拡散反射」マッピングレイヤでのUV層の選択が、読み込んだ直後はレンダリングに反映されません。    
+(Shade3Dのsxsdk::shader_interfaceに外部からアクセスできないため)     
+内部パラメータとしては反映されています。    
+Shade3DにglTFをインポートした後は、一度表面材質の「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、OKボタンで確定する必要があります。    
 
 ### 表面材質（マテリアル）の拡散反射値と反射値の関係 (ver.0.1.0.9 対応)
 
@@ -214,11 +231,15 @@ Roughness Metallicテクスチャがある場合は「拡散反射値」は1.0�
 
 エクスポート時(Shade3DからglTFへの変換)は以下のように変換しています。    
 
-    sxsdk::rgb_class col = (surface->get_diffuse_color()) * (surface->get_diffuse());    
+    const sxsdk::rgb_class col0 = surface->get_diffuse_color();    
+    sxsdk::rgb_class col = col0 * (surface->get_diffuse());    
     sxsdk::rgb_class reflectionCol = surface->get_reflection_color();    
     const float reflectionV  = std::max(std::min(1.0f, surface->get_reflection()), 0.0f);    
     const float reflectionV2 = 1.0f - reflectionV;    
     col = col * reflectionV2 + reflectionCol * reflectionV;    
+    col.red   = std::min(col0.red, col.red);    
+    col.green = std::min(col0.green, col.green);    
+    col.blue  = std::min(col0.blue, col.blue);     
 
 glTFのBaseColor Factorとして上記で計算したcolを採用。    
 glTFのMetallic FactorとしてShade3Dの反射値を採用。    
@@ -260,6 +281,7 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 * 表面材質のマッピングレイヤでの反復指定は仕様外にしました(ver.0.1.0.9 仕様変更)。    
 * アニメーションは、ボーン+スキンでのモーション指定のみに対応しています(ver.0.1.0.6 追加)。    
 * ボーンの変換行列では移動要素のみを指定するようにしてください。回転/せん断/スケールの指定には対応していません。    
+* glTFインポート時、「Occlusion (glTF)/拡散反射」マッピングレイヤでのUV層の選択が、読み込んだ直後はレンダリングに反映されません。    
 
 ## 制限事項 (glTFフォーマット)
 
@@ -309,6 +331,11 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/07/19] ver.0.1.0.13   
+* Import/Export : 表面材質のOcclusionレイヤでUV1/UV2を選択できるようにした。    
+* Import/Export : 表面材質の「透明」に対応。    
+* Export : 表面材質で「反射」値を指定している場合の拡散反射色（BaseColor相当）の計算を微調整。
 
 [2018/07/15] ver.0.1.0.12   
 * 表面材質のマッピングレイヤとして、「Occlusion (glTF)」の種類を追加。    
