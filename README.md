@@ -205,6 +205,7 @@ UV1/UV2のいずれかを指定できます(ver.0.1.0.13-)。投影は「ラッ�
 「適用率」の指定が、glTFのocclusionTexture.strengthになります。    
 
 UV1/UV2の選択は、「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_occlusion_uv.png"/>     
 
 ### Occlusionのマッピングレイヤをインポートした場合の注意事項 (ver.0.1.0.13 - )
 
@@ -243,6 +244,15 @@ Roughness Metallicテクスチャがある場合は「拡散反射値」は1.0�
 
 glTFのBaseColor Factorとして上記で計算したcolを採用。    
 glTFのMetallic FactorとしてShade3Dの反射値を採用。    
+
+鏡のような鏡面反射をする場合は、「拡散反射」の色を白に近づけるようにし拡散反射のスライダを0.0に近づけるようにします。    
+この場合「反射」値は1.0に近づく指定をしています。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_diffuse_reflection_02.png"/>     
+こうすることで、glTF出力後もShade3Dと似た表現になります（あくまでも近似です）。    
+
+黒く光るような反射をする場合は、「拡散反射」の色を反射後の色（ここでは黒）に近づけるようにし拡散反射のスライダを0.0に近づけるようにします。    
+この場合「反射」値は0.0より大きな小さめの値を指定しています。    
+<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_diffuse_reflection_01.png"/>     
 
 ### エクスポート時の表面材質のマッピングレイヤについて (ver.0.1.0.9 対応)
 
