@@ -25,6 +25,7 @@ void CMaterialData::clear ()
 	roughnessFactor  = 1.0f;
 	metallicFactor   = 0.0f;
 	occlusionStrength = 1.0f;
+	normalStrength    = 1.0f;
 
 	baseColorImageIndex         = -1;
 	normalImageIndex            = -1;

@@ -38,6 +38,7 @@ public:
 	float roughnessFactor;				// Roughnessの値.
 	float metallicFactor;				// Metallicの値.
 	float occlusionStrength;			// Occlusionの強さ.
+	float normalStrength;				// Normalの強さ.
 
 	int baseColorTexCoord;				// BaseColorのテクスチャで使用するTexCoord(0 or 1).
 	int normalTexCoord;					// 法線マップのテクスチャで使用するTexCoord(0 or 1).
@@ -66,6 +67,7 @@ public:
 		this->baseColorFactor   = v.baseColorFactor;
 		this->emissiveFactor    = v.emissiveFactor;
 		this->occlusionStrength = v.occlusionStrength;
+		this->normalStrength    = v.normalStrength;
 		this->baseColorImageIndex         = v.baseColorImageIndex;
 		this->normalImageIndex            = v.normalImageIndex;
 		this->emissiveImageIndex          = v.emissiveImageIndex;

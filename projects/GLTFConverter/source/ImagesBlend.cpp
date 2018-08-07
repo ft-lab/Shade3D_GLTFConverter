@@ -52,6 +52,9 @@ void CImagesBlend::blendImages ()
 	// Diffuseのアルファ透明を使用しているかチェック.
 	m_diffuseAlphaTrans = m_checkDiffuseAlphaTrans();
 
+	// 法線マップの強さを取得.
+	m_normalWeight = m_getNormalWeight();
+
 	// Shade3Dでの表面材質のマッピングレイヤごとに、各種イメージを合成.
 	if (!m_diffuseMasterImage && m_hasDiffuseImage) m_blendImages(sxsdk::enums::diffuse_mapping);
 	if (!m_normalMasterImage && m_hasNormalImage) m_blendImages(sxsdk::enums::normal_mapping);
@@ -128,6 +131,28 @@ bool CImagesBlend::m_checkSingleImage (const sxsdk::enums::mapping_type mappingT
 	}
 
 	return false;
+}
+
+/**
+ * 法線マップの強さを取得.
+ */
+float CImagesBlend::m_getNormalWeight ()
+{
+	float retWeight = 1.0f;
+
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+		if (mappingLayer.get_type() != sxsdk::enums::normal_mapping) continue;
+		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
+		const float weight = mappingLayer.get_weight();
+		if (MathUtil::isZero(weight)) continue;
+		retWeight = weight;
+		break;
+	}
+	return retWeight;
 }
 
 /**
@@ -284,10 +309,6 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 		const float weight  = (mappingType == sxsdk::enums::normal_mapping) ? 1.0f : (std::min(std::max(mappingLayer.get_weight(), 0.0f), 1.0f));
 		const float weight2 = 1.0f - weight;
 		if (MathUtil::isZero(weight)) continue;
-
-		if (mappingType == sxsdk::enums::normal_mapping) {
-			m_normalWeight = mappingLayer.get_weight();
-		}
 
 		const int blendMode = mappingLayer.get_blend_mode();
 		try {

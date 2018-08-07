@@ -906,6 +906,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							materialData.normalImageIndex = imageIndex;
 							materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 							materialData.normalTexCoord   = imageBlend.getTexCoord(mType);
+							materialData.normalStrength   = imageBlend.getNormalWeight();
 							storeNormalImage = true;
 
 						} else if (mType == sxsdk::enums::glow_mapping) {
@@ -948,6 +949,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							materialData.normalImageIndex = imageIndex;
 							materialData.normalTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 							materialData.normalTexCoord   = imageBlend.getTexCoord(mType);
+							materialData.normalStrength   = imageBlend.getNormalWeight();
 							storeNormalImage = true;
 
 						} else if (mType == sxsdk::enums::glow_mapping) {

@@ -335,6 +335,7 @@ namespace {
 			if (materialD.normalImageIndex >= 0) {
 				material.normalTexture.textureId = std::to_string(materialD.normalImageIndex);
 				material.normalTexture.texCoord  = (size_t)materialD.normalTexCoord;
+				material.normalTexture.scale     = materialD.normalStrength;
 
 				// テクスチャのTiling情報を指定.
 				{

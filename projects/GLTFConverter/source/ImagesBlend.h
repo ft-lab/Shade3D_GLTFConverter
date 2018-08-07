@@ -94,6 +94,10 @@ private:
 		sx::vec<int,2>& texRepeat,
 		bool& hasImage);
 
+	/**
+	 * 法線マップの強さを取得.
+	 */
+	float m_getNormalWeight ();
 
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
