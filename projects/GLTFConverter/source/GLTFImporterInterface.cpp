@@ -663,6 +663,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				mLayer.set_uv_mapping(materialD.normalTexCoord);
 				mLayer.set_repetition_x(std::max(1, (int)materialD.normalTexScale.x));
 				mLayer.set_repetition_y(std::max(1, (int)materialD.normalTexScale.y));
+				mLayer.set_weight(materialD.normalStrength);
 			}
 
 			// 発光をマッピングレイヤとして追加.

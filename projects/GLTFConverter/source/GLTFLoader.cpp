@@ -540,6 +540,7 @@ namespace {
 			dstMaterialData.metallicFactor    = material.metallicRoughness.metallicFactor;
 			dstMaterialData.roughnessFactor   = material.metallicRoughness.roughnessFactor;
 			dstMaterialData.occlusionStrength = material.occlusionTexture.strength;
+			dstMaterialData.normalStrength    = material.normalTexture.scale;
 
 			// BaseColorのテクスチャIDを取得.
 			if (material.metallicRoughness.baseColorTexture.textureId != "") {
