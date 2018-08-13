@@ -33,6 +33,8 @@ public:
 	sxsdk::vec3 translation;			// 位置.
 	sxsdk::vec3 scale;					// スケール.
 	sxsdk::quaternion_class rotation;	// 回転.
+	sxsdk::vec3 shear;					// せん断.
+	sxsdk::mat4 matrix;					// 変換行列（せん断が存在する場合に使用）.
 
 	bool isBone;					// ボーンノードとして使用している場合はtrue (skinsのjoints要素で参照されているかで判別).
 	bool isEndBone;					// スキンが割り当てられていない終端ノードの場合.
@@ -54,6 +56,8 @@ public:
 		this->translation     = v.translation;
 		this->scale           = v.scale;
 		this->rotation        = v.rotation;
+		this->shear           = v.shear;
+		this->matrix          = v.matrix;
 		this->isBone          = v.isBone;
 		this->isEndBone       = v.isEndBone;
 		this->pShapeHandle    = v.pShapeHandle;

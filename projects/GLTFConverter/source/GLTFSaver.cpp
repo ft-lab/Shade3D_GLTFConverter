@@ -202,6 +202,8 @@ namespace {
 					gltfNode.children.push_back(std::to_string(j));
 				}
 			}
+
+			// glTFの仕様では、RTSに分解できる要素でないといけないので「せん断」は無視される。.
 			if (!MathUtil::isZero(nodeD.translation, fMin)) {
 				gltfNode.translation = Vector3(nodeD.translation.x, nodeD.translation.y, nodeD.translation.z);
 			}

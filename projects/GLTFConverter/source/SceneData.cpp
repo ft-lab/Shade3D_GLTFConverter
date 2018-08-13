@@ -35,6 +35,8 @@ void CNodeData::clear ()
 	translation = sxsdk::vec3(0, 0, 0);
 	scale       = sxsdk::vec3(1, 1, 1);
 	rotation    = sxsdk::quaternion_class::identity;
+	shear       = sxsdk::vec3(0, 0, 0);
+	matrix      = sxsdk::mat4::identity;
 }
 
 /**
@@ -205,10 +207,12 @@ int CSceneData::beginNode (const std::string& nodeName, const sxsdk::mat4 m)
 	// 変換行列の格納.
 	{
 		sxsdk::vec3 scale ,shear, rotate, trans;
-		m.unmatrix(scale ,shear, rotate, trans);
+		m.unmatrix(scale, shear, rotate, trans);
 		nodeD.translation = trans * 0.001f;			// mm ==> m 変換.
 		nodeD.scale       = scale;
 		nodeD.rotation    = sxsdk::quaternion_class(rotate);
+		nodeD.shear       = shear;
+		nodeD.matrix      = sxsdk::mat4::scale(scale) * sxsdk::mat4::shear(shear) * sxsdk::mat4::rotate(rotate) * sxsdk::mat4::translate(nodeD.translation);
 	}
 
 	int prevNodeIndex = -1;
