@@ -175,7 +175,7 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 |glTFでのイメージの種類|マッピングレイヤ|合成|適用率|反転|   
 |----|----|----|----|----|   
 |BaseColor(RGB) |イメージ/拡散反射|通常|1.0|—|   
-|Normal(RGB) |イメージ/法線|通常|1.0|—|   
+|Normal(RGB) |イメージ/法線|通常|法線マップのscale値 (※ ver.0.1.0.14 対応)|—|   
 |Emissive(RGB) |イメージ/発光|通常|1.0|—|   
 |Roughness MetallicのMetallic(B)|イメージ/拡散反射|乗算|Metallic Factorの値 (※ ver.0.1.0.9 仕様変更)|o|   
 |Roughness MetallicのMetallic(B)|イメージ/反射|通常|1.0|—|   
@@ -277,6 +277,7 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 「イメージ/法線」のマッピングレイヤはglTFのNormalのテクスチャとして反映しています。    
 
 「頂点カラー/拡散反射」を指定できます(ただし、頂点カラー1のみ使用)。    
+「イメージ/法線」では、適用率がglTFの法線マップのscale値として格納されます（ver.0.1.0.14 対応）。    
 
 ## 制限事項
 
@@ -341,6 +342,9 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/08/13] ver.0.1.0.14   
+* Import/Export : 表面材質のNormalレイヤで「適用率」を反映するようにした。    
 
 [2018/07/19] ver.0.1.0.13   
 * Import/Export : 表面材質のOcclusionレイヤでUV1/UV2を選択できるようにした。    
