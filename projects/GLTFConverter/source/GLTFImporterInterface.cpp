@@ -619,6 +619,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					}
 				}
 
+				mLayer.set_blend_mode(7);		// 乗算合成.
 				mLayer.set_blur(true);
 				mLayer.set_uv_mapping(materialD.baseColorTexCoord);
 				mLayer.set_repetition_x(std::max(1, (int)materialD.baseColorTexScale.x));
