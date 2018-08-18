@@ -174,7 +174,7 @@ Shade3Dではこれはオフにしたままのほうが都合がよいです。
 
 |glTFでのイメージの種類|マッピングレイヤ|合成|適用率|反転|   
 |----|----|----|----|----|   
-|BaseColor(RGB) |イメージ/拡散反射|通常|1.0|—|   
+|BaseColor(RGB) |イメージ/拡散反射|乗算 (※ ver.0.1.0.15 仕様変更)|1.0|—|   
 |Normal(RGB) |イメージ/法線|通常|法線マップのscale値 (※ ver.0.1.0.14 対応)|—|   
 |Emissive(RGB) |イメージ/発光|通常|1.0|—|   
 |Roughness MetallicのMetallic(B)|イメージ/拡散反射|乗算|Metallic Factorの値 (※ ver.0.1.0.9 仕様変更)|o|   
@@ -342,6 +342,10 @@ rapidjsonは、Microsoft.glTF.CPP内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/08/18] ver.0.1.0.15   
+* Import : 表面材質の拡散反射レイヤを追加する際に、合成は「乗算」とするようにした（glTFでは、BaseColorFactorとBaseColorTextureは乗算する仕様のため）。
+* Import : skinのskeleton要素を持つ場合、skeletonはルートボーンとなるためそのノード以降はボーンと判断。    
 
 [2018/08/13] ver.0.1.0.14   
 * Import/Export : 表面材質のNormalレイヤで「適用率」を反映するようにした。    
