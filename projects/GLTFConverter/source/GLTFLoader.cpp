@@ -911,6 +911,14 @@ namespace {
 					sceneData->nodes[index].isBone = true;
 				}
 			}
+
+			// skeletonIDの指定がある場合、そのノードをボーンと判断.
+			if (skinD.skeletonID >= 0) {
+				const int rootNodeIndex = skinD.skeletonID + 1;
+				if (rootNodeIndex < (int)(sceneData->nodes.size())) {
+					sceneData->nodes[rootNodeIndex].isBone = true;
+				}
+			}
 		}
 
 		// ボーン対象のノードの子は、すべてボーンとして扱う.
