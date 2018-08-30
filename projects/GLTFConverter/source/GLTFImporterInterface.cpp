@@ -8,6 +8,7 @@
 #include "MathUtil.h"
 #include "StreamCtrl.h"
 #include "StringUtil.h"
+#include "MotionExternalAccess.h"
 
 enum
 {
@@ -26,6 +27,7 @@ namespace {
 
 CGLTFImporterInterface::CGLTFImporterInterface (sxsdk::shade_interface &shade) : shade(shade)
 {
+	m_MorphTargetsAccess = NULL;
 }
 
 /**
@@ -99,6 +101,9 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 		fileName = std::string(stream->get_name());
 	}
 	if (fileName == "") return;
+
+	// Morph Targets情報アクセスクラス.
+	m_MorphTargetsAccess = getMorphTargetsAttributeAccess(shade);
 
 	// GLTFファイルを読み込み.
 	CGLTFLoader gltfLoader;
@@ -487,9 +492,52 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			}
 		}
 
+		// Morph Targets情報を割り当て.
+		// これは、「MotionUtil」プラグインに情報を渡している.
+		if (!newMeshData.morphTargets.morphTargetsData.empty() && m_MorphTargetsAccess) {
+			const int versCou = pMesh.get_total_number_of_control_points();
+
+			// 指定の形状を初期値として渡す.
+			m_MorphTargetsAccess->setupShape(&pMesh);
+
+			sxsdk::polygon_mesh_saver_class* pMeshSaver = pMesh.get_polygon_mesh_saver();
+
+			// Targetごとの頂点番号/頂点座標を渡す.
+			const float scale = 1000.0f;
+			const int targetsCou = (int)newMeshData.morphTargets.morphTargetsData.size();
+			for (int i = 0; i < targetsCou; ++i) {
+				const COneMorphTargetData& morphD = newMeshData.morphTargets.morphTargetsData[i];
+				const std::string name = std::string("target ") + std::to_string(i);
+				std::vector<sxsdk::vec3> posList;
+				std::vector<int> vIndices;
+
+				for (size_t j = 0; j < morphD.vIndices.size(); ++j) {
+					const int vIndex = morphD.vIndices[j];
+					if (vIndex >= 0 && vIndex < versCou) {
+						posList.push_back((morphD.position[j] * scale) + (pMeshSaver->get_point(vIndex)));
+						vIndices.push_back(vIndex);
+					}
+				}
+				if (!vIndices.empty()) {
+					m_MorphTargetsAccess->appendTargetVertices(name, vIndices, posList);
+				}
+			}
+			pMeshSaver->release();
+
+			// ウエイト値をすべて0にする.
+			m_MorphTargetsAccess->setZeroAllWeight();
+
+			// Morph Targets情報をstreamに保存.
+			m_MorphTargetsAccess->writeMorphTargetsData();
+
+			m_MorphTargetsAccess->updateMesh();
+		}
+
+		// スキン時の重複頂点のマージはスキンの処理を行うm_setMeshSkin関数で行うため、
+		// ここではスキップ.
 		if (newMeshData.skinJoints.empty() && newMeshData.skinWeights.empty()) {
 			// 重複頂点のマージ.
-			pMesh.cleanup_redundant_vertices();
+			m_cleanupRedundantVertices(pMesh);
 
 			// 稜線を生成.
 			pMesh.make_edges();
@@ -500,6 +548,21 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 		return true;
 	}
+}
+
+/**
+ * 重複頂点をマージする.
+ * Morph Targetsの頂点もマージ対象.
+ */
+void CGLTFImporterInterface::m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh)
+{
+	// Morph Targetsの情報も更新.
+	if (m_MorphTargetsAccess) {
+		m_MorphTargetsAccess->cleanupRedundantVertices(pMesh);
+		m_MorphTargetsAccess->writeMorphTargetsData();
+	}
+
+	//pMesh.cleanup_redundant_vertices();
 }
 
 /**
@@ -948,7 +1011,7 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 		}
 
 		// 重複頂点のマージ.
-		pMesh.cleanup_redundant_vertices();
+		m_cleanupRedundantVertices(pMesh);
 
 		// 稜線を生成.
 		pMesh.make_edges();

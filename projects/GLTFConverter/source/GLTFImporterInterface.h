@@ -8,6 +8,7 @@
 
 class CSceneData;
 class CNodeData;
+class CMorphTargetsAccess;
 
 class CGLTFImporterInterface : public sxsdk::importer_interface {
 
@@ -16,6 +17,8 @@ private:
 	std::string m_tempPath;		// 作業用のディレクトリ.
 
 	sxsdk::mat4 m_coordinatesMatrix;		// インポート時のスケールなどの変換行列.
+
+	CMorphTargetsAccess* m_MorphTargetsAccess;	// Morph Targets情報をShade3Dに反映するクラス.
 
 private:
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_IMPORTER_INTERFACE_ID; }
@@ -118,6 +121,12 @@ private:
 	 * アニメーション情報を割り当て.
 	 */
 	void m_setAnimations (sxsdk::scene_interface *scene, CSceneData* sceneData);
+
+	/**
+	 * 重複頂点をマージする.
+	 * Morph Targetsの頂点もマージ対象.
+	 */
+	void m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh);
 
 public:
 	CGLTFImporterInterface (sxsdk::shade_interface &shade);

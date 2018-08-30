@@ -5,6 +5,7 @@
 #define _MESHDATA_H
 
 #include "GlobalHeader.h"
+#include "MorphTargetsData.h"
 
 #include <vector>
 #include <string>
@@ -33,6 +34,8 @@ public:
 	int materialIndex;							// 対応するマテリアル番号.
 	std::vector<int> faceGroupMaterialIndex;	// フェイスグループごとのマテリアル番号リスト.
 
+	CMorphTargetsData morphTargets;				// Morph Targetsの情報.
+
 public:
 	CTempMeshData ();
 	~CTempMeshData ();
@@ -52,6 +55,8 @@ public:
 
 		this->materialIndex   = v.materialIndex;
 		this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;
+
+		this->morphTargets = v.morphTargets;
 
 		return (*this);
     }
@@ -87,6 +92,8 @@ public:
 
 	int materialIndex;						// 対応するマテリアル番号.
 
+	CMorphTargetsData morphTargets;			// Morph Targetsの情報.
+
 public:
 	CPrimitiveData ();
 	~CPrimitiveData ();
@@ -103,6 +110,7 @@ public:
 		this->skinWeights     = v.skinWeights;
 		this->skinJoints      = v.skinJoints;
 		this->skinJointsHandle = v.skinJointsHandle;
+		this->morphTargets     = v.morphTargets;
 
 		return (*this);
     }

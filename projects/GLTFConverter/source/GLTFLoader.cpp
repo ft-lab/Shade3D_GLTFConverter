@@ -425,6 +425,88 @@ namespace {
 						}
 					}
 				}
+
+				// Morph Targets情報を取得.
+				if (!meshPrim.targets.empty()) {
+					const size_t targetsCou = meshPrim.targets.size();
+					dstPrimitiveData.morphTargets.morphTargetsData.resize(targetsCou);
+					for (size_t j = 0; j < targetsCou; ++j) {
+						const MorphTarget& mTargetData   = meshPrim.targets[j];
+						COneMorphTargetData& dstMTargetD = dstPrimitiveData.morphTargets.morphTargetsData[j];
+
+						if (mTargetData.positionsAccessorId != "") {
+							const int id = std::stoi(mTargetData.positionsAccessorId);
+							const Accessor& acce = gltfDoc.accessors[id];
+							const int bufferViewID = std::stoi(acce.bufferViewId);
+							const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+							const size_t byteStride  = bufferView.byteStride;
+							const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
+
+							if (acce.componentType == COMPONENT_FLOAT) {
+								std::vector<float> fList;
+
+								if (reader) fList = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								else if (binReader) fList = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+								if (acce.count > 0 && floatStride == 3) {
+									dstMTargetD.position.resize(acce.count);
+									for (size_t k = 0, iPos = offsetI; k < acce.count; ++k, iPos += floatStride) {
+										dstMTargetD.position[k] = sxsdk::vec3(fList[iPos + 0], fList[iPos + 1], fList[iPos + 2]);
+									}
+								}
+							}
+						}
+
+						if (mTargetData.normalsAccessorId != "") {
+							const int id = std::stoi(mTargetData.normalsAccessorId);
+							const Accessor& acce = gltfDoc.accessors[id];
+							const int bufferViewID = std::stoi(acce.bufferViewId);
+							const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+							const size_t byteStride  = bufferView.byteStride;
+							const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
+
+							if (acce.componentType == COMPONENT_FLOAT) {
+								std::vector<float> fList;
+
+								if (reader) fList = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								else if (binReader) fList = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+								if (acce.count > 0 && floatStride == 3) {
+									dstMTargetD.normal.resize(acce.count);
+									for (size_t k = 0, iPos = offsetI; k < acce.count; ++k, iPos += floatStride) {
+										dstMTargetD.normal[k] = sxsdk::vec3(fList[iPos + 0], fList[iPos + 1], fList[iPos + 2]);
+									}
+								}
+							}
+						}
+
+						if (mTargetData.tangentsAccessorId != "") {
+							const int id = std::stoi(mTargetData.tangentsAccessorId);
+							const Accessor& acce = gltfDoc.accessors[id];
+							const int bufferViewID = std::stoi(acce.bufferViewId);
+							const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+							const size_t byteStride  = bufferView.byteStride;
+							const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
+
+							if (acce.componentType == COMPONENT_FLOAT) {
+								std::vector<float> fList;
+
+								if (reader) fList = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								else if (binReader) fList = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+								const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+								if (acce.count > 0 && floatStride == 3) {
+									dstMTargetD.tangent.resize(acce.count);
+									for (size_t k = 0, iPos = offsetI; k < acce.count; ++k, iPos += floatStride) {
+										dstMTargetD.tangent[k] = sxsdk::vec3(fList[iPos + 0], fList[iPos + 1], fList[iPos + 2]);
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}

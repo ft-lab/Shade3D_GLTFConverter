@@ -287,6 +287,8 @@
     <ClCompile Include="..\source\MaterialData.cpp" />
     <ClCompile Include="..\source\MathUtil.cpp" />
     <ClCompile Include="..\source\MeshData.cpp" />
+    <ClCompile Include="..\source\MorphTargetsData.cpp" />
+    <ClCompile Include="..\source\MotionExternalAccess.cpp" />
     <ClCompile Include="..\source\OcclusionShaderInterface.cpp" />
     <ClCompile Include="..\source\SceneData.cpp" />
     <ClCompile Include="..\source\ImageData.cpp" />
@@ -307,6 +309,8 @@
     <ClInclude Include="..\source\MaterialData.h" />
     <ClInclude Include="..\source\MathUtil.h" />
     <ClInclude Include="..\source\MeshData.h" />
+    <ClInclude Include="..\source\MorphTargetsData.h" />
+    <ClInclude Include="..\source\MotionExternalAccess.h" />
     <ClInclude Include="..\source\OcclusionShaderInterface.h" />
     <ClInclude Include="..\source\SceneData.h" />
     <ClInclude Include="..\source\ImageData.h" />

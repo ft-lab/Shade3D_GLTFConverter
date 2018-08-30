@@ -33,6 +33,8 @@ void CTempMeshData::clear ()
 
 	materialIndex = 0;
 	faceGroupMaterialIndex.clear();
+
+	morphTargets.clear();
 }
 
 /**
@@ -115,6 +117,20 @@ void CTempMeshData::optimize ()
 			triangleIndices[i] = useVersList[ triangleIndices[i] ];
 		}
 
+		for (size_t i = 0; i < morphTargets.morphTargetsData.size(); ++i) {
+			COneMorphTargetData& mTargetD = morphTargets.morphTargetsData[i];
+			const size_t vCou = mTargetD.vIndices.size();
+			for (size_t j = 0; j < vCou; ++j) {
+				mTargetD.vIndices[j] = useVersList[ mTargetD.vIndices[j] ];
+			}
+			for (int j = (int)vCou - 1; j >= 0; --j) {
+				if (mTargetD.vIndices[j] < 0) {
+					mTargetD.vIndices.erase(mTargetD.vIndices.begin() + j);
+					mTargetD.position.erase(mTargetD.position.begin() + j);
+				}
+			}
+		}
+
 		for (int i = (int)versCou - 1; i >= 0; --i) {
 			if (useVersList[i] < 0) {
 				useVersList.erase(useVersList.begin() + i);
@@ -152,6 +168,7 @@ void CPrimitiveData::clear ()
 	skinWeights.clear();
 	skinJoints.clear();
 	skinJointsHandle.clear();
+	morphTargets.clear();
 }
 
 /**
@@ -423,8 +440,8 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 	tempMeshData.name = this->name;
 
 	// どの要素を使用するか.
-	bool useUV0, useUV1, useNormal, useColor0, useSkinWeights, useSkinJoints;
-	useUV0 = useUV1 = useNormal = useColor0 = useSkinWeights = useSkinJoints = false;
+	bool useUV0, useUV1, useNormal, useColor0, useSkinWeights, useSkinJoints, useMorphTargets;
+	useUV0 = useUV1 = useNormal = useColor0 = useSkinWeights = useSkinJoints = useMorphTargets = false;
 	for (size_t loop = 0; loop < primitivesCou; ++loop) {
 		const CPrimitiveData& primitiveD = primitives[loop];
 		if (!primitiveD.normals.empty()) useNormal = true;
@@ -433,6 +450,7 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 		if (!primitiveD.skinJoints.empty()) useSkinJoints = true;
 		if (!primitiveD.skinWeights.empty()) useSkinWeights = true;
 		if (!primitiveD.color0.empty()) useColor0 = true;
+		if (!primitiveD.morphTargets.morphTargetsData.empty()) useMorphTargets = true;
 	}
 
 	size_t vOffset = 0;
@@ -549,6 +567,33 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 			} else {
 				for (size_t i = 0; i < versCou; ++i) {
 					tempMeshData.skinJoints.push_back(sx::vec<int,4>(0, 0, 0, 0));
+				}
+			}
+		}
+
+		// Morph Targets情報.
+		// glTFではPrimitiveの頂点数分の情報を持っているが、すべてを持つのはリソースを消費するため、.
+		// 変化のないものは省いて最適化してtempMeshDataへ渡す。この際に、使用している頂点のインデックスも格納.
+		if (useMorphTargets) {
+			const size_t targetsCou = primitiveD.morphTargets.morphTargetsData.size();
+			if (targetsCou > 0) {
+				std::vector<int> useVerList;
+				COneMorphTargetData tData;
+				for (size_t i = 0; i < targetsCou; ++i) {
+					const COneMorphTargetData& mTargetD = primitiveD.morphTargets.morphTargetsData[i];
+					const size_t vCou = mTargetD.position.size();
+					if (vCou == 0) continue;
+
+					// 使用している頂点に対するインデックスを保持.
+					tData.clear();
+					for (size_t j = 0; j < vCou; ++j) {
+						if (!sx::zero(mTargetD.position[j])) {
+							tData.vIndices.push_back(j + vOffset);
+							tData.position.push_back(mTargetD.position[j]);
+						}
+					}
+					tData.weight = mTargetD.weight;
+					tempMeshData.morphTargets.morphTargetsData.push_back(tData);
 				}
 			}
 		}
