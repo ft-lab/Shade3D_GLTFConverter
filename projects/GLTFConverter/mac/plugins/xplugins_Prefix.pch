@@ -1,0 +1,18 @@
+//
+// Prefix header for all source files of the 'xplugins' target in the 'xplugins' project.
+//
+
+#include <Carbon/Carbon.h>
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+    #import <AppKit/AppKit.h>
+#endif 
+
+#define MacOS 1
+#define MacOSX 1
+#define CARBON 1
+#define PLUGIN 1
+#define SXMACOSX 1
+#define SXCARBON 1
+#define DLLEXPORT
+#define STDCALL

@@ -29,6 +29,8 @@ public:
 
 public:
 	COneMorphTargetData ();
+	COneMorphTargetData (const COneMorphTargetData& v);
+	~COneMorphTargetData ();
 
     COneMorphTargetData& operator = (const COneMorphTargetData &v) {
 		this->position = v.position;
@@ -56,6 +58,9 @@ public:
 
 public:
 	CMorphTargetsData ();
+	CMorphTargetsData (const CMorphTargetsData& v);
+	~CMorphTargetsData ();
+
     CMorphTargetsData& operator = (const CMorphTargetsData &v) {
 		this->morphTargetsData = v.morphTargetsData;
 		return (*this);

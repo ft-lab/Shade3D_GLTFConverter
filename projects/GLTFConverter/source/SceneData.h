@@ -43,6 +43,7 @@ public:
 
 public:
 	CNodeData ();
+	CNodeData (const CNodeData& v);
 	~CNodeData ();
 
     CNodeData& operator = (const CNodeData &v) {

@@ -32,6 +32,8 @@ public:
 
 public:
 	CAnimChannelData ();
+	CAnimChannelData (const CAnimChannelData& v);
+	~CAnimChannelData ();
 
 	CAnimChannelData& operator = (const CAnimChannelData &v) {
 		this->samplerIndex    = v.samplerIndex;
@@ -62,6 +64,8 @@ public:
 
 public:
 	CAnimSamplerData ();
+	CAnimSamplerData (const CAnimSamplerData &v);
+	~CAnimSamplerData ();
 
 	CAnimSamplerData& operator = (const CAnimSamplerData &v) {
 		this->inputData         = v.inputData;
@@ -86,6 +90,8 @@ public:
 
 public:
 	CAnimationData ();
+	CAnimationData (const CAnimationData& v);
+	~CAnimationData ();
 
     CAnimationData& operator = (const CAnimationData &v) {
 		this->name         = v.name;

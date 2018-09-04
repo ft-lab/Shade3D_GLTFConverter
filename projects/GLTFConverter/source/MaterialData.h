@@ -57,6 +57,7 @@ public:
 
 public:
 	CMaterialData ();
+	CMaterialData (const CMaterialData& v);
 	~CMaterialData ();
 
     CMaterialData& operator = (const CMaterialData &v) {

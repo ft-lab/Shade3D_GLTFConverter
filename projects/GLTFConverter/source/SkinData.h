@@ -20,6 +20,8 @@ public:
 
 public:
 	CSkinData ();
+	CSkinData (const CSkinData& v);
+	~CSkinData ();
 
     CSkinData& operator = (const CSkinData &v) {
 		this->name                = v.name;

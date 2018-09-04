@@ -10,6 +10,19 @@ CImageData::CImageData ()
 	clear();
 }
 
+CImageData::CImageData (const CImageData& v)
+{
+	this->name       = v.name;
+	this->mimeType   = v.mimeType;
+	this->imageDatas = v.imageDatas;
+	this->width      = v.width;
+	this->height     = v.height;
+	this->imageMask  = v.imageMask;
+	this->useBaseColorAlpha = v.useBaseColorAlpha;
+	this->shadeMasterImage  = v.shadeMasterImage;
+	this->shadeImage = v.shadeImage;
+}
+
 CImageData::~CImageData ()
 {
 }

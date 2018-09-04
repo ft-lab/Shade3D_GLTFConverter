@@ -42,6 +42,7 @@ public:
 
 public:
 	CImageData ();
+	CImageData (const CImageData& v);
 	~CImageData ();
 
     CImageData& operator = (const CImageData &v) {

@@ -1,0 +1,650 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9213EBA01B12E3E00023FEDA /* GlobalHeader.h */; };
+		9213EBA71B12E3E00023FEDA /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9213EBA11B12E3E00023FEDA /* main.cpp */; };
+		92F6FC0A213E409F005655E6 /* glTFConverter.info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 92F6FC09213E409F005655E6 /* glTFConverter.info.plist */; };
+		92F6FC0C213E4209005655E6 /* libGLTFSDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F6FC0B213E4209005655E6 /* libGLTFSDK.a */; };
+		92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC0D213E4238005655E6 /* GLTFSaver.h */; };
+		92F6FC36213E423F005655E6 /* SceneData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC0E213E4239005655E6 /* SceneData.h */; };
+		92F6FC37213E423F005655E6 /* GLTFExporterInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC0F213E4239005655E6 /* GLTFExporterInterface.cpp */; };
+		92F6FC38213E423F005655E6 /* GLTFSaver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC10213E4239005655E6 /* GLTFSaver.cpp */; };
+		92F6FC39213E423F005655E6 /* GLTFLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC11213E4239005655E6 /* GLTFLoader.h */; };
+		92F6FC3A213E423F005655E6 /* SkinData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC12213E4239005655E6 /* SkinData.h */; };
+		92F6FC3B213E423F005655E6 /* MathUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC13213E4239005655E6 /* MathUtil.cpp */; };
+		92F6FC3C213E423F005655E6 /* MeshData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC14213E423A005655E6 /* MeshData.cpp */; };
+		92F6FC3D213E423F005655E6 /* StreamCtrl.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC15213E423A005655E6 /* StreamCtrl.h */; };
+		92F6FC3E213E423F005655E6 /* StreamCtrl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC16213E423A005655E6 /* StreamCtrl.cpp */; };
+		92F6FC3F213E423F005655E6 /* Shade3DUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC17213E423A005655E6 /* Shade3DUtil.cpp */; };
+		92F6FC40213E423F005655E6 /* ImageData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC18213E423A005655E6 /* ImageData.h */; };
+		92F6FC41213E423F005655E6 /* MotionExternalAccess.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC19213E423A005655E6 /* MotionExternalAccess.h */; };
+		92F6FC42213E423F005655E6 /* SceneData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC1A213E423A005655E6 /* SceneData.cpp */; };
+		92F6FC43213E423F005655E6 /* OcclusionShaderInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC1B213E423A005655E6 /* OcclusionShaderInterface.cpp */; };
+		92F6FC44213E423F005655E6 /* Shade3DUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC1C213E423B005655E6 /* Shade3DUtil.h */; };
+		92F6FC45213E423F005655E6 /* LicenseDialogInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC1D213E423B005655E6 /* LicenseDialogInterface.cpp */; };
+		92F6FC46213E423F005655E6 /* StringUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC1E213E423B005655E6 /* StringUtil.cpp */; };
+		92F6FC47213E423F005655E6 /* GLTFExporterInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC1F213E423B005655E6 /* GLTFExporterInterface.h */; };
+		92F6FC48213E423F005655E6 /* ImagesBlend.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC20213E423B005655E6 /* ImagesBlend.h */; };
+		92F6FC49213E423F005655E6 /* OcclusionShaderInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC21213E423B005655E6 /* OcclusionShaderInterface.h */; };
+		92F6FC4A213E423F005655E6 /* StringUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC22213E423B005655E6 /* StringUtil.h */; };
+		92F6FC4B213E423F005655E6 /* LicenseDialogInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC23213E423C005655E6 /* LicenseDialogInterface.h */; };
+		92F6FC4C213E423F005655E6 /* GLTFImporterInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC24213E423C005655E6 /* GLTFImporterInterface.cpp */; };
+		92F6FC4D213E423F005655E6 /* GLTFImporterInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC25213E423C005655E6 /* GLTFImporterInterface.h */; };
+		92F6FC4E213E423F005655E6 /* MathUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC26213E423C005655E6 /* MathUtil.h */; };
+		92F6FC4F213E423F005655E6 /* MorphTargetsData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC27213E423C005655E6 /* MorphTargetsData.h */; };
+		92F6FC50213E423F005655E6 /* AnimationData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC28213E423C005655E6 /* AnimationData.cpp */; };
+		92F6FC51213E423F005655E6 /* MaterialData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC29213E423D005655E6 /* MaterialData.cpp */; };
+		92F6FC52213E423F005655E6 /* MotionExternalAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC2A213E423D005655E6 /* MotionExternalAccess.cpp */; };
+		92F6FC53213E423F005655E6 /* ShapeStack.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC2B213E423D005655E6 /* ShapeStack.h */; };
+		92F6FC54213E423F005655E6 /* ImagesBlend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC2C213E423D005655E6 /* ImagesBlend.cpp */; };
+		92F6FC55213E423F005655E6 /* AnimationData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC2D213E423D005655E6 /* AnimationData.h */; };
+		92F6FC56213E423F005655E6 /* MaterialData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC2E213E423D005655E6 /* MaterialData.h */; };
+		92F6FC57213E423F005655E6 /* MeshData.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC2F213E423E005655E6 /* MeshData.h */; };
+		92F6FC58213E423F005655E6 /* SkinData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC30213E423E005655E6 /* SkinData.cpp */; };
+		92F6FC59213E423F005655E6 /* ImageData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC31213E423E005655E6 /* ImageData.cpp */; };
+		92F6FC5A213E423F005655E6 /* ShapeStack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC32213E423E005655E6 /* ShapeStack.cpp */; };
+		92F6FC5B213E423F005655E6 /* GLTFLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC33213E423E005655E6 /* GLTFLoader.cpp */; };
+		92F6FC5C213E423F005655E6 /* MorphTargetsData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92F6FC34213E423E005655E6 /* MorphTargetsData.cpp */; };
+		FFE6EF5D1A6667E60006CB66 /* shdplugin.icns in Resources */ = {isa = PBXBuildFile; fileRef = 16F9E21A0546323A00F09F49 /* shdplugin.icns */; };
+		FFE6EF5E1A6667E60006CB66 /* sxuls in Resources */ = {isa = PBXBuildFile; fileRef = A31F019408BD316A00C322BE /* sxuls */; };
+		FFE6EF611A6667E60006CB66 /* com.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7BB47841980FA1500C9F408 /* com.cpp */; };
+		FFE6EF6A1A6667E60006CB66 /* vectors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7BB47861980FA1500C9F408 /* vectors.cpp */; };
+		FFE6EF741A6667E60006CB66 /* debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C7BB47851980FA1500C9F408 /* debug.cpp */; };
+		FFE6EF791A6667E60006CB66 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7A45C7D13DFD68B005C78EC /* Foundation.framework */; };
+		FFE6EF7A1A6667E60006CB66 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7A45C8313DFD69F005C78EC /* Cocoa.framework */; };
+		FFE6EF7B1A6667E60006CB66 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7A45CDB13DFD915005C78EC /* SystemConfiguration.framework */; };
+		FFE6EF7C1A6667E60006CB66 /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C7A45CE313DFD955005C78EC /* libiconv.dylib */; };
+		FFE6EFE41A6669460006CB66 /* glTFConverter.shdplugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = FFE6EF871A6667E60006CB66 /* glTFConverter.shdplugin */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FF39F5911A667C8A00E09111 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFE6EF811A6667E60006CB66 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 12;
+			dstPath = ../../../../../../builds/mac/plugins;
+			dstSubfolderSpec = 16;
+			files = (
+				FFE6EFE41A6669460006CB66 /* glTFConverter.shdplugin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		16F9E21A0546323A00F09F49 /* shdplugin.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = shdplugin.icns; path = ../xshade/icns/shdplugin.icns; sourceTree = SOURCE_ROOT; };
+		32DBCF630370AF2F00C91783 /* xplugins_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xplugins_Prefix.pch; sourceTree = "<group>"; };
+		9213EBA01B12E3E00023FEDA /* GlobalHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GlobalHeader.h; path = ../../source/GlobalHeader.h; sourceTree = "<group>"; };
+		9213EBA11B12E3E00023FEDA /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../source/main.cpp; sourceTree = "<group>"; };
+		92F6FC09213E409F005655E6 /* glTFConverter.info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = glTFConverter.info.plist; path = plists/glTFConverter.info.plist; sourceTree = "<group>"; };
+		92F6FC0B213E4209005655E6 /* libGLTFSDK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLTFSDK.a; path = ../GLTFSDK/lib/release/libGLTFSDK.a; sourceTree = "<group>"; };
+		92F6FC0D213E4238005655E6 /* GLTFSaver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFSaver.h; path = ../../source/GLTFSaver.h; sourceTree = "<group>"; };
+		92F6FC0E213E4239005655E6 /* SceneData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SceneData.h; path = ../../source/SceneData.h; sourceTree = "<group>"; };
+		92F6FC0F213E4239005655E6 /* GLTFExporterInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFExporterInterface.cpp; path = ../../source/GLTFExporterInterface.cpp; sourceTree = "<group>"; };
+		92F6FC10213E4239005655E6 /* GLTFSaver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFSaver.cpp; path = ../../source/GLTFSaver.cpp; sourceTree = "<group>"; };
+		92F6FC11213E4239005655E6 /* GLTFLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFLoader.h; path = ../../source/GLTFLoader.h; sourceTree = "<group>"; };
+		92F6FC12213E4239005655E6 /* SkinData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SkinData.h; path = ../../source/SkinData.h; sourceTree = "<group>"; };
+		92F6FC13213E4239005655E6 /* MathUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MathUtil.cpp; path = ../../source/MathUtil.cpp; sourceTree = "<group>"; };
+		92F6FC14213E423A005655E6 /* MeshData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MeshData.cpp; path = ../../source/MeshData.cpp; sourceTree = "<group>"; };
+		92F6FC15213E423A005655E6 /* StreamCtrl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamCtrl.h; path = ../../source/StreamCtrl.h; sourceTree = "<group>"; };
+		92F6FC16213E423A005655E6 /* StreamCtrl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamCtrl.cpp; path = ../../source/StreamCtrl.cpp; sourceTree = "<group>"; };
+		92F6FC17213E423A005655E6 /* Shade3DUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Shade3DUtil.cpp; path = ../../source/Shade3DUtil.cpp; sourceTree = "<group>"; };
+		92F6FC18213E423A005655E6 /* ImageData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImageData.h; path = ../../source/ImageData.h; sourceTree = "<group>"; };
+		92F6FC19213E423A005655E6 /* MotionExternalAccess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MotionExternalAccess.h; path = ../../source/MotionExternalAccess.h; sourceTree = "<group>"; };
+		92F6FC1A213E423A005655E6 /* SceneData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneData.cpp; path = ../../source/SceneData.cpp; sourceTree = "<group>"; };
+		92F6FC1B213E423A005655E6 /* OcclusionShaderInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OcclusionShaderInterface.cpp; path = ../../source/OcclusionShaderInterface.cpp; sourceTree = "<group>"; };
+		92F6FC1C213E423B005655E6 /* Shade3DUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Shade3DUtil.h; path = ../../source/Shade3DUtil.h; sourceTree = "<group>"; };
+		92F6FC1D213E423B005655E6 /* LicenseDialogInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LicenseDialogInterface.cpp; path = ../../source/LicenseDialogInterface.cpp; sourceTree = "<group>"; };
+		92F6FC1E213E423B005655E6 /* StringUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringUtil.cpp; path = ../../source/StringUtil.cpp; sourceTree = "<group>"; };
+		92F6FC1F213E423B005655E6 /* GLTFExporterInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFExporterInterface.h; path = ../../source/GLTFExporterInterface.h; sourceTree = "<group>"; };
+		92F6FC20213E423B005655E6 /* ImagesBlend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImagesBlend.h; path = ../../source/ImagesBlend.h; sourceTree = "<group>"; };
+		92F6FC21213E423B005655E6 /* OcclusionShaderInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OcclusionShaderInterface.h; path = ../../source/OcclusionShaderInterface.h; sourceTree = "<group>"; };
+		92F6FC22213E423B005655E6 /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringUtil.h; path = ../../source/StringUtil.h; sourceTree = "<group>"; };
+		92F6FC23213E423C005655E6 /* LicenseDialogInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LicenseDialogInterface.h; path = ../../source/LicenseDialogInterface.h; sourceTree = "<group>"; };
+		92F6FC24213E423C005655E6 /* GLTFImporterInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFImporterInterface.cpp; path = ../../source/GLTFImporterInterface.cpp; sourceTree = "<group>"; };
+		92F6FC25213E423C005655E6 /* GLTFImporterInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFImporterInterface.h; path = ../../source/GLTFImporterInterface.h; sourceTree = "<group>"; };
+		92F6FC26213E423C005655E6 /* MathUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MathUtil.h; path = ../../source/MathUtil.h; sourceTree = "<group>"; };
+		92F6FC27213E423C005655E6 /* MorphTargetsData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MorphTargetsData.h; path = ../../source/MorphTargetsData.h; sourceTree = "<group>"; };
+		92F6FC28213E423C005655E6 /* AnimationData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnimationData.cpp; path = ../../source/AnimationData.cpp; sourceTree = "<group>"; };
+		92F6FC29213E423D005655E6 /* MaterialData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MaterialData.cpp; path = ../../source/MaterialData.cpp; sourceTree = "<group>"; };
+		92F6FC2A213E423D005655E6 /* MotionExternalAccess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MotionExternalAccess.cpp; path = ../../source/MotionExternalAccess.cpp; sourceTree = "<group>"; };
+		92F6FC2B213E423D005655E6 /* ShapeStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ShapeStack.h; path = ../../source/ShapeStack.h; sourceTree = "<group>"; };
+		92F6FC2C213E423D005655E6 /* ImagesBlend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImagesBlend.cpp; path = ../../source/ImagesBlend.cpp; sourceTree = "<group>"; };
+		92F6FC2D213E423D005655E6 /* AnimationData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnimationData.h; path = ../../source/AnimationData.h; sourceTree = "<group>"; };
+		92F6FC2E213E423D005655E6 /* MaterialData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MaterialData.h; path = ../../source/MaterialData.h; sourceTree = "<group>"; };
+		92F6FC2F213E423E005655E6 /* MeshData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MeshData.h; path = ../../source/MeshData.h; sourceTree = "<group>"; };
+		92F6FC30213E423E005655E6 /* SkinData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkinData.cpp; path = ../../source/SkinData.cpp; sourceTree = "<group>"; };
+		92F6FC31213E423E005655E6 /* ImageData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageData.cpp; path = ../../source/ImageData.cpp; sourceTree = "<group>"; };
+		92F6FC32213E423E005655E6 /* ShapeStack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ShapeStack.cpp; path = ../../source/ShapeStack.cpp; sourceTree = "<group>"; };
+		92F6FC33213E423E005655E6 /* GLTFLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFLoader.cpp; path = ../../source/GLTFLoader.cpp; sourceTree = "<group>"; };
+		92F6FC34213E423E005655E6 /* MorphTargetsData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MorphTargetsData.cpp; path = ../../source/MorphTargetsData.cpp; sourceTree = "<group>"; };
+		A31F019508BD316A00C322BE /* en */ = {isa = PBXFileReference; lastKnownFileType = folder; name = en; path = ../../source/resources/en.lproj/sxuls; sourceTree = SOURCE_ROOT; };
+		A31F01A808BD318900C322BE /* ja */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ja; path = ../../source/resources/ja.lproj/sxuls; sourceTree = SOURCE_ROOT; };
+		A31F01B308BD319F00C322BE /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = folder; name = zh_CN; path = ../../source/resources/zh_CN.lproj/sxuls; sourceTree = SOURCE_ROOT; };
+		C724213318B32DA30083BD68 /* config.plugins.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = config.plugins.xcconfig; path = ../../../../xcconfig/config.plugins.xcconfig; sourceTree = "<group>"; };
+		C7A45C7D13DFD68B005C78EC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		C7A45C8313DFD69F005C78EC /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		C7A45CDB13DFD915005C78EC /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = /System/Library/Frameworks/SystemConfiguration.framework; sourceTree = "<absolute>"; };
+		C7A45CE313DFD955005C78EC /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = /usr/lib/libiconv.dylib; sourceTree = "<absolute>"; };
+		C7BB47841980FA1500C9F408 /* com.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = com.cpp; path = ../../../../include/sxcore/com.cpp; sourceTree = "<group>"; };
+		C7BB47851980FA1500C9F408 /* debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = debug.cpp; path = ../../../../include/sxcore/debug.cpp; sourceTree = "<group>"; };
+		C7BB47861980FA1500C9F408 /* vectors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = vectors.cpp; path = ../../../../include/sxcore/vectors.cpp; sourceTree = "<group>"; };
+		FFE6EF871A6667E60006CB66 /* glTFConverter.shdplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = glTFConverter.shdplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FFE6EF781A6667E60006CB66 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FFE6EF791A6667E60006CB66 /* Foundation.framework in Frameworks */,
+				FFE6EF7A1A6667E60006CB66 /* Cocoa.framework in Frameworks */,
+				FFE6EF7B1A6667E60006CB66 /* SystemConfiguration.framework in Frameworks */,
+				FFE6EF7C1A6667E60006CB66 /* libiconv.dylib in Frameworks */,
+				92F6FC0C213E4209005655E6 /* libGLTFSDK.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		089C166AFE841209C02AAC07 /* xplugins */ = {
+			isa = PBXGroup;
+			children = (
+				C724213318B32DA30083BD68 /* config.plugins.xcconfig */,
+				4A3E5BC70B0029410006A4FF /* sources */,
+				B8F429BB04BCB35A00A80009 /* plists */,
+				08FB77AFFE84173DC02AAC07 /* Classes */,
+				32C88E010371C26100C91783 /* include */,
+				089C167CFE841241C02AAC07 /* Resources */,
+				089C1671FE841209C02AAC07 /* Frameworks and Libraries */,
+				19C28FB8FE9D52D311CA2CBB /* Products */,
+			);
+			name = xplugins;
+			sourceTree = "<group>";
+		};
+		089C1671FE841209C02AAC07 /* Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				92F6FC0B213E4209005655E6 /* libGLTFSDK.a */,
+				C7A45C7D13DFD68B005C78EC /* Foundation.framework */,
+				C7A45C8313DFD69F005C78EC /* Cocoa.framework */,
+				C7A45CDB13DFD915005C78EC /* SystemConfiguration.framework */,
+				C7A45CE313DFD955005C78EC /* libiconv.dylib */,
+			);
+			name = "Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C167CFE841241C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A31F019408BD316A00C322BE /* sxuls */,
+				16F9E21A0546323A00F09F49 /* shdplugin.icns */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		08FB77AFFE84173DC02AAC07 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				C7BB47841980FA1500C9F408 /* com.cpp */,
+				C7BB47851980FA1500C9F408 /* debug.cpp */,
+				C7BB47861980FA1500C9F408 /* vectors.cpp */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		19C28FB8FE9D52D311CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FFE6EF871A6667E60006CB66 /* glTFConverter.shdplugin */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		32C88E010371C26100C91783 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				92F6FC2D213E423D005655E6 /* AnimationData.h */,
+				92F6FC1F213E423B005655E6 /* GLTFExporterInterface.h */,
+				92F6FC25213E423C005655E6 /* GLTFImporterInterface.h */,
+				92F6FC11213E4239005655E6 /* GLTFLoader.h */,
+				92F6FC0D213E4238005655E6 /* GLTFSaver.h */,
+				92F6FC18213E423A005655E6 /* ImageData.h */,
+				92F6FC20213E423B005655E6 /* ImagesBlend.h */,
+				92F6FC23213E423C005655E6 /* LicenseDialogInterface.h */,
+				92F6FC2E213E423D005655E6 /* MaterialData.h */,
+				92F6FC26213E423C005655E6 /* MathUtil.h */,
+				92F6FC2F213E423E005655E6 /* MeshData.h */,
+				92F6FC27213E423C005655E6 /* MorphTargetsData.h */,
+				92F6FC19213E423A005655E6 /* MotionExternalAccess.h */,
+				92F6FC21213E423B005655E6 /* OcclusionShaderInterface.h */,
+				92F6FC0E213E4239005655E6 /* SceneData.h */,
+				92F6FC1C213E423B005655E6 /* Shade3DUtil.h */,
+				92F6FC2B213E423D005655E6 /* ShapeStack.h */,
+				92F6FC12213E4239005655E6 /* SkinData.h */,
+				92F6FC15213E423A005655E6 /* StreamCtrl.h */,
+				92F6FC22213E423B005655E6 /* StringUtil.h */,
+				9213EBA01B12E3E00023FEDA /* GlobalHeader.h */,
+				32DBCF630370AF2F00C91783 /* xplugins_Prefix.pch */,
+			);
+			name = include;
+			sourceTree = "<group>";
+		};
+		4A3E5BC70B0029410006A4FF /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				92F6FC28213E423C005655E6 /* AnimationData.cpp */,
+				92F6FC0F213E4239005655E6 /* GLTFExporterInterface.cpp */,
+				92F6FC24213E423C005655E6 /* GLTFImporterInterface.cpp */,
+				92F6FC33213E423E005655E6 /* GLTFLoader.cpp */,
+				92F6FC10213E4239005655E6 /* GLTFSaver.cpp */,
+				92F6FC31213E423E005655E6 /* ImageData.cpp */,
+				92F6FC2C213E423D005655E6 /* ImagesBlend.cpp */,
+				92F6FC1D213E423B005655E6 /* LicenseDialogInterface.cpp */,
+				92F6FC29213E423D005655E6 /* MaterialData.cpp */,
+				92F6FC13213E4239005655E6 /* MathUtil.cpp */,
+				92F6FC14213E423A005655E6 /* MeshData.cpp */,
+				92F6FC34213E423E005655E6 /* MorphTargetsData.cpp */,
+				92F6FC2A213E423D005655E6 /* MotionExternalAccess.cpp */,
+				92F6FC1B213E423A005655E6 /* OcclusionShaderInterface.cpp */,
+				92F6FC1A213E423A005655E6 /* SceneData.cpp */,
+				92F6FC17213E423A005655E6 /* Shade3DUtil.cpp */,
+				92F6FC32213E423E005655E6 /* ShapeStack.cpp */,
+				92F6FC30213E423E005655E6 /* SkinData.cpp */,
+				92F6FC16213E423A005655E6 /* StreamCtrl.cpp */,
+				92F6FC1E213E423B005655E6 /* StringUtil.cpp */,
+				9213EBA11B12E3E00023FEDA /* main.cpp */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		B8F429BB04BCB35A00A80009 /* plists */ = {
+			isa = PBXGroup;
+			children = (
+				92F6FC09213E409F005655E6 /* glTFConverter.info.plist */,
+			);
+			name = plists;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		FFE6EF591A6667E60006CB66 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92F6FC48213E423F005655E6 /* ImagesBlend.h in Headers */,
+				9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */,
+				92F6FC40213E423F005655E6 /* ImageData.h in Headers */,
+				92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */,
+				92F6FC44213E423F005655E6 /* Shade3DUtil.h in Headers */,
+				92F6FC56213E423F005655E6 /* MaterialData.h in Headers */,
+				92F6FC39213E423F005655E6 /* GLTFLoader.h in Headers */,
+				92F6FC4A213E423F005655E6 /* StringUtil.h in Headers */,
+				92F6FC3D213E423F005655E6 /* StreamCtrl.h in Headers */,
+				92F6FC4E213E423F005655E6 /* MathUtil.h in Headers */,
+				92F6FC57213E423F005655E6 /* MeshData.h in Headers */,
+				92F6FC4D213E423F005655E6 /* GLTFImporterInterface.h in Headers */,
+				92F6FC36213E423F005655E6 /* SceneData.h in Headers */,
+				92F6FC3A213E423F005655E6 /* SkinData.h in Headers */,
+				92F6FC4F213E423F005655E6 /* MorphTargetsData.h in Headers */,
+				92F6FC4B213E423F005655E6 /* LicenseDialogInterface.h in Headers */,
+				92F6FC55213E423F005655E6 /* AnimationData.h in Headers */,
+				92F6FC47213E423F005655E6 /* GLTFExporterInterface.h in Headers */,
+				92F6FC41213E423F005655E6 /* MotionExternalAccess.h in Headers */,
+				92F6FC49213E423F005655E6 /* OcclusionShaderInterface.h in Headers */,
+				92F6FC53213E423F005655E6 /* ShapeStack.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		FFE6EF581A6667E60006CB66 /* glTFConverter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFE6EF831A6667E60006CB66 /* Build configuration list for PBXNativeTarget "glTFConverter" */;
+			buildPhases = (
+				FFE6EF591A6667E60006CB66 /* Headers */,
+				FFE6EF5C1A6667E60006CB66 /* Resources */,
+				FFE6EF5F1A6667E60006CB66 /* Sources */,
+				FF39F5911A667C8A00E09111 /* CopyFiles */,
+				FFE6EF781A6667E60006CB66 /* Frameworks */,
+				FF39F5941A66864400E09111 /* ShellScript */,
+				FFE6EF811A6667E60006CB66 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = glTFConverter;
+			productName = multi_plugin;
+			productReference = FFE6EF871A6667E60006CB66 /* glTFConverter.shdplugin */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		089C1669FE841209C02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+			};
+			buildConfigurationList = A31F017D08BD30B100C322BE /* Build configuration list for PBXProject "Template" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+				de,
+				en,
+				es,
+				fr,
+				ja,
+				zh_CN,
+			);
+			mainGroup = 089C166AFE841209C02AAC07 /* xplugins */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FFE6EF581A6667E60006CB66 /* glTFConverter */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FFE6EF5C1A6667E60006CB66 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FFE6EF5D1A6667E60006CB66 /* shdplugin.icns in Resources */,
+				FFE6EF5E1A6667E60006CB66 /* sxuls in Resources */,
+				92F6FC0A213E409F005655E6 /* glTFConverter.info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FFE6EF5F1A6667E60006CB66 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92F6FC54213E423F005655E6 /* ImagesBlend.cpp in Sources */,
+				92F6FC43213E423F005655E6 /* OcclusionShaderInterface.cpp in Sources */,
+				92F6FC5B213E423F005655E6 /* GLTFLoader.cpp in Sources */,
+				FFE6EF611A6667E60006CB66 /* com.cpp in Sources */,
+				92F6FC4C213E423F005655E6 /* GLTFImporterInterface.cpp in Sources */,
+				92F6FC42213E423F005655E6 /* SceneData.cpp in Sources */,
+				92F6FC3B213E423F005655E6 /* MathUtil.cpp in Sources */,
+				FFE6EF6A1A6667E60006CB66 /* vectors.cpp in Sources */,
+				92F6FC38213E423F005655E6 /* GLTFSaver.cpp in Sources */,
+				92F6FC46213E423F005655E6 /* StringUtil.cpp in Sources */,
+				92F6FC3C213E423F005655E6 /* MeshData.cpp in Sources */,
+				9213EBA71B12E3E00023FEDA /* main.cpp in Sources */,
+				92F6FC51213E423F005655E6 /* MaterialData.cpp in Sources */,
+				92F6FC58213E423F005655E6 /* SkinData.cpp in Sources */,
+				92F6FC37213E423F005655E6 /* GLTFExporterInterface.cpp in Sources */,
+				92F6FC5C213E423F005655E6 /* MorphTargetsData.cpp in Sources */,
+				92F6FC3E213E423F005655E6 /* StreamCtrl.cpp in Sources */,
+				92F6FC50213E423F005655E6 /* AnimationData.cpp in Sources */,
+				92F6FC52213E423F005655E6 /* MotionExternalAccess.cpp in Sources */,
+				92F6FC3F213E423F005655E6 /* Shade3DUtil.cpp in Sources */,
+				92F6FC5A213E423F005655E6 /* ShapeStack.cpp in Sources */,
+				FFE6EF741A6667E60006CB66 /* debug.cpp in Sources */,
+				92F6FC45213E423F005655E6 /* LicenseDialogInterface.cpp in Sources */,
+				92F6FC59213E423F005655E6 /* ImageData.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A31F019408BD316A00C322BE /* sxuls */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A31F019508BD316A00C322BE /* en */,
+				A31F01A808BD318900C322BE /* ja */,
+				A31F01B308BD319F00C322BE /* zh_CN */,
+			);
+			name = sxuls;
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A31F017E08BD30B100C322BE /* Development */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C724213318B32DA30083BD68 /* config.plugins.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "libc++";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(MACROS)",
+				);
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				SDKROOT = macosx10.13;
+			};
+			name = Development;
+		};
+		A31F017F08BD30B100C322BE /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C724213318B32DA30083BD68 /* config.plugins.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "libc++";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(MACROS)",
+				);
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				SDKROOT = macosx10.13;
+			};
+			name = Deployment;
+		};
+		A31F018008BD30B100C322BE /* Default */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C724213318B32DA30083BD68 /* config.plugins.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "libc++";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(MACROS)",
+				);
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx10.13;
+			};
+			name = Default;
+		};
+		FFE6EF841A6667E60006CB66 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				DEBUGGING_SYMBOLS = YES;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+					../GLTFSDK/include,
+				);
+				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = glTFConverter;
+				SDKROOT = macosx10.13;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-w";
+				WRAPPER_EXTENSION = shdplugin;
+				ZERO_LINK = NO;
+			};
+			name = Development;
+		};
+		FFE6EF851A6667E60006CB66 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+					../GLTFSDK/include,
+				);
+				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				"MACOSX_DEPLOYMENT_TARGET[arch=i386]" = 10.13;
+				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				PRODUCT_NAME = glTFConverter;
+				SDKROOT = macosx10.13;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-w";
+				WRAPPER_EXTENSION = shdplugin;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		FFE6EF861A6667E60006CB66 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(TOOLCHAINPATH)",
+					"$(BOOSTPATH)",
+					"$(INCLUDEPATH)",
+					"$(COMMONPATH)",
+					"$(INCLUDEPATH)/openexr-1.6.1/macos",
+					"$(INCLUDEPATH)/openexr-1.6.1/**",
+					../GLTFSDK/include,
+				);
+				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_STYLE = Bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				PRODUCT_NAME = glTFConverter;
+				SDKROOT = macosx10.13;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = "-w";
+				WRAPPER_EXTENSION = shdplugin;
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A31F017D08BD30B100C322BE /* Build configuration list for PBXProject "Template" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A31F017E08BD30B100C322BE /* Development */,
+				A31F017F08BD30B100C322BE /* Deployment */,
+				A31F018008BD30B100C322BE /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		FFE6EF831A6667E60006CB66 /* Build configuration list for PBXNativeTarget "glTFConverter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFE6EF841A6667E60006CB66 /* Development */,
+				FFE6EF851A6667E60006CB66 /* Deployment */,
+				FFE6EF861A6667E60006CB66 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 089C1669FE841209C02AAC07 /* Project object */;
+}

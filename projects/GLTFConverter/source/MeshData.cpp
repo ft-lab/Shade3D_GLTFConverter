@@ -13,6 +13,26 @@ CTempMeshData::CTempMeshData ()
 	clear();
 }
 
+CTempMeshData::CTempMeshData (const CTempMeshData& v)
+{
+	this->name            = v.name;
+	this->vertices        = v.vertices;
+	this->skinWeights     = v.skinWeights;
+	this->skinJoints      = v.skinJoints;
+	this->skinJointsHandle = v.skinJointsHandle;
+	this->triangleIndices = v.triangleIndices;
+	this->triangleFaceGroupIndex  = v.triangleFaceGroupIndex;
+	this->triangleNormals = v.triangleNormals;
+	this->triangleUV0     = v.triangleUV0;
+	this->triangleUV1     = v.triangleUV1;
+	this->triangleColor0  = v.triangleColor0;
+
+	this->materialIndex   = v.materialIndex;
+	this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;
+
+	this->morphTargets = v.morphTargets;
+}
+
 CTempMeshData::~CTempMeshData ()
 {
 }
@@ -149,6 +169,22 @@ void CTempMeshData::optimize ()
 CPrimitiveData::CPrimitiveData ()
 {
 	clear();
+}
+
+CPrimitiveData::CPrimitiveData (const CPrimitiveData& v)
+{
+	this->name            = v.name;
+	this->vertices        = v.vertices;
+	this->normals         = v.normals;
+	this->uv0             = v.uv0;
+	this->uv1             = v.uv1;
+	this->color0          = v.color0;
+	this->triangleIndices = v.triangleIndices;
+	this->materialIndex   = v.materialIndex;
+	this->skinWeights     = v.skinWeights;
+	this->skinJoints      = v.skinJoints;
+	this->skinJointsHandle = v.skinJointsHandle;
+	this->morphTargets     = v.morphTargets;
 }
 
 CPrimitiveData::~CPrimitiveData ()
@@ -413,6 +449,13 @@ bool CPrimitiveData::hasNeedVertexColorAlpha () const
 CMeshData::CMeshData ()
 {
 	clear();
+}
+
+CMeshData::CMeshData (const CMeshData& v)
+{
+	this->name        = v.name;
+	this->primitives  = v.primitives;
+	this->pMeshHandle = v.pMeshHandle;
 }
 
 CMeshData::~CMeshData ()

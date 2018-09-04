@@ -15,6 +15,25 @@ CNodeData::CNodeData ()
 {
 	clear();
 }
+CNodeData::CNodeData (const CNodeData& v)
+{
+	this->name            = v.name;
+	this->meshIndex       = v.meshIndex;
+	this->skinIndex       = v.skinIndex;
+	this->prevNodeIndex   = v.prevNodeIndex;
+	this->nextNodeIndex   = v.nextNodeIndex;
+	this->childNodeIndex  = v.childNodeIndex;
+	this->parentNodeIndex = v.parentNodeIndex;
+	this->translation     = v.translation;
+	this->scale           = v.scale;
+	this->rotation        = v.rotation;
+	this->shear           = v.shear;
+	this->matrix          = v.matrix;
+	this->isBone          = v.isBone;
+	this->isEndBone       = v.isEndBone;
+	this->pShapeHandle    = v.pShapeHandle;
+}
+
 CNodeData::~CNodeData ()
 {
 }

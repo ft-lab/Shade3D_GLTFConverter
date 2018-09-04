@@ -38,6 +38,7 @@ public:
 
 public:
 	CTempMeshData ();
+	CTempMeshData (const CTempMeshData& v);
 	~CTempMeshData ();
 
     CTempMeshData& operator = (const CTempMeshData &v) {
@@ -96,6 +97,7 @@ public:
 
 public:
 	CPrimitiveData ();
+	CPrimitiveData (const CPrimitiveData& v);
 	~CPrimitiveData ();
 
     CPrimitiveData& operator = (const CPrimitiveData &v) {
@@ -155,6 +157,7 @@ public:
 
 public:
 	CMeshData ();
+	CMeshData (const CMeshData& v);
 	~CMeshData ();
 
     CMeshData& operator = (const CMeshData &v) {

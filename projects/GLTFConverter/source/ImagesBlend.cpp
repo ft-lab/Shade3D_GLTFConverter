@@ -349,7 +349,8 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 			}
 			if (newRepeatX != mappingLayer.get_repetition_x() || newRepeatY != mappingLayer.get_repetition_y()) continue;
 			if (newTexCoord != mappingLayer.get_uv_mapping()) continue;
-			compointer<sxsdk::image_interface> image2(image->duplicate_image(&(newImage->get_size())));
+			sx::vec<int,2> newImgSize = newImage->get_size();
+			compointer<sxsdk::image_interface> image2(image->duplicate_image(&newImgSize));
 
 			// アルファ値を保持するバッファを作成.
 			if (i == diffuseAlphaLayerIndex) {
@@ -573,10 +574,11 @@ bool CImagesBlend::calcGLTFImages ()
 	compointer<sxsdk::image_interface> gltfRoughnessImage(m_pScene->create_image_interface(sx::vec<int,2>(width, height)));
 
 	// イメージサイズが width x heightとなるようにリサイズ.
+	sx::vec<int,2> newImgSize(width, height);
 	if (m_diffuseImage) {
 		const sx::vec<int,2> size = m_diffuseImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_diffuseImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			compointer<sxsdk::image_interface> image(m_diffuseImage->duplicate_image(&newImgSize));
 			m_diffuseImage->Release();
 			m_diffuseImage = image;
 		}
@@ -584,7 +586,7 @@ bool CImagesBlend::calcGLTFImages ()
 	if (m_reflectionImage) {
 		const sx::vec<int,2> size = m_reflectionImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_reflectionImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			compointer<sxsdk::image_interface> image(m_reflectionImage->duplicate_image(&newImgSize));
 			m_reflectionImage->Release();
 			m_reflectionImage = image;
 		}
@@ -592,7 +594,7 @@ bool CImagesBlend::calcGLTFImages ()
 	if (m_roughnessImage) {
 		const sx::vec<int,2> size = m_roughnessImage->get_size();
 		if (size.x != width || size.y != height) {
-			compointer<sxsdk::image_interface> image(m_roughnessImage->duplicate_image(&(sx::vec<int,2>(width, height))));
+			compointer<sxsdk::image_interface> image(m_roughnessImage->duplicate_image(&newImgSize));
 			m_roughnessImage->Release();
 			m_roughnessImage = image;
 		}

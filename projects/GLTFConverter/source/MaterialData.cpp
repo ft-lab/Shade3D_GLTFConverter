@@ -10,6 +10,42 @@ CMaterialData::CMaterialData ()
 	clear();
 }
 
+CMaterialData::CMaterialData (const CMaterialData& v)
+{
+	this->name = v.name;
+	this->alphaCutOff       = v.alphaCutOff;
+	this->alphaMode         = v.alphaMode;
+	this->doubleSided       = v.doubleSided;
+	this->baseColorFactor   = v.baseColorFactor;
+	this->emissiveFactor    = v.emissiveFactor;
+	this->occlusionStrength = v.occlusionStrength;
+	this->normalStrength    = v.normalStrength;
+	this->baseColorImageIndex         = v.baseColorImageIndex;
+	this->normalImageIndex            = v.normalImageIndex;
+	this->emissiveImageIndex          = v.emissiveImageIndex;
+	this->metallicRoughnessImageIndex = v.metallicRoughnessImageIndex;
+	this->occlusionImageIndex         = v.occlusionImageIndex;
+
+	this->roughnessFactor       = v.roughnessFactor;
+	this->metallicFactor        = v.metallicFactor;
+
+	this->shadeMasterSurface    = v.shadeMasterSurface;
+
+	this->baseColorTexCoord          = v.baseColorTexCoord;
+	this->normalTexCoord             = v.normalTexCoord;
+	this->emissiveTexCoord           = v.emissiveTexCoord;
+	this->metallicRoughnessTexCoord  = v.metallicRoughnessTexCoord;
+	this->occlusionTexCoord          = v.occlusionTexCoord;
+
+	this->baseColorTexScale         = v.baseColorTexScale;
+	this->normalTexScale            = v.normalTexScale;
+	this->emissiveTexScale          = v.emissiveTexScale;
+	this->metallicRoughnessTexScale = v.metallicRoughnessTexScale;
+	this->occlusionTexScale         = v.occlusionTexScale;
+
+	this->transparency = v.transparency;
+}
+
 CMaterialData::~CMaterialData ()
 {
 }

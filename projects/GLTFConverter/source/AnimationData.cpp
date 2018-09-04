@@ -9,6 +9,16 @@ CAnimChannelData::CAnimChannelData ()
 	clear();
 }
 
+CAnimChannelData::CAnimChannelData (const CAnimChannelData& v)
+{
+	this->samplerIndex    = v.samplerIndex;
+	this->targetNodeIndex = v.targetNodeIndex;
+	this->pathType        = v.pathType;
+}
+CAnimChannelData::~CAnimChannelData ()
+{
+}
+
 void CAnimChannelData::clear ()
 {
 	samplerIndex    = -1;
@@ -22,6 +32,16 @@ CAnimSamplerData::CAnimSamplerData ()
 	clear();
 }
 
+CAnimSamplerData::CAnimSamplerData (const CAnimSamplerData &v)
+{
+	this->inputData         = v.inputData;
+	this->interpolationType = v.interpolationType;
+	this->outputData        = v.outputData;
+}
+CAnimSamplerData::~CAnimSamplerData ()
+{
+}
+
 void CAnimSamplerData::clear ()
 {
 	inputData.clear();
@@ -33,6 +53,15 @@ void CAnimSamplerData::clear ()
 CAnimationData::CAnimationData ()
 {
 	clear();
+}
+CAnimationData::CAnimationData (const CAnimationData& v)
+{
+	this->name         = v.name;
+	this->channelData  = v.channelData;
+	this->samplerData  = v.samplerData;
+}
+CAnimationData::~CAnimationData ()
+{
 }
 
 void CAnimationData::clear ()
