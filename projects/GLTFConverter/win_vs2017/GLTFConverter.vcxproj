@@ -283,6 +283,7 @@
     <ClCompile Include="..\source\GLTFLoader.cpp" />
     <ClCompile Include="..\source\GLTFSaver.cpp" />
     <ClCompile Include="..\source\ImagesBlend.cpp" />
+    <ClCompile Include="..\source\LicenseDialogInterface.cpp" />
     <ClCompile Include="..\source\main.cpp" />
     <ClCompile Include="..\source\MaterialData.cpp" />
     <ClCompile Include="..\source\MathUtil.cpp" />
@@ -306,6 +307,7 @@
     <ClInclude Include="..\source\GLTFLoader.h" />
     <ClInclude Include="..\source\GLTFSaver.h" />
     <ClInclude Include="..\source\ImagesBlend.h" />
+    <ClInclude Include="..\source\LicenseDialogInterface.h" />
     <ClInclude Include="..\source\MaterialData.h" />
     <ClInclude Include="..\source\MathUtil.h" />
     <ClInclude Include="..\source\MeshData.h" />

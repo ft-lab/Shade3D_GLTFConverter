@@ -16,6 +16,7 @@ void COneMorphTargetData::clear ()
 	tangent.clear();
 	vIndices.clear();
 	weight = 0.0f;
+	name = "";
 }
 
 //-------------------------------------------------.

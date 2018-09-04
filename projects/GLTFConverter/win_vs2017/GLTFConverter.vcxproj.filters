@@ -70,6 +70,9 @@
     <ClCompile Include="..\source\MorphTargetsData.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\LicenseDialogInterface.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -131,6 +134,9 @@
       <Filter>mysources</Filter>
     </ClInclude>
     <ClInclude Include="..\source\MorphTargetsData.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\LicenseDialogInterface.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

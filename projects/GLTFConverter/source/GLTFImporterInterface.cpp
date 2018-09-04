@@ -47,11 +47,11 @@ void CGLTFImporterInterface::cleanup (void *)
 }
 
 /**
- * 扱うファイル拡張子数3
+ * 扱うファイル拡張子数.
  */
 int CGLTFImporterInterface::get_number_of_file_extensions (void *)
 {
-	return 2;
+	return 3;
 }
 
 /**
@@ -61,6 +61,7 @@ const char *CGLTFImporterInterface::get_file_extension (int index, void *)
 {
 	if (index == 0) return "glb";
 	if (index == 1) return "gltf";
+	if (index == 2) return "vrm";
 
 	return 0;
 }
@@ -72,6 +73,7 @@ const char *CGLTFImporterInterface::get_file_extension_description (int index, v
 {
 	if (index == 0) return "glTF";
 	if (index == 1) return "glTF";
+	if (index == 2) return "vrm";
 
 	return 0;
 }
@@ -273,6 +275,11 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 	// アニメーション情報を割り当て.
 	if (g_importParam.importAnimation) {
 		m_setAnimations(scene, sceneData);
+	}
+
+	// VRMとしてのライセンス情報をstreamに保持.
+	if (sceneData->isVRM) {
+		StreamCtrl::saveLicenseData(rootPart, sceneData->licenseData);
 	}
 }
 
@@ -507,7 +514,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 			const int targetsCou = (int)newMeshData.morphTargets.morphTargetsData.size();
 			for (int i = 0; i < targetsCou; ++i) {
 				const COneMorphTargetData& morphD = newMeshData.morphTargets.morphTargetsData[i];
-				const std::string name = std::string("target ") + std::to_string(i);
+				const std::string name = (morphD.name == "") ? std::string("target ") + std::to_string(i) : morphD.name;
 				std::vector<sxsdk::vec3> posList;
 				std::vector<int> vIndices;
 
@@ -560,9 +567,9 @@ void CGLTFImporterInterface::m_cleanupRedundantVertices (sxsdk::polygon_mesh_cla
 	if (m_MorphTargetsAccess) {
 		m_MorphTargetsAccess->cleanupRedundantVertices(pMesh);
 		m_MorphTargetsAccess->writeMorphTargetsData();
+	} else {
+		pMesh.cleanup_redundant_vertices();
 	}
-
-	//pMesh.cleanup_redundant_vertices();
 }
 
 /**

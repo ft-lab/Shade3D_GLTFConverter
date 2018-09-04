@@ -1159,6 +1159,120 @@ namespace {
 		}
 	}
 
+	/**
+	 * VRM用の拡張情報を格納.
+	 */
+	void storeVRMExtras_extensions (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+		const std::string extStr = gltfDoc.extensions["VRM"];
+
+		// jsonとしてパース.
+		rapidjson::Document extrasDoc;
+		extrasDoc.Parse(extStr.c_str());
+		if (extrasDoc.HasParseError()) return;
+
+		{
+			rapidjson::Value& exporterVersion = extrasDoc["exporterVersion"];
+			if (exporterVersion.GetType() == rapidjson::kStringType) {
+				sceneData->licenseData.exporterVersion = std::string(exporterVersion.GetString());
+			}
+		}
+		{
+			rapidjson::Value& meta = extrasDoc["meta"];
+			if (meta["version"].IsString()) {
+				sceneData->licenseData.version = std::string(meta["version"].GetString());
+			}
+			if (meta["author"].IsString()) {
+				sceneData->licenseData.author = std::string(meta["author"].GetString());
+			}
+			if (meta["contactInformation"].IsString()) {
+				sceneData->licenseData.contactInformation = std::string(meta["contactInformation"].GetString());
+			}
+			if (meta["reference"].IsString()) {
+				sceneData->licenseData.reference = std::string(meta["reference"].GetString());
+			}
+			if (meta["title"].IsString()) {
+				sceneData->licenseData.title = std::string(meta["title"].GetString());
+			}
+			if (meta["allowedUserName"].IsString()) {
+				sceneData->licenseData.allowedUserName = std::string(meta["allowedUserName"].GetString());
+			}
+			if (meta["violentUssageName"].IsString()) {
+				sceneData->licenseData.violentUssageName = std::string(meta["violentUssageName"].GetString());
+			}
+			if (meta["sexualUssageName"].IsString()) {
+				sceneData->licenseData.sexualUssageName = std::string(meta["sexualUssageName"].GetString());
+			}
+			if (meta["commercialUssageName"].IsString()) {
+				sceneData->licenseData.commercialUssageName = std::string(meta["commercialUssageName"].GetString());
+			}
+			if (meta["otherPermissionUrl"].IsString()) {
+				sceneData->licenseData.otherPermissionUrl = std::string(meta["otherPermissionUrl"].GetString());
+			}
+			if (meta["licenseName"].IsString()) {
+				sceneData->licenseData.licenseName = std::string(meta["licenseName"].GetString());
+			}
+			if (meta["otherLicenseUrl"].IsString()) {
+				sceneData->licenseData.otherLicenseUrl = std::string(meta["otherLicenseUrl"].GetString());
+			}
+		}
+	}
+
+	/**
+	 * VRM用のMorph Targets情報（Target名）を格納.
+	 */
+	void storeVRMExtras_morphTargets (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+		const size_t meshesSize = gltfDoc.meshes.Size();
+		if (meshesSize != (sceneData->meshes.size())) return;
+
+		for (size_t mLoop = 0; mLoop < meshesSize; ++mLoop) {
+			const Mesh& mesh = gltfDoc.meshes[mLoop];
+			const size_t primitivesCou = mesh.primitives.size();
+			if (primitivesCou == 0) continue;
+
+			CMeshData& dstMeshData = sceneData->getMeshData(mLoop);
+			for (size_t primLoop = 0; primLoop < primitivesCou; ++primLoop) {
+				CPrimitiveData& dstPrimitiveData = dstMeshData.primitives[primLoop];
+				const MeshPrimitive& meshPrim = mesh.primitives[primLoop];
+				if (meshPrim.extras == "") continue;
+
+				// jsonとしてパースし、targetNamesの配列を取得.
+				rapidjson::Document extrasDoc;
+				extrasDoc.Parse(meshPrim.extras.c_str());
+				if (extrasDoc.HasParseError()) continue;
+
+				rapidjson::Value& targetNames = extrasDoc["targetNames"];
+				rapidjson::SizeType num = targetNames.Size();
+
+				std::vector<std::string> namesList;
+				namesList.resize(num);
+				for (rapidjson::SizeType i = 0; i < num; ++i) {
+					rapidjson::Value& nameV = targetNames[i];
+					namesList[i] = "";
+					if (nameV.GetType() == rapidjson::kStringType) {
+						namesList[i] = std::string(nameV.GetString());
+					}
+				}
+				if (!namesList.empty()) {
+					if (namesList.size() != dstPrimitiveData.morphTargets.morphTargetsData.size()) continue;
+
+					for (size_t i = 0; i < namesList.size(); ++i) {
+						COneMorphTargetData& targetD = dstPrimitiveData.morphTargets.morphTargetsData[i];
+						targetD.name = namesList[i];
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * VRM用の拡張情報を格納.
+	 */
+	void storeVRMExtras (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+		if (!(sceneData->isVRM)) return;
+
+		storeVRMExtras_extensions(gltfDoc, sceneData);
+		storeVRMExtras_morphTargets(gltfDoc, sceneData);
+	}
 }
 
 CGLTFLoader::CGLTFLoader ()
@@ -1199,8 +1313,8 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	GLTFDocument gltfDoc;
 	std::string jsonStr = "";
 
-	// fileNameがglbファイルかどうか.
-	const bool glbFile = (StringUtil::getFileExtension(fileName) == std::string("glb"));
+	// fileNameがglb(vrm)ファイルかどうか.
+	const bool glbFile = (StringUtil::getFileExtension(fileName) == std::string("glb") || StringUtil::getFileExtension(fileName) == std::string("vrm"));
 
 	// gltf/glbの拡張子より、読み込みを分岐.
 	if (glbFile) {
@@ -1272,6 +1386,20 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		const size_t bufferViewsSize = gltfDoc.bufferViews.Size();
 		const size_t imagesSize      = gltfDoc.images.Size();
 
+		// VRMかどうか.
+		sceneData->isVRM = false;
+		{
+			const size_t eCou = gltfDoc.extensionsUsed.size();
+			for (std::unordered_set<std::string>::iterator it = gltfDoc.extensionsUsed.begin(); it != gltfDoc.extensionsUsed.end(); ++it) {
+				std::string str = *it;
+				std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+				if (str == "vrm") {
+					sceneData->isVRM = true;
+					break;
+				}
+			}
+		}
+
 		// Asset情報を取得.
 		sceneData->assetVersion   = gltfDoc.asset.version;
 		sceneData->assetGenerator = gltfDoc.asset.generator;
@@ -1297,6 +1425,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 		// アニメーション情報を格納.
 		::storeGLTFAnimations(gltfDoc, reader, sceneData);
+
+		// VRM用の情報を格納.
+		::storeVRMExtras(gltfDoc, sceneData);
 
 		if (g_errorMessage != "") return false;
 		return true;

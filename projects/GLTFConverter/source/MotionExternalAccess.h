@@ -4,7 +4,7 @@
 #ifndef _EXTERNALACCESS_H
 #define _EXTERNALACCESS_H
 
-#include "GlobalHeader.h"
+#include "sxsdk.cxx"
 
 #include <vector>
 
@@ -16,6 +16,21 @@
 
 // CHiddenBoneUtilInterfaceクラス.
 #define HIDDEN_BONE_UTIL_INTERFACE_ID sx::uuid_class("0AB5E6B6-F3DE-4C86-B6C0-F0246FF87330")
+
+/**
+ * ベジェ曲線のポイント情報.
+ */
+class CBezierPoint2D {
+public:
+	sxsdk::vec2 point;			// ポイント.
+	sxsdk::vec2 inHandle;		// inハンドル.
+	sxsdk::vec2 outHandle;		// outハンドル.
+
+public:
+	CBezierPoint2D () {
+		point = inHandle = outHandle = sxsdk::vec2(0, 0);
+	}
+};
 
 //----------------------------------------------------------------------.
 /**

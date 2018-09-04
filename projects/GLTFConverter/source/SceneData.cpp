@@ -60,6 +60,8 @@ CSceneData::CSceneData ()
 
 void CSceneData::clear()
 {
+	isVRM = false;
+
 	assetVersion    = "";
 	assetGenerator  = "";
 	assetCopyRight  = "";
@@ -77,6 +79,7 @@ void CSceneData::clear()
 	skins.clear();
 	m_nodeStack.clear();
 	animations.clear();
+	licenseData.clear();
 }
 
 /**

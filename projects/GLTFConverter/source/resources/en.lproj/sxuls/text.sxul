@@ -9,6 +9,7 @@
 	<string id="gltf_importer_title" value="glTF (gltf/glb) ..."/>
 	<string id="gltf_exporter_title" value="glTF (glb) ..."/>
 	<string id="occlusion_shader_title" value="Occlusion (glTF)"/>
+	<string id="license_dialog_title" value="glTF License"/>
 
 	<string id="license_All_rights_reserved" value="Has copyright." />
 	<string id="license_CC_BY" value="You must give appropriate credit.&#10;remix,transform OK/commercial OK" />

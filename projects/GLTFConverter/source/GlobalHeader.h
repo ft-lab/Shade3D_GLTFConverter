@@ -14,11 +14,13 @@
 #define GLTF_IMPORTER_INTERFACE_ID sx::uuid_class("29C48EA8-1851-4703-AF06-9DEB5A17FF49")
 #define GLTF_EXPORTER_INTERFACE_ID sx::uuid_class("40385ADE-D20F-4694-A817-27CE6B8A1016")
 #define OCCLUSION_SHADER_INTERFACE_ID sx::uuid_class("509D92F5-D9F9-4335-B070-0FBDEE179523")
+#define LICENSE_DIALOG_INTERFACE_ID sx::uuid_class("DC1B3583-05DE-4AA7-BE76-1B0B1FC599AD")
 
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
 #define GLTF_EXPORTER_DLG_STREAM_VERSION		0x100
 #define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x100
+#define GLTF_LICENSE_STREAM_VERSION				0x100
 
 // 作業ディレクトリ名.
 #define GLTF_TEMP_DIR "shade3d_temp_gltf"
@@ -33,6 +35,48 @@ namespace GLTFConverter {
 		export_texture_jpeg,			// jpegの置き換え.
 	};
 }
+
+/**
+ * ライセンス情報 (VRMで使用する).
+ */
+class CLicenseData
+{
+public:
+	std::string exporterVersion;
+	std::string version;
+	std::string author;
+	std::string contactInformation;
+	std::string reference;
+	std::string title;
+	std::string allowedUserName;
+	std::string violentUssageName;
+	std::string sexualUssageName;
+	std::string commercialUssageName;
+	std::string otherPermissionUrl;
+	std::string licenseName;
+	std::string otherLicenseUrl;
+
+public:
+	CLicenseData () {
+		clear();
+	}
+
+	void clear () {
+		exporterVersion      = "";
+		version              = "";
+		author               = "";
+		contactInformation   = "";
+		reference            = "";
+		title                = "";
+		allowedUserName      = "";
+		violentUssageName    = "";
+		sexualUssageName     = "";
+		commercialUssageName = "";
+		otherPermissionUrl   = "";
+		licenseName          = "";
+		otherLicenseUrl      = "";
+	}
+};
 
 /**
  * エクスポートダイアログボックスのパラメータ.

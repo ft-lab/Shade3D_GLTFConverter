@@ -7,6 +7,7 @@
 #include "GLTFImporterInterface.h"
 #include "GLTFExporterInterface.h"
 #include "OcclusionShaderInterface.h"
+#include "LicenseDialogInterface.h"
 
 //**************************************************//
 //	グローバル関数									//
@@ -17,6 +18,11 @@
 extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, void **p, sxsdk::shade_interface *shade, void *) {
 	unknown_interface *u = NULL;
 	
+	if (iid == attribute_iid) {
+		if (i == 0) {
+			u = new CLicenseDialogInterface(*shade);
+		}
+	}
 	if (iid == importer_iid) {
 		if (i == 0) {
 			u = new CGLTFImporterInterface(*shade);
@@ -44,6 +50,7 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
  */
 extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_interface *shade) {
 
+	if (iid == attribute_iid) return 1;
 	if (iid == importer_iid) return 1;
 	if (iid == exporter_iid) return 1;
 	if (iid == shader_iid) return 1;
@@ -55,6 +62,11 @@ extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_i
  * インターフェース名を返す.
  */
 extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxsdk::shade_interface *shade, void *) {
+	if (iid == attribute_iid) {
+		if (i == 0) {
+			return CLicenseDialogInterface::name(shade);
+		}
+	}
 	if (iid == importer_iid) {
 		if (i == 0) {
 			return CGLTFImporterInterface::name(shade);
@@ -78,6 +90,11 @@ extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxs
  * プラグインのUUIDを返す.
  */
 extern "C" SXSDKEXPORT sx::uuid_class STDCALL get_uuid (const IID &iid, int i, void *) {
+	if (iid == attribute_iid) {
+		if (i == 0) {
+			return LICENSE_DIALOG_INTERFACE_ID;
+		}
+	}
 	if (iid == importer_iid) {
 		if (i == 0) {
 			return GLTF_IMPORTER_INTERFACE_ID;

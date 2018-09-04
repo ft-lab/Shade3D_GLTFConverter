@@ -83,6 +83,7 @@ private:
 	std::vector<int> m_nodeStack;			// ノードを格納する際の階層構造のためのスタック.
 
 public:
+	bool isVRM;								// VRM形式の場合はtrue.
 	std::string assetVersion;				// Assetバージョン.
 	std::string assetGenerator;				// 作成ツール.
 	std::string assetCopyRight;				// Copy Right.
@@ -106,6 +107,8 @@ public:
 	CAnimationData animations;				// アニメーション情報クラス.
 
 	CExportDlgParam exportParam;			// エクスポート時のパラメータ.
+
+	CLicenseData licenseData;				// VRMで定義されているライセンスデータなど.
 
 private:
 

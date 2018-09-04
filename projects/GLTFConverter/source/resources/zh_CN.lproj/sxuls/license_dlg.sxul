@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dialog default_button="true" title="License">
+	<group label="VRM">
+		<short-string id="101" label="exporterVersion : " />
+		<short-string id="102" label="Version : " />
+		<short-string id="103" label="Author : " />
+		<short-string id="104" label="ContactInformation : " />
+		<short-string id="105" label="Reference : " />
+		<short-string id="106" label="Title : " />
+		<short-string id="107" label="AllowedUserName : " />
+		<short-string id="108" label="ViolentUssageName : " />
+		<short-string id="109" label="SexualUssageName : " />
+		<short-string id="110" label="CommercialUssageName : " />
+		<short-string id="111" label="OtherPermissionUrl : " />
+		<short-string id="112" label="LicenseName : " />
+		<short-string id="113" label="OtherLicenseUrl : " />
+	</group>
+</dialog>

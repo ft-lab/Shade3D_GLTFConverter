@@ -25,6 +25,8 @@ public:
 
 	std::vector<int> vIndices;			// 参照する頂点番号 (Shade3Dに渡す際に、最適化として使用).
 
+	std::string name;					// 名前 (VRM拡張).
+
 public:
 	COneMorphTargetData ();
 
@@ -34,6 +36,8 @@ public:
 		this->tangent  = v.tangent;
 		this->weight   = v.weight;
 		this->vIndices = v.vIndices;
+
+		this->name     = v.name;
 
 		return (*this);
 	}

@@ -187,6 +187,162 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 	} catch (...) { }
 }
 
+
+/**
+ * 形状ごとにライセンス情報を保存.
+ */
+void StreamCtrl::saveLicenseData (sxsdk::shape_class& shape, const CLicenseData& data)
+{
+	try {
+		compointer<sxsdk::stream_interface> stream(shape.create_attribute_stream_interface_with_uuid(LICENSE_DIALOG_INTERFACE_ID));
+		if (!stream) return;
+		stream->set_pointer(0);
+		stream->set_size(0);
+
+		int iDat;
+		int iVersion = GLTF_LICENSE_STREAM_VERSION;
+		char szStr[200];
+		stream->write_int(iVersion);
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.exporterVersion[0]), std::min((int)data.exporterVersion.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.version[0]), std::min((int)data.version.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.author[0]), std::min((int)data.author.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.contactInformation[0]), std::min((int)data.contactInformation.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.reference[0]), std::min((int)data.reference.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.title[0]), std::min((int)data.title.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.allowedUserName[0]), std::min((int)data.allowedUserName.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.violentUssageName[0]), std::min((int)data.violentUssageName.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.sexualUssageName[0]), std::min((int)data.sexualUssageName.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.commercialUssageName[0]), std::min((int)data.commercialUssageName.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.otherPermissionUrl[0]), std::min((int)data.otherPermissionUrl.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.licenseName[0]), std::min((int)data.licenseName.length(), 190));
+			stream->write(192, szStr);
+		}
+		{
+			memset(szStr, 0, 192);
+			memcpy(szStr, &(data.otherLicenseUrl[0]), std::min((int)data.otherLicenseUrl.length(), 190));
+			stream->write(192, szStr);
+		}
+	} catch (...) { }
+
+}
+
+/**
+ * 形状ごとのライセンス情報を読み込み.
+ */
+void StreamCtrl::loadLicenseData (sxsdk::shape_class& shape, CLicenseData& data)
+{
+	data.clear();
+	try {
+		compointer<sxsdk::stream_interface> stream(shape.get_attribute_stream_interface_with_uuid(LICENSE_DIALOG_INTERFACE_ID));
+		if (!stream) return;
+		stream->set_pointer(0);
+
+		int iDat;
+		int iVersion;
+		char szStr[200];
+		stream->read_int(iVersion);
+
+		{
+			stream->read(192, szStr);
+			data.exporterVersion = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.version = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.author = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.contactInformation = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.reference = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.title = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.allowedUserName = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.violentUssageName = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.sexualUssageName = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.commercialUssageName = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.otherPermissionUrl = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.licenseName = std::string(szStr);
+		}
+		{
+			stream->read(192, szStr);
+			data.otherLicenseUrl = std::string(szStr);
+		}
+	} catch (...) { }
+}
+
 /**
  * Occlusion Shader(マッピングレイヤ)情報を保存.
  */

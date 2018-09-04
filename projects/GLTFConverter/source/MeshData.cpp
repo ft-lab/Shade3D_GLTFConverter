@@ -593,6 +593,7 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 						}
 					}
 					tData.weight = mTargetD.weight;
+					tData.name   = mTargetD.name;
 					tempMeshData.morphTargets.morphTargetsData.push_back(tData);
 				}
 			}

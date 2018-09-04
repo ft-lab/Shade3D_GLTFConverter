@@ -30,6 +30,16 @@ namespace StreamCtrl
 	void loadExportDialogParam (sxsdk::shade_interface& shade, CExportDlgParam& data);
 
 	/**
+	 * 形状ごとにライセンス情報を保存.
+	 */
+	void saveLicenseData (sxsdk::shape_class& shape, const CLicenseData& data);
+
+	/**
+	 * 形状ごとのライセンス情報を読み込み.
+	 */
+	void loadLicenseData (sxsdk::shape_class& shape, CLicenseData& data);
+
+	/**
 	 * Occlusion Shader(マッピングレイヤ)情報を保存.
 	 */
 	void saveOcclusionParam (sxsdk::stream_interface* stream, const COcclusionShaderData& data);
