@@ -79,7 +79,7 @@ namespace {
 	/**
 	 * GLTFのMesh情報を取得して格納.
 	 */
-	void storeGLTFMeshes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFMeshes (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		const size_t meshesSize = gltfDoc.meshes.Size();
 
 		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
@@ -93,7 +93,7 @@ namespace {
 				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
 #endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
-				binReader.reset(new GLTFResourceReader(*binStreamReader));
+				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
 				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
@@ -125,9 +125,10 @@ namespace {
 				dstPrimitiveData.materialIndex = std::stoi(meshPrim.materialId);
 
 				// 頂点座標を取得.
-				if (meshPrim.positionsAccessorId != "") {
+				std::string accessorID;
+				if (meshPrim.TryGetAttributeAccessorId("POSITION", accessorID)) {
 					// positionsAccessorIdを取得 → accessorsよりbufferViewIdを取得 → ResourceReaderよりバッファ情報を取得、とたどる.
-					const int positionID = std::stoi(meshPrim.positionsAccessorId);
+					const int positionID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[positionID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -151,8 +152,8 @@ namespace {
 				}
 
 				// 法線を取得.
-				if (meshPrim.normalsAccessorId != "") {
-					const int normalID = std::stoi(meshPrim.normalsAccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("NORMAL", accessorID)) {
+					const int normalID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[normalID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -175,8 +176,8 @@ namespace {
 				}
 
 				// UV0を取得.
-				if (meshPrim.uv0AccessorId != "") {
-					const int uv0ID = std::stoi(meshPrim.uv0AccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("TEXCOORD_0", accessorID)) {
+					const int uv0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -201,8 +202,8 @@ namespace {
 				}
 
 				// UV1を取得.
-				if (meshPrim.uv1AccessorId != "") {
-					const int uv1ID = std::stoi(meshPrim.uv1AccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("TEXCOORD_1", accessorID)) {
+					const int uv1ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv1ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -226,8 +227,8 @@ namespace {
 				}
 
 				// Color0を取得.
-				if (meshPrim.color0AccessorId != "") {
-					const int color0ID = std::stoi(meshPrim.color0AccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("COLOR_0", accessorID)) {
+					const int color0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[color0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -370,8 +371,8 @@ namespace {
 				}
 
 				// スキンのWeightを取得.
-				if (meshPrim.weights0AccessorId != "") {
-					const int weightsID = std::stoi(meshPrim.weights0AccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("WEIGHTS_0", accessorID)) {
+					const int weightsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[weightsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
@@ -397,8 +398,8 @@ namespace {
 				}
 
 				// スキンのJointsを取得.
-				if (meshPrim.joints0AccessorId != "") {
-					const int jointsID = std::stoi(meshPrim.joints0AccessorId);
+				if (meshPrim.TryGetAttributeAccessorId("JOINTS_0", accessorID)) {
+					const int jointsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[jointsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
 
@@ -561,7 +562,7 @@ namespace {
 	/**
 	 * json文字列より、asset-extrasの指定を取得.
 	 */
-	void storeAssetExtrasData (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+	void storeAssetExtrasData (Document& gltfDoc, CSceneData* sceneData) {
 		sceneData->assetExtrasAuthor  = "";
 		sceneData->assetExtrasLicense = "";
 		sceneData->assetExtrasSource  = "";
@@ -595,7 +596,7 @@ namespace {
 	/**
 	 * GLTFのMaterial情報を取得して格納.
 	 */
-	void storeGLTFMaterials (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFMaterials (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		const size_t materialsSize   = gltfDoc.materials.Size();
 		const size_t imagesSize      = gltfDoc.images.Size();
 
@@ -794,7 +795,7 @@ namespace {
 	/**
 	 * GLTFのImage情報を取得して格納.
 	 */
-	void storeGLTFImages (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFImages (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		const size_t imagesSize = gltfDoc.images.Size();
 
 		// GLTFから読み込む場合は、外部の画像を読み込みすることになる.
@@ -808,7 +809,7 @@ namespace {
 				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
 #endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
-				binReader.reset(new GLTFResourceReader(*binStreamReader));
+				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
 				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
@@ -860,7 +861,7 @@ namespace {
 	/**
 	 * ノード階層を格納.
 	 */
-	void storeGLTFNodes (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFNodes (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		const size_t nodesCou = gltfDoc.nodes.Size();
 
 		sceneData->nodes.clear();
@@ -1010,7 +1011,7 @@ namespace {
 	/**
 	 * Skin情報を格納.
 	 */
-	void storeGLTFSkins (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFSkins (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		const size_t skinsCou = gltfDoc.skins.Size();
 
 		sceneData->skins.clear();
@@ -1023,7 +1024,7 @@ namespace {
 			try {
 				const std::string fileDir = sceneData->getFileDir();
 				binStreamReader.reset(new BinStreamReader(fileDir));
-				binReader.reset(new GLTFResourceReader(*binStreamReader));
+				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
 				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
@@ -1075,7 +1076,7 @@ namespace {
 	/**
 	 * Animation情報を格納.
 	 */
-	void storeGLTFAnimations (GLTFDocument& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFAnimations (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
 		sceneData->animations.clear();
 		const size_t animCou = gltfDoc.animations.Size();
 		if (animCou == 0) return;
@@ -1087,7 +1088,7 @@ namespace {
 			try {
 				const std::string fileDir = sceneData->getFileDir();
 				binStreamReader.reset(new BinStreamReader(fileDir));
-				binReader.reset(new GLTFResourceReader(*binStreamReader));
+				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
 				g_errorMessage = std::string("Bin file could not be loaded.");
 				return;
@@ -1100,7 +1101,7 @@ namespace {
 
 		CAnimationData& dstAnimD = sceneData->animations;
 
-		const size_t channelsCou = anim.channels.size();
+		const size_t channelsCou = anim.channels.Size();
 		if (channelsCou > 0) {
 			for (size_t i = 0; i < channelsCou; ++i) {
 				const AnimationChannel& animChannel = anim.channels[i];
@@ -1162,7 +1163,7 @@ namespace {
 	/**
 	 * VRM用の拡張情報を格納.
 	 */
-	void storeVRMExtras_extensions (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+	void storeVRMExtras_extensions (Document& gltfDoc, CSceneData* sceneData) {
 		const std::string extStr = gltfDoc.extensions["VRM"];
 
 		// jsonとしてパース.
@@ -1220,7 +1221,7 @@ namespace {
 	/**
 	 * VRM用のMorph Targets情報（Target名）を格納.
 	 */
-	void storeVRMExtras_morphTargets (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+	void storeVRMExtras_morphTargets (Document& gltfDoc, CSceneData* sceneData) {
 		const size_t meshesSize = gltfDoc.meshes.Size();
 		if (meshesSize != (sceneData->meshes.size())) return;
 
@@ -1267,7 +1268,7 @@ namespace {
 	/**
 	 * VRM用の拡張情報を格納.
 	 */
-	void storeVRMExtras (GLTFDocument& gltfDoc, CSceneData* sceneData) {
+	void storeVRMExtras (Document& gltfDoc, CSceneData* sceneData) {
 		if (!(sceneData->isVRM)) return;
 
 		storeVRMExtras_extensions(gltfDoc, sceneData);
@@ -1310,7 +1311,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	sceneData->filePath = fileName;
 
 	std::shared_ptr<GLBResourceReader> reader;
-	GLTFDocument gltfDoc;
+	Document gltfDoc;
 	std::string jsonStr = "";
 
 	// fileNameがglb(vrm)ファイルかどうか.
@@ -1321,8 +1322,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		try {
 			// glbファイルを読み込み.
 			auto glbStream = std::make_shared<std::ifstream>(fileName2, std::ios::binary);
-			auto streamReader = std::make_unique<InStream>();
-			reader.reset(new GLBResourceReader(*streamReader, glbStream));
+			std::shared_ptr<BinStreamReader> binStreamReader;
+			binStreamReader.reset(new BinStreamReader(""));
+			reader.reset(new GLBResourceReader(binStreamReader, glbStream));
 
 			// glbファイルからjson部を取得.
 			jsonStr = reader->GetJson();
@@ -1372,7 +1374,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	try {
 		// jsonデータをパース.
 		try {
-			gltfDoc = DeserializeJson(jsonStr);
+			gltfDoc = Deserialize(jsonStr);
 		} catch (GLTFException e) {
 			g_errorMessage = std::string(e.what());
 			return false;

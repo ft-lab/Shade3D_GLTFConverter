@@ -50,7 +50,7 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
  */
 extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_interface *shade) {
 
-	if (iid == attribute_iid) return 1;
+	if (iid == attribute_iid) return 0;		// TODO.
 	if (iid == importer_iid) return 1;
 	if (iid == exporter_iid) return 1;
 	if (iid == shader_iid) return 1;

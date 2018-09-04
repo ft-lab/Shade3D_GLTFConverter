@@ -7,10 +7,9 @@
 #include <GLTFSDK/Deserialize.h>
 #include <GLTFSDK/Serialize.h>
 #include <GLTFSDK/GLTFResourceReader.h>
-#include <GLTFSDK/GLTFResourceWriter2.h>
-#include <GLTFSDK/GLBResourceWriter2.h>
+#include <GLTFSDK/GLTFResourceWriter.h>
+#include <GLTFSDK/GLBResourceWriter.h>
 #include <GLTFSDK/IStreamWriter.h>
-#include <GLTFSDK/IStreamFactory.h>
 #include <GLTFSDK/BufferBuilder.h>
 
 #include <rapidjson/document.h>
@@ -138,49 +137,9 @@ namespace {
 	};
 
 	/**
-	 * GLBのバイナリ出力用.
-	 */
-	class OutputGLBStreamFactory : public IStreamFactory
-	{
-	private:
-		std::string m_basePath;		// glbファイルの絶対パスのディレクトリ.
-		std::string m_fileName;		// 出力ファイル名.
-
-	public:
-		OutputGLBStreamFactory (std::string basePath, std::string fileName) : 
-			m_basePath(basePath), m_fileName(fileName),
-			m_stream(std::make_shared<std::stringstream>(std::ios_base::app | std::ios_base::binary | std::ios_base::in | std::ios_base::out))
-	
-		{
-		}
-
-		virtual ~OutputGLBStreamFactory () {
-		}
-
-		virtual std::shared_ptr<std::iostream> GetTemporaryStream (const std::string& uri) const override
-		{
-			return std::dynamic_pointer_cast<std::iostream>(m_stream);
-		}
-
-		virtual std::shared_ptr<std::ostream> GetOutputStream (const std::string& filename) const override
-		{
-			const std::string path = m_basePath + std::string("/") + m_fileName;
-			return std::make_shared<std::ofstream>(path, std::ios::binary | std::ios::out);
-		}
-
-		virtual std::shared_ptr<std::istream> GetInputStream(const std::string&) const override
-		{
-			return std::dynamic_pointer_cast<std::istream>(m_stream);
-		}
-
-	private:
-		std::shared_ptr<std::stringstream> m_stream;
-	};
-
-	/**
 	 * ノード情報を指定.
 	 */
-	void setNodesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	void setNodesData (Document& gltfDoc,  const CSceneData* sceneData) {
 		if (sceneData->nodes.empty()) return;
 		const float fMin = (float)(1e-4);
 
@@ -277,7 +236,7 @@ namespace {
 	/**
 	 * マテリアル情報を指定.
 	 */
-	void setMaterialsData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	void setMaterialsData (Document& gltfDoc,  const CSceneData* sceneData) {
 		const size_t mCou = sceneData->materials.size();
 
 		// テクスチャの繰り返しで (1, 1)でないものがあるかチェック.
@@ -383,7 +342,7 @@ namespace {
 	 * メッシュ情報を指定.
 	 * @return accessorIDの数.
 	 */
-	int setMeshesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData) {
+	int setMeshesData (Document& gltfDoc,  const CSceneData* sceneData) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return 0;
 
@@ -414,22 +373,24 @@ namespace {
 				}
 
 				meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
-				meshPrimitive.normalsAccessorId   = std::to_string(accessorID++);
-				meshPrimitive.positionsAccessorId = std::to_string(accessorID++);
+				meshPrimitive.attributes["NORMAL"] = std::to_string(accessorID++);
+				meshPrimitive.attributes["POSITION"] = std::to_string(accessorID++);
 				if (!primitiveD.uv0.empty()) {
-					meshPrimitive.uv0AccessorId = std::to_string(accessorID++);
+					meshPrimitive.attributes["TEXCOORD_0"] = std::to_string(accessorID++);
 				}
 				if (!primitiveD.uv1.empty()) {
-					meshPrimitive.uv1AccessorId = std::to_string(accessorID++);
+					meshPrimitive.attributes["TEXCOORD_1"] = std::to_string(accessorID++);
+
 				}
 				if (!primitiveD.color0.empty()) {
-					meshPrimitive.color0AccessorId = std::to_string(accessorID++);
+					meshPrimitive.attributes["COLOR_0"] = std::to_string(accessorID++);
+
 				}
 				if (!primitiveD.skinJoints.empty()) {
-					meshPrimitive.joints0AccessorId = std::to_string(accessorID++);
+					meshPrimitive.attributes["JOINTS_0"] = std::to_string(accessorID++);
 				}
 				if (!primitiveD.skinWeights.empty()) {
-					meshPrimitive.weights0AccessorId = std::to_string(accessorID++);
+					meshPrimitive.attributes["WEIGHTS_0"] = std::to_string(accessorID++);
 				}
 
 				meshPrimitive.mode = MESH_TRIANGLES;		// (4) 三角形情報として格納.
@@ -447,7 +408,7 @@ namespace {
 	/**
 	 *   GLB出力向けにバイナリ情報をbufferBuilderに格納.
 	 */
-	void setBufferData_to_BufferBuilder (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
+	void setBufferData_to_BufferBuilder (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
 
@@ -753,7 +714,7 @@ namespace {
 	 *   拡張子gltfの場合、バッファは外部のbinファイル。.
 	 *   格納は、格納要素のOffsetごとに4バイト alignmentを考慮（そうしないとエラーになる）.
 	 */
-	void setBufferData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
+	void setBufferData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
 
@@ -780,10 +741,10 @@ namespace {
 		const std::string fileExtension = sceneData->getFileExtension();
 
 		// binの出力バッファ.
-		std::shared_ptr<GLTFResourceWriter2> binWriter;
+		std::shared_ptr<GLTFResourceWriter> binWriter;
 		if (fileExtension == "gltf") {
 			auto binStreamWriter = std::make_unique<BinStreamWriter>(fileDir, binFileName);
-			binWriter.reset(new GLTFResourceWriter2(std::move(binStreamWriter), binFileName));
+			binWriter.reset(new GLTFResourceWriter(std::move(binStreamWriter)));
 		}
 
 		int accessorID = 0;
@@ -1211,7 +1172,7 @@ namespace {
 	/**
 	 *   Image/Textures情報を格納.
 	 */
-	void setImagesData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade) {
+	void setImagesData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade) {
 		const size_t imagesCou = sceneData->images.size();
 
 		std::vector<std::string> imageFileNameList;
@@ -1291,7 +1252,7 @@ namespace {
 					std::shared_ptr<GLTFResourceReader> binReader;
 
 					binStreamReader.reset(new BinStreamReader(StringUtil::getFileDir(fileName)));
-					binReader.reset(new GLTFResourceReader(*binStreamReader));
+					binReader.reset(new GLTFResourceReader(binStreamReader));
 
 					// uriはSJISに変換.
 					Image image2(gltfDoc.images[i]);
@@ -1333,7 +1294,7 @@ namespace {
 	/**
 	 * スキン情報を格納.
 	 */
-	int setSkinData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int meshAccessorIDCount) {
+	int setSkinData (Document& gltfDoc,  const CSceneData* sceneData, const int meshAccessorIDCount) {
 		const size_t skinsCou = sceneData->skins.size();
 		if (skinsCou == 0) return meshAccessorIDCount;
 
@@ -1365,7 +1326,7 @@ namespace {
 	/**
 	 * アニメーション情報を格納.
 	 */
-	int setAnimationData (GLTFDocument& gltfDoc,  const CSceneData* sceneData, const int skinAccessorIDCount) {
+	int setAnimationData (Document& gltfDoc,  const CSceneData* sceneData, const int skinAccessorIDCount) {
 		const CAnimationData animD = sceneData->animations;
 		const size_t animCou = animD.channelData.size();
 		if (animCou == 0) return skinAccessorIDCount;
@@ -1385,7 +1346,7 @@ namespace {
 				animChannel.samplerId     = std::to_string(channelD.samplerIndex);
 				animChannel.target.nodeId = std::to_string(channelD.targetNodeIndex);
 				animChannel.target.path   = (channelD.pathType == CAnimChannelData::path_type_translation) ? TARGET_TRANSLATION : TARGET_ROTATION;
-				anim.channels.push_back(animChannel);
+				anim.channels.Append(animChannel);
 			}
 
 			// Sampler情報を格納.
@@ -1438,18 +1399,16 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 	const std::string fileName2 = StringUtil::getFileName(filePath2);
 
 	try {
-		GLTFDocument gltfDoc;
+		Document gltfDoc;
 		gltfDoc.images.Clear();
 	    gltfDoc.buffers.Clear();
 		gltfDoc.bufferViews.Clear();
 		gltfDoc.accessors.Clear();
 
-		// GLB出力用.
-		auto glbStreamFactory = std::make_unique<OutputGLBStreamFactory>(fileDir2, fileName2);
-
 		std::unique_ptr<BufferBuilder> glbBuilder;
 		if (sceneData->getFileExtension() == "glb") {
-			auto glbWriter = std::make_unique<GLBResourceWriter2>(std::move(glbStreamFactory), filePath2);
+			auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
+			auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
 			glbBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
 			glbBuilder->AddBuffer(GLB_BUFFER_ID);
 		}
@@ -1506,8 +1465,8 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 
 			// glbファイルを出力.
 			auto manifest     = Serialize(gltfDoc);
-		    auto outputWriter = dynamic_cast<GLBResourceWriter2 *>(&glbBuilder->GetResourceWriter());
-			if (outputWriter) outputWriter->Flush(manifest, std::string(""));
+		    auto outputWriter = dynamic_cast<GLBResourceWriter *>(&glbBuilder->GetResourceWriter());
+			if (outputWriter) outputWriter->Flush(manifest, filePath2);
 
 		} else {
 			// gltfファイルを出力.
