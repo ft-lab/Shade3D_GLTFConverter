@@ -526,7 +526,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 					}
 				}
 				if (!vIndices.empty()) {
-					m_MorphTargetsAccess->appendTargetVertices(name, vIndices, posList);
+					m_MorphTargetsAccess->appendTargetVertices(name.c_str(), (int)vIndices.size(), &(vIndices[0]), &(posList[0]));
 				}
 			}
 			pMeshSaver->release();
@@ -536,7 +536,6 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 			// Morph Targets情報をstreamに保存.
 			m_MorphTargetsAccess->writeMorphTargetsData();
-
 			m_MorphTargetsAccess->updateMesh();
 		}
 

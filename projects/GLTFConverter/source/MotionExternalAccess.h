@@ -8,6 +8,11 @@
 
 #include <vector>
 
+/*
+	関数の引数としてstd::stringやstd::vector<>を使うと、Release/Debugの混在でうまく連携できない模様.
+	そのため、char *、ポインタ参照、などで渡す.
+*/
+
 /**
  * プラグインインターフェイス派生クラスのID.
  */
@@ -100,9 +105,14 @@ public:
 	virtual sxsdk::shape_class* getTargetShape () = 0;
 
 	/**
+	 * オリジナルの頂点座標数を取得.
+	 */
+	virtual int getOrgVerticesCount () const = 0;
+
+	/**
 	 * オリジナルの頂点座標を取得.
 	 */
-	virtual const std::vector<sxsdk::vec3>& getOrgVertices () const = 0;
+	virtual int getOrgVertices (sxsdk::vec3* vertices) const = 0;
 
 	/**
 	 * 対象のポリゴンメッシュ形状クラスを渡す.
@@ -113,17 +123,20 @@ public:
 
 	/**
 	 * baseの頂点座標を格納。streamからの読み込み時に呼ばれる.
+	 * @param[in] vCou      頂点数.
+	 * @param[in] vertices  登録する頂点座標.
 	 */
-	virtual  void setOrgVertices (const std::vector<sxsdk::vec3>& vertices) = 0;
+	virtual void setOrgVertices (const int vCou, const sxsdk::vec3* vertices) = 0;
 
 	/**
 	 * 選択頂点座標をMorphTargetsの頂点として追加.
 	 * @param[in] name      target名.
+	 * @param[in] vCou      頂点数.
 	 * @param[in] indices   登録する頂点インデックス (選択された頂点).
 	 * @param[in] vertices  登録する頂点座標.
 	 * @return Morph Targets番号.
 	 */
-	virtual int appendTargetVertices (const std::string& name, const std::vector<int>& indices, const std::vector<sxsdk::vec3>& vertices) = 0;
+	virtual int appendTargetVertices (const char* name, const int vCou, const int* indices, const sxsdk::vec3* vertices) = 0;
 
 	/**
 	 * Morph Targetsの数.
@@ -133,15 +146,22 @@ public:
 	/**
 	 * Morph Targetの名前を取得.
 	 * @param[in]  tIndex    Morph Targets番号.
+	 * @param[out] name      名前が入る.
 	 */
-	virtual const std::string getTargetName (const int tIndex) const = 0;
+	virtual bool getTargetName (const int tIndex, char* name) const = 0;
 
 	/**
 	 * Morph Targetの名前を指定.
 	 * @param[in]  tIndex    Morph Targets番号.
 	 * @param[in]  name      名前.
 	 */
-	virtual void setTargetName (const int tIndex, const std::string& name) = 0;
+	virtual void setTargetName (const int tIndex, const char* name) = 0;
+
+	/**
+	 * Morph Targetsの頂点数を取得.
+	 * @param[in]  tIndex    Morph Targets番号.
+	 */
+	virtual int getTargetVerticesCount (const int tIndex) = 0;
 
 	/**
 	 * Morph Targetsの頂点座標を取得.
@@ -149,7 +169,7 @@ public:
 	 * @param[out] indices   頂点インデックスが返る.
 	 * @param[out] vertices  頂点座標が返る.
 	 */
-	virtual bool getTargetVertices (const int tIndex, std::vector<int>& indices, std::vector<sxsdk::vec3>& vertices) = 0;
+	virtual bool getTargetVertices (const int tIndex, int* indices, sxsdk::vec3* vertices) = 0;
 
 	/**
 	 * Morph Targetsのウエイト値を指定.
