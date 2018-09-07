@@ -124,10 +124,31 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 	shade.message(std::string("Asset version : ") + sceneData.assetVersion);
 	shade.message(std::string("Asset copyright : ") + sceneData.assetCopyRight);
 
-	shade.message(std::string("Asset title : ") + sceneData.assetExtrasTitle);
-	shade.message(std::string("Asset author : ") + sceneData.assetExtrasAuthor);
-	shade.message(std::string("Asset source : ") + sceneData.assetExtrasSource);
-	shade.message(std::string("Asset license : ") + sceneData.assetExtrasLicense);
+	if (sceneData.isVRM) {
+		// VRMの場合のライセンス情報などを表示.
+		shade.message(std::string("VRM : "));
+		shade.message(std::string("    exporter version : ") + sceneData.licenseData.exporterVersion);
+		shade.message(std::string("    version : ") + sceneData.licenseData.version);
+		shade.message(std::string("    author : ") + sceneData.licenseData.author);
+		shade.message(std::string("    contact information : ") + sceneData.licenseData.contactInformation);
+		shade.message(std::string("    reference : ") + sceneData.licenseData.reference);
+		shade.message(std::string("    title : ") + sceneData.licenseData.title);
+		shade.message(std::string("    allowed user name : ") + sceneData.licenseData.allowedUserName);
+		shade.message(std::string("    violent ussage name : ") + sceneData.licenseData.violentUssageName);
+		shade.message(std::string("    sexual ussage name : ") + sceneData.licenseData.sexualUssageName);
+		shade.message(std::string("    commercial ussage name : ") + sceneData.licenseData.commercialUssageName);
+		shade.message(std::string("    other permission url : ") + sceneData.licenseData.otherPermissionUrl);
+		shade.message(std::string("    license name : ") + sceneData.licenseData.licenseName);
+		shade.message(std::string("    other license url : ") + sceneData.licenseData.otherLicenseUrl);
+
+	} else {
+		// Oculus Homeでのライセンス情報.
+		shade.message(std::string("Asset title : ") + sceneData.assetExtrasTitle);
+		shade.message(std::string("Asset author : ") + sceneData.assetExtrasAuthor);
+		shade.message(std::string("Asset source : ") + sceneData.assetExtrasSource);
+		shade.message(std::string("Asset license : ") + sceneData.assetExtrasLicense);
+	}
+	shade.message("");
 
 	shade.message(std::string("Meshes : ") + std::to_string(sceneData.meshes.size()));
 	shade.message(std::string("Materials : ") + std::to_string(sceneData.materials.size()));
