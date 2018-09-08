@@ -324,7 +324,6 @@
 				FFE6EF5F1A6667E60006CB66 /* Sources */,
 				FF39F5911A667C8A00E09111 /* CopyFiles */,
 				FFE6EF781A6667E60006CB66 /* Frameworks */,
-				FF39F5941A66864400E09111 /* ShellScript */,
 				FFE6EF811A6667E60006CB66 /* CopyFiles */,
 			);
 			buildRules = (
@@ -382,9 +381,6 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		FFE6EF5F1A6667E60006CB66 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -440,9 +436,7 @@
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
 				CLANG_CXX_LIBRARY = "libc++";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(MACROS)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(MACROS)";
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
@@ -470,9 +464,7 @@
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
 				CLANG_CXX_LIBRARY = "libc++";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(MACROS)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(MACROS)";
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
@@ -500,9 +492,7 @@
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
 				CLANG_CXX_LIBRARY = "libc++";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(MACROS)",
-				);
+				GCC_PREPROCESSOR_DEFINITIONS = "$(MACROS)";
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
@@ -547,7 +537,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
 				LIBRARY_STYLE = Bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = glTFConverter;
 				SDKROOT = macosx10.13;
@@ -579,9 +569,9 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
 				LIBRARY_STYLE = Bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=i386]" = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				"MACOSX_DEPLOYMENT_TARGET[arch=i386]" = 10.11;
+				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.11;
 				PRODUCT_NAME = glTFConverter;
 				SDKROOT = macosx10.13;
 				SECTORDER_FLAGS = "";
@@ -612,7 +602,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
 				LIBRARY_STYLE = Bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = glTFConverter;
 				SDKROOT = macosx10.13;
 				SECTORDER_FLAGS = "";
