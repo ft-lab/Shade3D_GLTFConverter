@@ -9,6 +9,7 @@
 class CSceneData;
 class CNodeData;
 class CMorphTargetsAccess;
+class CTempMeshData;
 
 class CGLTFImporterInterface : public sxsdk::importer_interface {
 
@@ -126,7 +127,7 @@ private:
 	 * 重複頂点をマージする.
 	 * Morph Targetsの頂点もマージ対象.
 	 */
-	void m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh);
+	void m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh, const CTempMeshData* tempMeshData);
 
 public:
 	CGLTFImporterInterface (sxsdk::shade_interface &shade);

@@ -27,6 +27,10 @@ namespace MathUtil {
 	 */
 	double calcTriangleArea (const sxsdk::vec3& v1, const sxsdk::vec3& v2, const sxsdk::vec3& v3);
 
+	/**
+	 * バウンディングボックスの最小最大を計算.
+	 */
+	void calcBoundingBox (const std::vector<sxsdk::vec3>& vers, sxsdk::vec3& bbMin, sxsdk::vec3& bbMax);
 }
 
 #endif

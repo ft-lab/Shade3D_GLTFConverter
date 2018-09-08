@@ -355,6 +355,8 @@ namespace {
 			mesh.name = meshD.name;
 			mesh.id   = std::to_string(meshLoop);
 
+			std::vector<float> weights;		// Morph Targetsのウエイト値.
+
 			// MeshPrimitiveに1つのメッシュの情報を格納。accessorのIDを指定していく.
 			// indices                 : 三角形の頂点インデックス.
 			// attributes - NORMAL     : 法線.
@@ -392,11 +394,29 @@ namespace {
 				if (!primitiveD.skinWeights.empty()) {
 					meshPrimitive.attributes["WEIGHTS_0"] = std::to_string(accessorID++);
 				}
+				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
+					const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
+					for (size_t tLoop = 0; tLoop < morphTargetsD.morphTargetsData.size(); ++tLoop) {
+						const COneMorphTargetData& mTargetD = morphTargetsD.morphTargetsData[tLoop];
+						meshPrimitive.targets.push_back(MorphTarget());
+						MorphTarget& dstTarget = meshPrimitive.targets.back();
+						dstTarget.positionsAccessorId = std::to_string(accessorID++);
+						if (!mTargetD.normal.empty()) dstTarget.normalsAccessorId = std::to_string(accessorID++);
+						//if (!mTargetD.tangent.empty()) dstTarget.tangentsAccessorId = std::to_string(accessorID++);
+
+						// mesh内のすべてのprimitiveは、同一のMorph Targets数でウエイト値も同じという仕様.
+						if (primLoop == 0) weights.push_back(mTargetD.weight);
+					}
+				}
 
 				meshPrimitive.mode = MESH_TRIANGLES;		// (4) 三角形情報として格納.
 
 				mesh.primitives.push_back(meshPrimitive);
 			}
+
+			// Morph Targetsのデフォルトウエイト値.
+			// 複数のPrimitiveがある場合は、すべてで同じTarget数でないといけない模様.
+			if (!weights.empty()) mesh.weights = weights;
 
 			// Mesh情報を追加.
 			gltfDoc.meshes.Append(mesh);
@@ -605,6 +625,72 @@ namespace {
 
 					byteOffset += byteLength;
 					accessorID++;
+				}
+
+				// Morph Targets情報を格納.
+				// Targetとして格納する頂点数は、primitiveの頂点数と同じである必要がある.
+				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
+					const size_t primVersCou = primitiveD.vertices.size();
+					std::vector<sxsdk::vec3> vec3List, vec4List;
+					vec3List.resize(primVersCou);
+					vec4List.resize(primVersCou);
+					const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
+					for (size_t tLoop = 0; tLoop < morphTargetsD.morphTargetsData.size(); ++tLoop) {
+						const COneMorphTargetData& targetD = morphTargetsD.morphTargetsData[tLoop];
+						const size_t tvCou = targetD.vIndices.size();
+
+						// 頂点座標の差分を格納.
+						{
+							for (size_t i = 0; i < primVersCou; ++i) vec3List[i] = sxsdk::vec3(0, 0, 0);
+							for (size_t i = 0; i < tvCou; ++i) {
+								const int vIndex = targetD.vIndices[i];
+								vec3List[vIndex] = targetD.position[i] - primitiveD.vertices[vIndex];
+							}
+
+							MathUtil::calcBoundingBox(vec3List, bbMin, bbMax);
+
+							AccessorDesc acceDesc;
+							acceDesc.accessorType  = TYPE_VEC3;
+							acceDesc.componentType = COMPONENT_FLOAT;
+							acceDesc.byteOffset    = byteOffset;
+							acceDesc.normalized    = false;
+							acceDesc.minValues.push_back(bbMin.x);
+							acceDesc.minValues.push_back(bbMin.y);
+							acceDesc.minValues.push_back(bbMin.z);
+							acceDesc.maxValues.push_back(bbMax.x);
+							acceDesc.maxValues.push_back(bbMax.y);
+							acceDesc.maxValues.push_back(bbMax.z);
+							const size_t byteLength = (sizeof(float) * 3) * primVersCou;
+
+							bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+							bufferBuilder->AddAccessor(convert_vec3_to_float(vec3List), acceDesc); 
+
+							byteOffset += byteLength;
+							accessorID++;
+						}
+
+						// 法線を格納.
+						if (!targetD.normal.empty()) {
+							for (size_t i = 0; i < primVersCou; ++i) vec3List[i] = primitiveD.normals[i];
+							for (size_t i = 0; i < tvCou; ++i) {
+								const int vIndex = targetD.vIndices[i];
+								vec3List[vIndex] = targetD.normal[i];
+							}
+
+							AccessorDesc acceDesc;
+							acceDesc.accessorType  = TYPE_VEC3;
+							acceDesc.componentType = COMPONENT_FLOAT;
+							acceDesc.byteOffset    = byteOffset;
+							acceDesc.normalized    = false;
+							const size_t byteLength = (sizeof(float) * 3) * primVersCou;
+
+							bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+							bufferBuilder->AddAccessor(convert_vec3_to_float(vec3List), acceDesc); 
+
+							byteOffset += byteLength;
+							accessorID++;
+						}
+					}
 				}
 			}
 		}
@@ -1022,6 +1108,89 @@ namespace {
 					}
 					byteOffset += buffV.byteLength;
 					accessorID++;
+				}
+
+				// Morph Targets.
+				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
+					const size_t primVersCou = primitiveD.vertices.size();
+					std::vector<sxsdk::vec3> vec3List, vec4List;
+					vec3List.resize(primVersCou);
+					vec4List.resize(primVersCou);
+					const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
+					for (size_t tLoop = 0; tLoop < morphTargetsD.morphTargetsData.size(); ++tLoop) {
+						const COneMorphTargetData& targetD = morphTargetsD.morphTargetsData[tLoop];
+						const size_t tvCou = targetD.vIndices.size();
+
+						// 頂点座標の差分を格納.
+						{
+							for (size_t i = 0; i < primVersCou; ++i) vec3List[i] = sxsdk::vec3(0, 0, 0);
+							for (size_t i = 0; i < tvCou; ++i) {
+								const int vIndex = targetD.vIndices[i];
+								vec3List[vIndex] = targetD.position[i] - primitiveD.vertices[vIndex];
+							}
+
+							MathUtil::calcBoundingBox(vec3List, bbMin, bbMax);
+
+							Accessor acce;
+							acce.id             = std::to_string(accessorID);
+							acce.bufferViewId   = std::to_string(accessorID);
+							acce.type           = TYPE_VEC3;
+							acce.componentType  = COMPONENT_FLOAT;
+							acce.count          = primVersCou;
+							acce.min.push_back(bbMin.x);
+							acce.min.push_back(bbMin.y);
+							acce.min.push_back(bbMin.z);
+							acce.max.push_back(bbMax.x);
+							acce.max.push_back(bbMax.y);
+							acce.max.push_back(bbMax.z);
+							gltfDoc.accessors.Append(acce);
+
+							BufferView buffV;
+							buffV.id         = std::to_string(accessorID);
+							buffV.bufferId   = std::string("0");
+							buffV.byteOffset = byteOffset;
+							buffV.byteLength = (sizeof(float) * 3) * primVersCou;
+							buffV.target     = ARRAY_BUFFER;
+							gltfDoc.bufferViews.Append(buffV);
+
+							// バッファ情報として格納.
+							if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(vec3List[0]), gltfDoc.accessors[accessorID]);
+
+							byteOffset += buffV.byteLength;
+							accessorID++;
+						}
+
+						// 法線を格納.
+						if (!targetD.normal.empty()) {
+							for (size_t i = 0; i < primVersCou; ++i) vec3List[i] = primitiveD.normals[i];
+							for (size_t i = 0; i < tvCou; ++i) {
+								const int vIndex = targetD.vIndices[i];
+								vec3List[vIndex] = targetD.normal[i];
+							}
+
+							Accessor acce;
+							acce.id             = std::to_string(accessorID);
+							acce.bufferViewId   = std::to_string(accessorID);
+							acce.type           = TYPE_VEC3;
+							acce.componentType  = COMPONENT_FLOAT;
+							acce.count          = primVersCou;
+							gltfDoc.accessors.Append(acce);
+
+							BufferView buffV;
+							buffV.id         = std::to_string(accessorID);
+							buffV.bufferId   = std::string("0");
+							buffV.byteOffset = byteOffset;
+							buffV.byteLength = (sizeof(float) * 3) * primVersCou;
+							buffV.target     = ARRAY_BUFFER;
+							gltfDoc.bufferViews.Append(buffV);
+
+							// バッファ情報として格納.
+							if (binWriter) binWriter->Write(gltfDoc.bufferViews[accessorID], &(vec3List[0]), gltfDoc.accessors[accessorID]);
+
+							byteOffset += buffV.byteLength;
+							accessorID++;
+						}
+					}
 				}
 			}
 		}

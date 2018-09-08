@@ -11,6 +11,8 @@
 /*
 	関数の引数としてstd::stringやstd::vector<>を使うと、Release/Debugの混在でうまく連携できない模様.
 	そのため、char *、ポインタ参照、などで渡す.
+	また、新しい関数の追加がある場合は末尾に追加していくこと。.
+	引数の変更の場合は、呼び出し元と呼び出す側で全体入れ替えが必要.
 */
 
 /**
@@ -213,6 +215,24 @@ public:
 	 * Morph Targetsの情報より、m_pTargetShapeのポリゴンメッシュを更新.
 	 */
 	virtual void updateMesh () = 0;
+
+	/**
+	 * シーンのすべての形状で、Morph Targets情報を持つ形状のウエイト値を一時保持.
+	 * (いったんすべてのウエイト値を0にして戻す、という操作で使用).
+	 */
+	virtual void pushAllWeight (sxsdk::scene_interface* scene, const bool setZeroWeight = false) = 0;
+
+	/**
+	 * シーンのすべての形状のMorph Targets情報のウエイト値を戻す.
+	 */
+	virtual void popAllWeight (sxsdk::scene_interface* scene) = 0;
+
+	/**
+	 * 指定の形状の(Cacheでの)カレントウエイト値を取得.
+	 * @param[in]  tIndex    Morph Targets番号.
+	 * @param[out] weights   targetごとのウエイト値が返る.
+	 */
+	virtual bool getShapeCurrentWeights (const sxsdk::shape_class* shape, float* weights) = 0;
 
 };
 

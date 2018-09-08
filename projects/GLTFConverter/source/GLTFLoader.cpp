@@ -109,6 +109,10 @@ namespace {
 			if (primitivesCou == 0) continue;
 			dstMeshData.name = mesh.name;
 
+			// Morph Targetsのデフォルトウエイト値.
+			const std::vector<float> morphTargetsWeights = mesh.weights;
+			int morphTargetsWeightOffset = 0;
+
 			for (size_t primLoop = 0; primLoop < primitivesCou; ++primLoop) {
 				dstMeshData.primitives.push_back(CPrimitiveData());
 				CPrimitiveData& dstPrimitiveData = dstMeshData.primitives.back();
@@ -435,6 +439,11 @@ namespace {
 						const MorphTarget& mTargetData   = meshPrim.targets[j];
 						COneMorphTargetData& dstMTargetD = dstPrimitiveData.morphTargets.morphTargetsData[j];
 
+						dstMTargetD.weight = 0.0f;
+						if (!morphTargetsWeights.empty() && morphTargetsWeightOffset + j < morphTargetsWeights.size()) {
+							dstMTargetD.weight = morphTargetsWeights[morphTargetsWeightOffset + j];
+						}
+
 						if (mTargetData.positionsAccessorId != "") {
 							const int id = std::stoi(mTargetData.positionsAccessorId);
 							const Accessor& acce = gltfDoc.accessors[id];
@@ -507,6 +516,7 @@ namespace {
 							}
 						}
 					}
+					morphTargetsWeightOffset += targetsCou;
 				}
 			}
 		}

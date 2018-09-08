@@ -158,6 +158,8 @@ void CGLTFImporterInterface::do_import (sxsdk::scene_interface *scene, sxsdk::st
 
 	// シーン情報を構築.
 	m_createGLTFScene(scene, &sceneData);
+
+	m_MorphTargetsAccess = NULL;
 }
 
 /****************************************************************/
@@ -547,13 +549,11 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 					}
 				}
 				if (!vIndices.empty()) {
-					m_MorphTargetsAccess->appendTargetVertices(name.c_str(), (int)vIndices.size(), &(vIndices[0]), &(posList[0]));
+					const int tIndex = m_MorphTargetsAccess->appendTargetVertices(name.c_str(), (int)vIndices.size(), &(vIndices[0]), &(posList[0]));
+					m_MorphTargetsAccess->setTargetWeight(tIndex, morphD.weight);
 				}
 			}
 			pMeshSaver->release();
-
-			// ウエイト値をすべて0にする.
-			m_MorphTargetsAccess->setZeroAllWeight();
 
 			// Morph Targets情報をstreamに保存.
 			m_MorphTargetsAccess->writeMorphTargetsData();
@@ -564,7 +564,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 		// ここではスキップ.
 		if (newMeshData.skinJoints.empty() && newMeshData.skinWeights.empty()) {
 			// 重複頂点のマージ.
-			m_cleanupRedundantVertices(pMesh);
+			m_cleanupRedundantVertices(pMesh, &newMeshData);
 
 			// 稜線を生成.
 			pMesh.make_edges();
@@ -581,15 +581,18 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
  * 重複頂点をマージする.
  * Morph Targetsの頂点もマージ対象.
  */
-void CGLTFImporterInterface::m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh)
+void CGLTFImporterInterface::m_cleanupRedundantVertices (sxsdk::polygon_mesh_class& pMesh, const CTempMeshData* tempMeshData)
 {
 	// Morph Targetsの情報も更新.
 	if (m_MorphTargetsAccess) {
-		m_MorphTargetsAccess->cleanupRedundantVertices(pMesh);
-		m_MorphTargetsAccess->writeMorphTargetsData();
-	} else {
-		pMesh.cleanup_redundant_vertices();
+		if (!tempMeshData->morphTargets.morphTargetsData.empty()) {
+			m_MorphTargetsAccess->cleanupRedundantVertices(pMesh);
+			m_MorphTargetsAccess->writeMorphTargetsData();
+			return;
+		}
 	}
+
+	pMesh.cleanup_redundant_vertices();
 }
 
 /**
@@ -1038,7 +1041,7 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 		}
 
 		// 重複頂点のマージ.
-		m_cleanupRedundantVertices(pMesh);
+		m_cleanupRedundantVertices(pMesh, &newMeshData);
 
 		// 稜線を生成.
 		pMesh.make_edges();

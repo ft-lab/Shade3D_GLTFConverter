@@ -17,6 +17,7 @@
 #include <memory>
 
 class CSceneData;
+class CMorphTargetsAccess;
 
 class CGLTFExporterInterface : public sxsdk::exporter_interface
 {
@@ -25,6 +26,8 @@ private:
 	compointer<sxsdk::plugin_exporter_interface> m_pluginExporter;
 	compointer<sxsdk::stream_interface> m_stream;
 	compointer<sxsdk::text_stream_interface> m_text_stream;
+
+	CMorphTargetsAccess* m_MorphTargetsAccess;	// Morph Targets情報をShade3Dに反映するクラス.
 
 	CShapeStack m_shapeStack;
 
@@ -248,6 +251,11 @@ private:
 	 * @return マテリアル番号.
 	 */
 	int m_setMaterialCurrentShape (sxsdk::shape_class* shape, const int faceGroupIndex = -1);
+
+	/**
+	 * 形状に割り当てられているMorph Targets情報を格納.
+	 */
+	void m_setMorphTargets (sxsdk::shape_class* shape);
 
 	/**
 	 * 指定の形状がスキップ対象か.

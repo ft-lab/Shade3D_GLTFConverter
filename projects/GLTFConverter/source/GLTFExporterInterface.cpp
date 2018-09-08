@@ -8,6 +8,7 @@
 #include "Shade3DUtil.h"
 #include "StreamCtrl.h"
 #include "ImagesBlend.h"
+#include "MotionExternalAccess.h"
 
 #include <iostream>
 #include <map>
@@ -29,6 +30,8 @@ enum
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
+	m_MorphTargetsAccess = NULL;
+
 	m_dlgOK = false;
 
 	// ライセンスの種類.
@@ -69,6 +72,9 @@ const char *CGLTFExporterInterface::get_file_description (void *aux)
  */
 void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin_exporter, void *)
 {
+	// Morph Targets情報アクセスクラス.
+	m_MorphTargetsAccess = getMorphTargetsAttributeAccess(shade);
+
 	// streamに、ダイアログボックスのパラメータを保存.
 	StreamCtrl::saveExportDialogParam(shade, m_exportParam);
 
@@ -117,16 +123,25 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 		}
 	}
 
+	// Morph Targetsのウエイト値を0にする.
+	m_MorphTargetsAccess->pushAllWeight(scene, true);
+
 	// エクスポートを開始.
 	plugin_exporter->do_export();
+
+	// Morph Targetsのウエイト値を元に戻す.
+	m_MorphTargetsAccess->popAllWeight(scene);
 
 	// 元のシーケンスモードに戻す.
 	if (m_exportParam.outputBonesAndSkins) {
 		if (oldSequenceMode) {
 			m_pScene->set_sequence_mode(oldSequenceMode);
-			m_pScene->set_dirty(oldDirty);
 		}
 	}
+
+	m_pScene->set_dirty(oldDirty);
+
+	m_MorphTargetsAccess = NULL;
 }
 
 /********************************************************************/
@@ -512,6 +527,9 @@ void CGLTFExporterInterface::end_polymesh (void *)
 
 	// m_meshDataからGLTFの形式にコンバートして格納.
 	if (!m_meshData.triangleIndices.empty() && !m_meshData.vertices.empty()) {
+		// Morph Targets情報を取得し、m_meshDataに格納.
+		m_setMorphTargets(m_pCurrentShape);
+
 		if (m_faceGroupCount == 0) {
 			const int curNodeIndex = m_sceneData->getCurrentNodeIndex();
 			const int meshIndex = m_sceneData->appendNewMeshData();
@@ -533,9 +551,65 @@ void CGLTFExporterInterface::end_polymesh (void *)
 				m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
 			}
 		} else {
-			// フェイスグループを死闘しているポリゴンメッシュの場合、ノードを作成してそれに分けて格納.
+			// フェイスグループを使用しているポリゴンメッシュの場合、Primitiveを作成してそれに分けて格納.
 			m_storeMeshesWithFaceGroup();
 		}
+	}
+}
+
+/**
+ * 形状に割り当てられているMorph Targets情報を格納.
+ */
+void CGLTFExporterInterface::m_setMorphTargets (sxsdk::shape_class* shape)
+{
+	if (!m_MorphTargetsAccess) return;
+	if (shape->get_type() != sxsdk::enums::polygon_mesh) return;
+
+	// Morph Targetsの情報を読み込み.
+	if (!m_MorphTargetsAccess->readMorphTargetsData(*shape)) return;
+
+	sxsdk::polygon_mesh_class& pMesh = shape->get_polygon_mesh();
+	const int orgVersCou = m_MorphTargetsAccess->getOrgVerticesCount();
+	const int targetsCou = m_MorphTargetsAccess->getTargetsCount();
+	if (orgVersCou == 0 || targetsCou == 0) return;
+	if (pMesh.get_total_number_of_control_points() != orgVersCou) return;
+
+	// オリジナルの頂点座標を取得.
+	std::vector<sxsdk::vec3> orgVertices;
+	orgVertices.resize(orgVersCou);
+	m_MorphTargetsAccess->getOrgVertices(&(orgVertices[0]));
+
+	const float scaleInv = 1.0f / 1000.0f;
+
+	if (m_meshData.vertices.size() == orgVersCou) {
+		for (int i = 0; i < orgVersCou; ++i) m_meshData.vertices[i] = orgVertices[i] * scaleInv;
+	}
+
+	// ウエイト値を取得.
+	std::vector<float> weights;
+	weights.resize(targetsCou, 0.0f);
+	m_MorphTargetsAccess->getShapeCurrentWeights(shape, &(weights[0]));
+
+	char szName[256];
+	std::vector<int> indices;
+	std::vector<sxsdk::vec3> vertices;
+	for (int i = 0; i < targetsCou; ++i) {
+		m_MorphTargetsAccess->getTargetName(i, szName);
+		m_meshData.morphTargets.morphTargetsData.push_back(COneMorphTargetData());
+		COneMorphTargetData& dstMorphTargetD = m_meshData.morphTargets.morphTargetsData.back();
+		dstMorphTargetD.name = std::string(szName);
+		const int vCou = m_MorphTargetsAccess->getTargetVerticesCount(i);
+		if (vCou == 0) continue;
+		indices.resize(vCou);
+		vertices.resize(vCou);
+		m_MorphTargetsAccess->getTargetVertices(i, &(indices[0]), &(vertices[0]));
+
+		dstMorphTargetD.vIndices = indices;
+
+		dstMorphTargetD.position.resize(vCou);
+		for (int j = 0; j < vCou; ++j) dstMorphTargetD.position[j] = vertices[j] * scaleInv;
+
+		dstMorphTargetD.weight = weights[i];	//m_MorphTargetsAccess->getTargetWeight(i);
 	}
 }
 

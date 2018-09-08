@@ -137,6 +137,8 @@ void CTempMeshData::optimize ()
 			triangleIndices[i] = useVersList[ triangleIndices[i] ];
 		}
 
+		// glTFの仕様では、meshのprimitiveごとに、同一のMorph Targetsの要素数で同じ順番である必要がある模様.
+		// そのため、頂点数が0のものがあってもあえて残す.
 		for (size_t i = 0; i < morphTargets.morphTargetsData.size(); ++i) {
 			COneMorphTargetData& mTargetD = morphTargets.morphTargetsData[i];
 			const size_t vCou = mTargetD.vIndices.size();
@@ -242,6 +244,11 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 		faceIndexInVertexList[i2].push_back(sx::vec<int,2>(i, 2));
 	}
 
+	// 追加した同一頂点番号を格納するバッファ.
+	std::vector< std::vector<int> > sameVersList;
+	sameVersList.resize(versCou);
+	for (size_t i = 0; i < versCou; ++i) sameVersList[i].clear();
+
 	// 共有する頂点のうち、法線/UV0/UV1が異なる場合は頂点として分離.
 	for (size_t vLoop = 0; vLoop < versCou; ++vLoop) {
 		const std::vector< sx::vec<int,2> >& facesList = faceIndexInVertexList[vLoop];
@@ -261,7 +268,6 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 				const sxsdk::vec3& n_2   = tempMeshData.triangleNormals[iP2];
 				const sxsdk::vec2& uv0_2 = (tempMeshData.triangleUV0.empty()) ? sxsdk::vec2(0, 0) : tempMeshData.triangleUV0[iP2];
 				const sxsdk::vec2& uv1_2 = (tempMeshData.triangleUV1.empty()) ? sxsdk::vec2(0, 0) : tempMeshData.triangleUV1[iP2];
-
 				if (MathUtil::isZero(n_1 - n_2) && MathUtil::isZero(uv0_1 - uv0_2) && MathUtil::isZero(uv1_1 - uv1_2)) {
 					sIndex = (int)j;
 					break;
@@ -283,6 +289,7 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 					const sx::vec<void*,4> v = skinJointsHandle[vLoop];
 					skinJointsHandle.push_back(v);
 				}
+				sameVersList[vLoop].push_back(vIndex);
 
 				triangleIndices[iP1] = vIndex;
 			} else {
@@ -331,6 +338,38 @@ void CPrimitiveData::convert (const CTempMeshData& tempMeshData)
 			}
 		}
 
+	}
+
+	// Morph Targetsを格納.
+	if (!tempMeshData.morphTargets.morphTargetsData.empty()) {
+		const CMorphTargetsData& srcMorphTargets = tempMeshData.morphTargets;
+		const int targetsCou = (int)srcMorphTargets.morphTargetsData.size();
+		if (targetsCou > 0) {
+			morphTargets.morphTargetsData.resize(targetsCou);
+			for (int i = 0; i < targetsCou; ++i) {
+				const COneMorphTargetData& srcTargetD = tempMeshData.morphTargets.morphTargetsData[i];
+				morphTargets.morphTargetsData[i] = srcTargetD;
+				COneMorphTargetData& dstTargetD = morphTargets.morphTargetsData[i];
+				const size_t vCou = srcTargetD.vIndices.size();
+				for (size_t j = 0; j < vCou; ++j) {
+					const int vIndex = srcTargetD.vIndices[j];
+					if (!sameVersList[vIndex].empty()) {
+						const std::vector<int>& vIList = sameVersList[vIndex];
+						for (size_t k = 0; k < vIList.size(); ++k) {
+							const int vNewIndex = vIList[k];
+							dstTargetD.vIndices.push_back(vNewIndex);
+							dstTargetD.position.push_back(srcTargetD.position[j]);
+							if (!srcTargetD.normal.empty()) {
+								dstTargetD.normal.push_back(srcTargetD.normal[j]);
+							}
+							if (!srcTargetD.tangent.empty()) {
+								dstTargetD.tangent.push_back(srcTargetD.tangent[j]);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -383,6 +422,7 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 		tempMeshD.vertices         = tempMeshData.vertices;
 		tempMeshD.skinWeights      = tempMeshData.skinWeights;
 		tempMeshD.skinJointsHandle = tempMeshData.skinJointsHandle;
+		tempMeshD.morphTargets     = tempMeshData.morphTargets;
 
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 			const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
@@ -620,24 +660,32 @@ bool CMeshData::mergePrimitives (CTempMeshData& tempMeshData) const
 		if (useMorphTargets) {
 			const size_t targetsCou = primitiveD.morphTargets.morphTargetsData.size();
 			if (targetsCou > 0) {
+				// glTFからの読み込みでは、mesh内のprimitiveはすべて同じ数のMorph Targetsを持っているのが仕様.
+				if (loop == 0) {
+					for (size_t i = 0; i < targetsCou; ++i) {
+						const COneMorphTargetData& mTargetD = primitiveD.morphTargets.morphTargetsData[i];
+						COneMorphTargetData tData;
+						tData.weight = mTargetD.weight;
+						tData.name   = mTargetD.name;
+						tempMeshData.morphTargets.morphTargetsData.push_back(tData);
+					}
+				}
+
 				std::vector<int> useVerList;
-				COneMorphTargetData tData;
 				for (size_t i = 0; i < targetsCou; ++i) {
 					const COneMorphTargetData& mTargetD = primitiveD.morphTargets.morphTargetsData[i];
 					const size_t vCou = mTargetD.position.size();
 					if (vCou == 0) continue;
 
+					COneMorphTargetData& tData = tempMeshData.morphTargets.morphTargetsData[i];
+
 					// 使用している頂点に対するインデックスを保持.
-					tData.clear();
 					for (size_t j = 0; j < vCou; ++j) {
 						if (!sx::zero(mTargetD.position[j])) {
 							tData.vIndices.push_back(j + vOffset);
 							tData.position.push_back(mTargetD.position[j]);
 						}
 					}
-					tData.weight = mTargetD.weight;
-					tData.name   = mTargetD.name;
-					tempMeshData.morphTargets.morphTargetsData.push_back(tData);
 				}
 			}
 		}

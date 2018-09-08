@@ -69,3 +69,22 @@ double MathUtil::calcTriangleArea (const sxsdk::vec3& v1, const sxsdk::vec3& v2,
 	S = std::sqrt(fDat1) * 0.5;
 	return S;
 }
+
+/**
+ * バウンディングボックスの最小最大を計算.
+ */
+void MathUtil::calcBoundingBox (const std::vector<sxsdk::vec3>& vers, sxsdk::vec3& bbMin, sxsdk::vec3& bbMax)
+{
+	bbMin = bbMax = sxsdk::vec3(0, 0, 0);
+	if (vers.empty()) return;
+	bbMin = bbMax = vers[0];
+	for (size_t i = 1; i < vers.size(); ++i) {
+		const sxsdk::vec3& v = vers[i];
+		bbMin.x = std::min(bbMin.x, v.x);
+		bbMin.y = std::min(bbMin.y, v.y);
+		bbMin.z = std::min(bbMin.z, v.z);
+		bbMax.x = std::max(bbMax.x, v.x);
+		bbMax.y = std::max(bbMax.y, v.y);
+		bbMax.z = std::max(bbMax.z, v.z);
+	}
+}
