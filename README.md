@@ -374,7 +374,7 @@ CMakeでXcode用のプロジェクトを作成し、ビルドします。
           [release]
             GLTFSDK.lib  Release用のGLTFSDKの静的ライブラリ
 ```
-
+[GLTFSDK]ディレクトリ内が、Shade3Dのプラグイン以外で必要なMicrosoft glTF SDKの関連ファイルです。    
 GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドします。  
 
 ### Mac
@@ -392,6 +392,8 @@ GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドしま�
           [release]
             libGLTFSDK.a  Release用のGLTFSDKの静的ライブラリ
 ```
+[GLTFSDK]ディレクトリ内が、Shade3Dのプラグイン以外で必要なMicrosoft glTF SDKの関連ファイルです。    
+GLTFConverter/mac/plugins/Template.xcodeproj をXcodeで開き、ビルドします。  
 
 ## 使用しているモジュール (開発者向け)
 
