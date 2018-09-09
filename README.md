@@ -59,7 +59,7 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * テクスチャマッピングの「アルファ透明」の入出力。ver.0.1.0.4で追加。  
 * 表面材質の「透明」の入出力。ver.0.1.0.13で追加。    
 * ボーンを使用したスキンアニメーション情報の入出力。ver.0.1.0.6で追加。   
-＊Morph Targets情報の入出力。ver.0.2.0.0で追加。ただし、Morph Targetsを使用したキーフレームアニメーションはまだ未対応です。    
+* Morph Targets情報の入出力。ver.0.2.0.0で追加。ただし、Morph Targetsを使用したキーフレームアニメーションはまだ未対応です。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -382,7 +382,8 @@ GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドしま�
   [GLTFConverter]  
     [source]             プラグインのソースコード  
     [mac]                
-      plugins/Template.xcodeproj  Macのプロジェクトファイル 
+      [plugins]
+        Template.xcodeproj   Macのプロジェクトファイル 
       [GLTFSDK]
         [include]
           [GLTFSDK]      glTF SDKで使用するヘッダファイル類    
@@ -404,6 +405,14 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/09/08] ver.0.2.0.0   
+* [内部処理] glTF処理ライブラリを「Microsoft.glTF.CPP」から「Microsoft glTF SDK」に置き換え  
+* [内部処理] モーション処理部を「MotionUtil」という別プラグインに分けて管理  
+* Mac対応
+* Import/Export : Morph Targets情報の入出力(アニメーションのキーフレームはまだです)  
+* Import : Importダイアログボックスでvrm形式を選択できるようにした  
+* Import : VRMのライセンス情報とMorph Targets名を読み込み  
 
 [2018/08/18] ver.0.1.0.15   
 * Import : 表面材質の拡散反射レイヤを追加する際に、合成は「乗算」とするようにした（glTFでは、BaseColorFactorとBaseColorTextureは乗算する仕様のため）。
