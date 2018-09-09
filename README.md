@@ -1,7 +1,7 @@
 # glTF Converter for Shade3D
 
 Shade3DでglTF(拡張子 gltf/glb)をインポート/エクスポートするプラグインです。  
-glTFの処理で、「Microsoft.glTF.CPP」( https://www.nuget.org/packages/Microsoft.glTF.CPP/ )を使用しています。
+glTFの処理で、「Microsoft glTF SDK」( https://github.com/Microsoft/glTF-SDK )を使用しています。
 
 ## 機能
 
@@ -12,7 +12,8 @@ glTFの処理で、「Microsoft.glTF.CPP」( https://www.nuget.org/packages/Micr
 
 ## 動作環境
 
-* Windows 7/8/10以降のOS  
+* Windows 7/8/10以降のOS    
+* macOS 10.11以降   
 * Shade3D ver.16/17以降で、Standard/Professional版（Basic版では動作しません）  
   Shade3Dの64bit版のみで使用できます。32bit版のShade3Dには対応していません。   
 
@@ -25,7 +26,11 @@ https://github.com/ft-lab/Shade3D_GLTFConverter/releases
 
 ### プラグインを配置し、Shade3Dを起動
 
-Windowsの場合は、ビルドされた glTFConverter64.dll をShade3Dのpluginsディレクトリに格納してShade3Dを起動。  
+※ glTF Converter ver.0.2.0.0以降で「MotionUtil」プラグインが必要となりました。    
+「MotionUtil」は、Morph Targetsやモーション処理のユーティリティプラグインです。    
+
+Windowsの場合は、ビルドされた glTFConverter64.dllとMotionUtil64.dll をShade3Dのpluginsディレクトリに格納してShade3Dを起動。  
+Macの場合は、ビルドされた glTFConverter.shdpluginとMotionUtil.shdplugin をShade3Dのpluginsディレクトリに格納してShade3Dを起動。  
 メインメニューの「ファイル」-「エクスポート」-「glTF(glb)」が表示されるのを確認します。  
 
 ### 使い方
@@ -33,7 +38,7 @@ Windowsの場合は、ビルドされた glTFConverter64.dll をShade3Dのplugin
 Shade3Dでのシーン情報をエクスポートする場合、  
 メインメニューの「ファイル」-「エクスポート」-「glTF(glb)」を選択し、指定のファイルにgltfまたはglb形式でファイル出力します。  
 ファイルダイアログボックスでのファイル指定では、デフォルトではglb形式のバイナリで出力する指定になっています。   
-ここで拡張子を「gltf」にすると、テキスト形式のgltfファイル、バイナリデータのbinファイル、テクスチャイメージの各種ファイルが出力されます。  
+WIn環境の場合はここで拡張子を「gltf」にすると、テキスト形式のgltfファイル、バイナリデータのbinファイル、テクスチャイメージの各種ファイルが出力されます。  
 
 gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポートする場合、   
 メインメニューの「ファイル」-「インポート」-「glTF(gltf/glb)」を選択し、gltfまたはglbの拡張子のファイルを指定します。  
@@ -54,6 +59,7 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * テクスチャマッピングの「アルファ透明」の入出力。ver.0.1.0.4で追加。  
 * 表面材質の「透明」の入出力。ver.0.1.0.13で追加。    
 * ボーンを使用したスキンアニメーション情報の入出力。ver.0.1.0.6で追加。   
+＊Morph Targets情報の入出力。ver.0.2.0.0で追加。ただし、Morph Targetsを使用したキーフレームアニメーションはまだ未対応です。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -303,6 +309,17 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 * テクスチャイメージとして使用できるファイルフォーマットは、pngまたはjpegのみです。   
 * UV層は0/1番目を使用できます(ver.0.1.0.1 追加)。   
 * ポリゴンメッシュの頂点に割り当てる頂点カラーは、頂点カラー番号0のみを乗算合成として使用できます (ver.0.1.0.3 追加)。
+* Morph Targetsの名前はglTFファイルとしての情報がないため、出力されません (ver.0.2.0.0 追加)。  
+
+## VRMフォーマットの暫定対応 (ver.0.2.0.0 - )
+
+インポート時に、VRMファイルを読み込むことができます。    
+VRM ( https://dwango.github.io/vrm/ )は、glTFを拡張したキャラクタに特化した形式です。    
+glTF Converterではまだまだ対応できていません。  
+以下、対応した項目です。    
+
+* Import : ライセンス情報を読み込み、メッセージウィンドウに表示します。  
+* Import : Morph Targetsの名前をShade3Dにインポートします。  
 
 ## 注意事項    
 
@@ -315,27 +332,72 @@ glTF Converter for Shade3Dでは個々の3Dモデルの扱いについては責�
 
 Shade3DプラグインSDK( https://github.com/shadedev/pluginsdk )をダウンロードします。  
 Shade3D_GLTFConverter/projects/GLTFConverterフォルダをShade3DのプラグインSDKのprojectsフォルダに複製します。  
-開発環境でnugetを使い「Microsoft.glTF.CPP」をインストールします。  
-以下のようなフォルダ構成になります。  
+Microsoft glTF SDK ( https://github.com/Microsoft/glTF-SDK )は事前にビルドしておく必要があります。    
 
+### WindowsでのMicrosoft glTF SDKのビルド
+
+GLTFSDK.slnをVS2017で開き、ビルドします。    
+「Built/Out/v141/x64/Release/GLTFSDK」に静的ライブラリ「GLTFSDK.lib」が生成されます。    
+この静的ライブラリと、
+「GLTFSDK/Inc」の下の「GLTFSDK」ディレクトリとその中のファイル、    
+「packages/rapidjson.temprelease.0.0.2.20/build/native/include」の下の「rapidjson」ディレクトリとその中のファイル、    
+を使用します。    
+
+### MacでのMicrosoft glTF SDKのビルド
+
+CMakeでXcode用のプロジェクトを作成し、ビルドします。    
+ビルド時にpowershellのインストールが必要です。    
+参考 : https://docs.microsoft.com/ja-jp/powershell/scripting/setup/installing-powershell-core-on-macos?view=powershell-6    
+「pwsh」が実行ファイルになるため、「powershell」とシンボリックリンクしておきます。    
+
+また、Project Settingsの「C++ Language Version」にて「GNU++14」としておく必要があります（std::make_uniqueを使用しているため）。    
+
+「Buildディレクトリ/GLTFSDK/Release」に静的ライブラリ「libGLTFSDK.a」が生成されます。    
+この静的ライブラリと、
+「GLTFSDK/Inc」の下の「GLTFSDK」ディレクトリとその中のファイル、    
+「Buildディレクトリ/RapidJSON-src/include」の下の「rapidjson」ディレクトリとその中のファイル、    
+を使用します。    
+
+### Windows
 ```c
   [GLTFConverter]  
     [source]             プラグインのソースコード  
-    [win_vs2017]         Win(vs2017)のプロジェクトファイル  
-      packages.config    nugetでインストールされたパッケージ一覧.  
-      [packages]         nugetでインストールされたパッケージ本体が入る.  
-         [Microsoft.glTF.CPP.1.3.55.0]  
-         [rapidjson.temprelease.0.0.2.20]  
+    [win_vs2017]         
+    　GLTFConverter.sln　　Win(vs2017)のプロジェクトファイル  　　
+      [GLTFSDK]
+        [include]
+          [GLTFSDK]      glTF SDKで使用するヘッダファイル類    
+          [rapidjson]    rapidjsonで使用するヘッダファイル類 
+        [lib]
+          [debug]
+            GLTFSDK.lib  Debug用のGLTFSDKの静的ライブラリ
+          [release]
+            GLTFSDK.lib  Release用のGLTFSDKの静的ライブラリ
 ```
 
 GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドします。  
 
+### Mac
+```c
+  [GLTFConverter]  
+    [source]             プラグインのソースコード  
+    [mac]                
+      plugins/Template.xcodeproj  Macのプロジェクトファイル 
+      [GLTFSDK]
+        [include]
+          [GLTFSDK]      glTF SDKで使用するヘッダファイル類    
+          [rapidjson]    rapidjsonで使用するヘッダファイル類 
+        [lib]
+          [release]
+            libGLTFSDK.a  Release用のGLTFSDKの静的ライブラリ
+```
+
 ## 使用しているモジュール (開発者向け)
 
-* Microsoft.glTF.CPP ( https://www.nuget.org/packages/Microsoft.glTF.CPP/ )
+* Microsoft glTF SDK ( https://github.com/Microsoft/glTF-SDK )
 * rapidjson ( https://github.com/Tencent/rapidjson/ )
 
-rapidjsonは、Microsoft.glTF.CPP内で使用されています。   
+rapidjsonは、Microsoft glTF SDK内で使用されています。   
 
 ## ライセンス  
 
