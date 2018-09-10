@@ -353,6 +353,8 @@ MorphTargets名が表示されます。
 このMorphTargets名はglTFフォーマットとしては情報がありません（VRMとしての情報になります）。    
 そのため、glTF出力するとMorph Targets名はデフォルトの「target」となります。    
 VRM出力に対応したときに、このあたりは対処予定です。
+* glTFエクスポート時は、Morph Targetsとして法線やTangentは出力していません。    
+この場合、ベースの頂点での法線が採用されます。
 
 ## 制限事項
 
