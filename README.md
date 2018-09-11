@@ -27,7 +27,7 @@ https://github.com/ft-lab/Shade3D_GLTFConverter/releases
 ### プラグインを配置し、Shade3Dを起動
 
 ※ glTF Converter ver.0.2.0.0以降で「MotionUtil」プラグインが必要となりました。    
-「MotionUtil」は、Morph Targetsやモーション処理のユーティリティプラグインです。    
+「MotionUtil」( https://github.com/ft-lab/Shade3D_MotionUtil )は、Morph Targetsやモーション処理のユーティリティプラグインです。    
 
 Windowsの場合は、ビルドされた glTFConverter64.dllとMotionUtil64.dll をShade3Dのpluginsディレクトリに格納してShade3Dを起動。  
 Macの場合は、ビルドされた glTFConverter.shdpluginとMotionUtil.shdplugin をShade3Dのpluginsディレクトリに格納してShade3Dを起動。  
