@@ -124,13 +124,13 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 	}
 
 	// Morph Targetsのウエイト値を0にする.
-	m_MorphTargetsAccess->pushAllWeight(scene, true);
+	if (m_MorphTargetsAccess) m_MorphTargetsAccess->pushAllWeight(scene, true);
 
 	// エクスポートを開始.
 	plugin_exporter->do_export();
 
 	// Morph Targetsのウエイト値を元に戻す.
-	m_MorphTargetsAccess->popAllWeight(scene);
+	if (m_MorphTargetsAccess) m_MorphTargetsAccess->popAllWeight(scene);
 
 	// 元のシーケンスモードに戻す.
 	if (m_exportParam.outputBonesAndSkins) {

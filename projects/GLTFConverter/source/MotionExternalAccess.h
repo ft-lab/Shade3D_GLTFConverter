@@ -69,6 +69,11 @@ public:
 	 * @param[in] boneRoot  対象のボーンルート.
 	 */
 	virtual void resizeBones (sxsdk::shape_class* boneRoot) = 0;
+
+	/**
+	 * クラスバージョンを取得 (ver.0.0.0.4 - ).
+	 */
+	virtual int getVersion () = 0;
 };
 
 //----------------------------------------------------------------------.
@@ -234,6 +239,10 @@ public:
 	 */
 	virtual bool getShapeCurrentWeights (const sxsdk::shape_class* shape, float* weights) = 0;
 
+	/**
+	 * クラスバージョンを取得 (ver.0.0.0.4 - ).
+	 */
+	virtual int getVersion () = 0;
 };
 
 //----------------------------------------------------------------------.
