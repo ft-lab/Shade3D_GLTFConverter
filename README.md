@@ -479,6 +479,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2018/09/16] ver.0.2.0.1   
+* [内部処理] : MotionUtilプラグインが存在しない場合でもクラッシュしないようにした
+
 [2018/09/08] ver.0.2.0.0   
 * [内部処理] glTF処理ライブラリを「Microsoft.glTF.CPP」から「Microsoft glTF SDK」に置き換え  
 * [内部処理] モーション処理部を「MotionUtil」という別プラグインに分けて管理  
