@@ -17,4 +17,5 @@
 	<bool id="102" label="Output bones and skins" />
 	<bool id="103" label="Output vertex color" />
 	<bool id="104" label="Outout animation" />
+	<bool id="105" label="Draco compression" />
 </dialog>

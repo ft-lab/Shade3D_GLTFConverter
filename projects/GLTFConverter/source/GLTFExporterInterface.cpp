@@ -19,6 +19,7 @@ enum
 	dlg_output_bones_and_skins_id = 102,	// ボーンとスキンを出力.
 	dlg_output_vertex_color_id = 103,		// 頂点カラーを出力.
 	dlg_output_animation_id = 104,			// アニメーションを出力.
+	dlg_output_draco_compression_id = 105,	// Draco圧縮.
 
 	dlg_asset_title_id = 201,				// タイトル.
 	dlg_asset_author_id = 202,				// 制作者.
@@ -525,6 +526,8 @@ void CGLTFExporterInterface::end_polymesh (void *)
 {
 	if (m_skip) return;
 
+	m_meshData.optimize();
+
 	// m_meshDataからGLTFの形式にコンバートして格納.
 	if (!m_meshData.triangleIndices.empty() && !m_meshData.vertices.empty()) {
 		// Morph Targets情報を取得し、m_meshDataに格納.
@@ -766,6 +769,11 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 	}
 	{
 		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_draco_compression_id));
+		item->set_bool(m_exportParam.dracoCompression);
+	}
+	{
+		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_asset_title_id));
 		item->set_string(m_exportParam.assetExtrasTitle.c_str());
 	}
@@ -838,6 +846,11 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_animation_id) {
 		m_exportParam.outputAnimation = item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_output_draco_compression_id) {
+		m_exportParam.dracoCompression = item.get_bool();
 		return true;
 	}
 

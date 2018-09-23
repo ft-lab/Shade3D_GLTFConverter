@@ -88,6 +88,7 @@ public:
 	bool outputBonesAndSkins;								// ボーンとスキン情報を出力.
 	bool outputVertexColor;									// 頂点カラーを出力.
 	bool outputAnimation;									// アニメーションを出力.
+	bool dracoCompression;									// Draco圧縮.
 
 	std::string assetExtrasTitle;							// タイトル.
 	std::string assetExtrasAuthor;							// 作成者.
@@ -104,6 +105,7 @@ public:
 		outputBonesAndSkins = true;
 		outputVertexColor   = true;
 		outputAnimation     = true;
+		dracoCompression    = false;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";

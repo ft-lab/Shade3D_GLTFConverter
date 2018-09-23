@@ -17,4 +17,5 @@
 	<bool id="102" label="ボーンとスキンを出力" />
 	<bool id="103" label="頂点カラーを出力" />
 	<bool id="104" label="アニメーションを出力" />
+	<bool id="105" label="Draco圧縮" />
 </dialog>
