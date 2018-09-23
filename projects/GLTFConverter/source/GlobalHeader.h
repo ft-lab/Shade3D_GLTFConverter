@@ -18,7 +18,11 @@
 
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
-#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x100
+
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x101
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_101	0x101
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_100	0x100
+
 #define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x100
 #define GLTF_LICENSE_STREAM_VERSION				0x100
 
@@ -33,6 +37,18 @@ namespace GLTFConverter {
 		export_texture_name = 0,		// マスターサーフェス名の拡張子指定を参照.
 		export_texture_png,				// pngの置き換え.
 		export_texture_jpeg,			// jpegの置き換え.
+	};
+
+	/**
+	 * 出力する最大テクスチャサイズ.
+	 */
+	enum export_max_texture_size {
+		export_max_texture_size_undefined = 0,	// 指定なし.
+		export_max_texture_size_256,			// 256.
+		export_max_texture_size_512,			// 512.
+		export_max_texture_size_1024,			// 1024.
+		export_max_texture_size_2048,			// 2048.
+		export_max_texture_size_4096,			// 4096.
 	};
 }
 
@@ -85,6 +101,8 @@ class CExportDlgParam
 {
 public:
 	GLTFConverter::export_texture_type outputTexture;		// エクスポート時のテクスチャの種類.
+	GLTFConverter::export_max_texture_size maxTextureSize;	// 最大テクスチャサイズ.
+
 	bool outputBonesAndSkins;								// ボーンとスキン情報を出力.
 	bool outputVertexColor;									// 頂点カラーを出力.
 	bool outputAnimation;									// アニメーションを出力.
@@ -95,6 +113,7 @@ public:
 	std::string assetExtrasLicense;							// ライセンス.
 	std::string assetExtrasSource;							// オリジナルモデルの参照先.
 
+
 public:
 	CExportDlgParam () {
 		clear();
@@ -102,6 +121,8 @@ public:
 
 	void clear () {
 		outputTexture       = GLTFConverter::export_texture_name;
+		maxTextureSize      = GLTFConverter::export_max_texture_size_undefined;
+
 		outputBonesAndSkins = true;
 		outputVertexColor   = true;
 		outputAnimation     = true;
@@ -111,6 +132,18 @@ public:
 		assetExtrasAuthor  = "";
 		assetExtrasLicense = "All rights reserved";
 		assetExtrasSource  = "";
+	}
+
+	/**
+	 * 最大テクスチャサイズを取得.
+	 */
+	int getMaxTextureSize () const {
+		if (maxTextureSize == GLTFConverter::export_max_texture_size_256) return 256;
+		if (maxTextureSize == GLTFConverter::export_max_texture_size_512) return 512;
+		if (maxTextureSize == GLTFConverter::export_max_texture_size_1024) return 1024;
+		if (maxTextureSize == GLTFConverter::export_max_texture_size_2048) return 2048;
+		if (maxTextureSize == GLTFConverter::export_max_texture_size_4096) return 4096;
+		return 99999;
 	}
 };
 

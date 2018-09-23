@@ -1347,6 +1347,9 @@ namespace {
 		std::vector<std::string> imageFileNameList;
 		imageFileNameList.resize(imagesCou, "");
 
+		// 最大テクスチャサイズ.
+		const int maxTexSize = sceneData->exportParam.getMaxTextureSize();
+
 		for (size_t i = 0; i < imagesCou; ++i) {
 			const CImageData& imageD = sceneData->images[i];
 			if (!imageD.shadeMasterImage && !imageD.shadeImage) continue;
@@ -1375,8 +1378,41 @@ namespace {
 				// 画像ファイルを指定の拡張子(jpg/png)で保存.
 				sxsdk::image_interface *image = (imageD.shadeMasterImage) ? (imageD.shadeMasterImage->get_image()) : imageD.shadeImage;
 				if (!image) continue;
+
+				// テクスチャをリサイズする場合 (ver.0.2.0.2 - ).
+				compointer<sxsdk::image_interface> image2;
+				if (sceneData->exportParam.maxTextureSize != GLTFConverter::export_max_texture_size_undefined) {
+					const int srcWidth  = image->get_size().x;
+					const int srcHeight = image->get_size().y;
+					if (srcWidth > maxTexSize || srcHeight > maxTexSize) {
+						sx::vec<int,2> newSize(srcWidth, srcHeight);
+						if (srcWidth > maxTexSize && srcHeight <= maxTexSize) {
+							newSize.x = maxTexSize;
+							newSize.y = maxTexSize * srcHeight / srcWidth;
+						} else if (srcHeight > maxTexSize && srcWidth <= maxTexSize) {
+							newSize.y = maxTexSize;
+							newSize.x = maxTexSize * srcWidth / srcHeight;
+						} else if (srcWidth > maxTexSize && srcHeight > maxTexSize) {
+							if (srcWidth > srcHeight) {
+								newSize.x = maxTexSize;
+								newSize.y = maxTexSize * srcHeight / srcWidth;
+							} else {
+								newSize.y = maxTexSize;
+								newSize.x = maxTexSize * srcWidth / srcHeight;
+							}
+						}
+						if (newSize.x != srcWidth || newSize.y != srcHeight) {
+							image2 = image->duplicate_image(&newSize);
+						}
+					}
+				}
+
 				const std::string fileFullPath = (sceneData->getFileDir()) + std::string("/") + fileName;
-				image->save(fileFullPath.c_str());
+				if (image2 && image2->has_image()) {
+					image2->save(fileFullPath.c_str());
+				} else {
+					image->save(fileFullPath.c_str());
+				}
 
 				imageFileNameList[i] = fileFullPath;
 

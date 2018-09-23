@@ -14,6 +14,7 @@
 		<long-string id="206" label="原型モデルの参照先:" />
 	</group>
 	<selection id="101" label="テクスチャ出力:|イメージ名から拡張子を参照|pngに置き換え|jpegに置き換え" />
+	<selection id="106" label="最大テクスチャサイズ:|指定なし|256|512|1024|2048|4096" />
 	<bool id="102" label="ボーンとスキンを出力" />
 	<bool id="103" label="頂点カラーを出力" />
 	<bool id="104" label="アニメーションを出力" />

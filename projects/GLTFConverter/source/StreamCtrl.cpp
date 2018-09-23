@@ -38,7 +38,6 @@ void StreamCtrl::saveImportDialogParam (sxsdk::shade_interface& shade, const CIm
 			iDat = data.importAnimation ? 1 : 0;
 			stream->write_int(iDat);
 		}
-
 	} catch (...) { }
 }
 
@@ -130,6 +129,17 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 			memcpy(szStr, &(data.assetExtrasSource[0]), std::min((int)data.assetExtrasSource.length(), 190));
 			stream->write(192, szStr);
 		}
+
+		// ver.0.2.0.2 - 
+		{
+			iDat = data.dracoCompression ? 1 : 0;
+			stream->write_int(iDat);
+		}
+		{
+			iDat = (int)data.maxTextureSize;
+			stream->write_int(iDat);
+		}
+
 	} catch (...) { }
 }
 
@@ -184,6 +194,19 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 			stream->read(192, szStr);
 			data.assetExtrasSource = std::string(szStr);
 		}
+
+		// ver.0.2.0.2 - 
+		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_101) {
+			{
+				stream->read_int(iDat);
+				data.dracoCompression = iDat ? true : false;
+			}
+			{
+				stream->read_int(iDat);
+				data.maxTextureSize = (GLTFConverter::export_max_texture_size)iDat;
+			}
+		}
+
 	} catch (...) { }
 }
 
