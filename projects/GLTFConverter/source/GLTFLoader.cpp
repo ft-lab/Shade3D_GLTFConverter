@@ -130,7 +130,7 @@ namespace {
 
 				// 頂点座標を取得.
 				std::string accessorID;
-				if (meshPrim.TryGetAttributeAccessorId("POSITION", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_POSITION, accessorID)) {
 					// positionsAccessorIdを取得 → accessorsよりbufferViewIdを取得 → ResourceReaderよりバッファ情報を取得、とたどる.
 					const int positionID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[positionID];
@@ -156,7 +156,7 @@ namespace {
 				}
 
 				// 法線を取得.
-				if (meshPrim.TryGetAttributeAccessorId("NORMAL", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_NORMAL, accessorID)) {
 					const int normalID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[normalID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -180,7 +180,7 @@ namespace {
 				}
 
 				// UV0を取得.
-				if (meshPrim.TryGetAttributeAccessorId("TEXCOORD_0", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_0, accessorID)) {
 					const int uv0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -206,7 +206,7 @@ namespace {
 				}
 
 				// UV1を取得.
-				if (meshPrim.TryGetAttributeAccessorId("TEXCOORD_1", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_1, accessorID)) {
 					const int uv1ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv1ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -231,7 +231,7 @@ namespace {
 				}
 
 				// Color0を取得.
-				if (meshPrim.TryGetAttributeAccessorId("COLOR_0", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_COLOR_0, accessorID)) {
 					const int color0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[color0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -375,7 +375,7 @@ namespace {
 				}
 
 				// スキンのWeightを取得.
-				if (meshPrim.TryGetAttributeAccessorId("WEIGHTS_0", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_WEIGHTS_0, accessorID)) {
 					const int weightsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[weightsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -402,7 +402,7 @@ namespace {
 				}
 
 				// スキンのJointsを取得.
-				if (meshPrim.TryGetAttributeAccessorId("JOINTS_0", accessorID)) {
+				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_JOINTS_0, accessorID)) {
 					const int jointsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[jointsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);

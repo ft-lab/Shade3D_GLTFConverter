@@ -4,10 +4,12 @@
 #include "GLTFSaver.h"
 #include "StringUtil.h"
 
-#include <GLTFSDK/Deserialize.h>
-#include <GLTFSDK/Serialize.h>
-#include <GLTFSDK/GLTFResourceReader.h>
-#include <GLTFSDK/GLTFResourceWriter.h>
+#include "glTFToolKit/GLTFSDK.h"
+#include "glTFToolKit/GLTFMeshCompression.h"
+
+#include <GLTFSDK/Extension.h>
+#include <GLTFSDK/ExtensionHandlers.h>
+#include <GLTFSDK/ExtensionsKHR.h>
 #include <GLTFSDK/GLBResourceWriter.h>
 #include <GLTFSDK/IStreamWriter.h>
 #include <GLTFSDK/BufferBuilder.h>
@@ -26,72 +28,10 @@ using namespace Microsoft::glTF;
 // 以下はGLTFSDK/rapidjsonのincludeよりも後に指定しないとビルドエラーになる.
 #include "SceneData.h"
 #include "MathUtil.h"
+#include "Shade3DArray.h"
 
 namespace {
 	std::string g_errorMessage = "";		// エラーメッセージの保持用.
-
-	/**
-	 * sxsdk::vec4をfoatの配列に置き換え.
-	 * @param[in] vList     vec4の配列.
-	 * @param[in] useAlpha  Alpha情報を格納するか.
-	 */
-	std::vector<float> convert_vec4_to_float (const std::vector<sxsdk::vec4>& vList, const bool useAlpha = true)
-	{
-		const int eCou = useAlpha ? 4 : 3;
-		std::vector<float> newData = std::vector<float>(vList.size() * eCou);
-		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += eCou) {
-			newData[iPos + 0] = vList[i].x;
-			newData[iPos + 1] = vList[i].y;
-			newData[iPos + 2] = vList[i].z;
-			if (useAlpha) newData[iPos + 3] = vList[i].w;
-		}
-		return newData;
-	}
-
-	/**
-	 * sxsdk::vec4をunsigned charの配列に置き換え.
-	 * @param[in] vList     vec4の配列.
-	 * @param[in] useAlpha  Alpha情報を格納するか.
-	 */
-	std::vector<unsigned char> convert_vec4_to_uchar (const std::vector<sxsdk::vec4>& vList, const bool useAlpha = true)
-	{
-		const int eCou = useAlpha ? 4 : 3;
-		std::vector<unsigned char> newData = std::vector<unsigned char>(vList.size() * eCou);
-		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += eCou) {
-			newData[iPos + 0] = (unsigned char)std::min((int)(vList[i].x * 255.0f), 255);
-			newData[iPos + 1] = (unsigned char)std::min((int)(vList[i].y * 255.0f), 255);
-			newData[iPos + 2] = (unsigned char)std::min((int)(vList[i].z * 255.0f), 255);
-			if (useAlpha) newData[iPos + 3] = (unsigned char)std::min((int)(vList[i].w * 255.0f), 255);
-		}
-		return newData;
-	}
-
-	/**
-	 * sxsdk::vec3をfoatの配列に置き換え.
-	 */
-	std::vector<float> convert_vec3_to_float (const std::vector<sxsdk::vec3>& vList)
-	{
-		std::vector<float> newData = std::vector<float>(vList.size() * 3);
-		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += 3) {
-			newData[iPos + 0] = vList[i].x;
-			newData[iPos + 1] = vList[i].y;
-			newData[iPos + 2] = vList[i].z;
-		}
-		return newData;
-	}
-
-	/**
-	 * sxsdk::vec2をfoatの配列に置き換え.
-	 */
-	std::vector<float> convert_vec2_to_float (const std::vector<sxsdk::vec2>& vList)
-	{
-		std::vector<float> newData = std::vector<float>(vList.size() * 2);
-		for (size_t i = 0, iPos = 0; i < vList.size(); ++i, iPos += 2) {
-			newData[iPos + 0] = vList[i].x;
-			newData[iPos + 1] = vList[i].y;
-		}
-		return newData;
-	}
 
 	/**
 	 * バイナリ読み込み用.
@@ -375,24 +315,24 @@ namespace {
 				}
 
 				meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
-				meshPrimitive.attributes["NORMAL"] = std::to_string(accessorID++);
-				meshPrimitive.attributes["POSITION"] = std::to_string(accessorID++);
+				meshPrimitive.attributes[ACCESSOR_NORMAL] = std::to_string(accessorID++);
+				meshPrimitive.attributes[ACCESSOR_POSITION] = std::to_string(accessorID++);
 				if (!primitiveD.uv0.empty()) {
-					meshPrimitive.attributes["TEXCOORD_0"] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_TEXCOORD_0] = std::to_string(accessorID++);
 				}
 				if (!primitiveD.uv1.empty()) {
-					meshPrimitive.attributes["TEXCOORD_1"] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_TEXCOORD_1] = std::to_string(accessorID++);
 
 				}
 				if (!primitiveD.color0.empty()) {
-					meshPrimitive.attributes["COLOR_0"] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_COLOR_0] = std::to_string(accessorID++);
 
 				}
 				if (!primitiveD.skinJoints.empty()) {
-					meshPrimitive.attributes["JOINTS_0"] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_JOINTS_0] = std::to_string(accessorID++);
 				}
 				if (!primitiveD.skinWeights.empty()) {
-					meshPrimitive.attributes["WEIGHTS_0"] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_WEIGHTS_0] = std::to_string(accessorID++);
 				}
 				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
 					const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
@@ -487,7 +427,7 @@ namespace {
 					const size_t byteLength = (sizeof(float) * 3) * primitiveD.normals.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.normals), acceDesc); 
+					bufferBuilder->AddAccessor(Shade3DArray::convert_vec3_to_float(primitiveD.normals), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -510,7 +450,7 @@ namespace {
 					const size_t byteLength = (sizeof(float) * 3) * primitiveD.vertices.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec3_to_float(primitiveD.vertices), acceDesc); 
+					bufferBuilder->AddAccessor(Shade3DArray::convert_vec3_to_float(primitiveD.vertices), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -527,7 +467,7 @@ namespace {
 					const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv0.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv0), acceDesc); 
+					bufferBuilder->AddAccessor(Shade3DArray::convert_vec2_to_float(primitiveD.uv0), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -544,7 +484,7 @@ namespace {
 					const size_t byteLength = (sizeof(float) * 2) * primitiveD.uv1.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec2_to_float(primitiveD.uv1), acceDesc); 
+					bufferBuilder->AddAccessor(Shade3DArray::convert_vec2_to_float(primitiveD.uv1), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -561,7 +501,7 @@ namespace {
 					size_t byteLength = (sizeof(unsigned char) * 4) * primitiveD.color0.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					const std::vector<unsigned char> buff = convert_vec4_to_uchar(primitiveD.color0, true);
+					const std::vector<unsigned char> buff = Shade3DArray::convert_vec4_to_uchar(primitiveD.color0, true);
 					bufferBuilder->AddAccessor(buff, acceDesc); 
 
 					byteOffset += byteLength;
@@ -621,7 +561,7 @@ namespace {
 					const size_t byteLength = (sizeof(float) * 4) * primitiveD.skinWeights.size();
 
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-					bufferBuilder->AddAccessor(convert_vec4_to_float(primitiveD.skinWeights), acceDesc); 
+					bufferBuilder->AddAccessor(Shade3DArray::convert_vec4_to_float(primitiveD.skinWeights), acceDesc); 
 
 					byteOffset += byteLength;
 					accessorID++;
@@ -663,7 +603,7 @@ namespace {
 							const size_t byteLength = (sizeof(float) * 3) * primVersCou;
 
 							bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-							bufferBuilder->AddAccessor(convert_vec3_to_float(vec3List), acceDesc); 
+							bufferBuilder->AddAccessor(Shade3DArray::convert_vec3_to_float(vec3List), acceDesc); 
 
 							byteOffset += byteLength;
 							accessorID++;
@@ -685,7 +625,7 @@ namespace {
 							const size_t byteLength = (sizeof(float) * 3) * primVersCou;
 
 							bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
-							bufferBuilder->AddAccessor(convert_vec3_to_float(vec3List), acceDesc); 
+							bufferBuilder->AddAccessor(Shade3DArray::convert_vec3_to_float(vec3List), acceDesc); 
 
 							byteOffset += byteLength;
 							accessorID++;
@@ -800,7 +740,7 @@ namespace {
 	 *   拡張子gltfの場合、バッファは外部のbinファイル。.
 	 *   格納は、格納要素のOffsetごとに4バイト alignmentを考慮（そうしないとエラーになる）.
 	 */
-	void setBufferData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
+	void setBufferData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, std::string& retBinFileName) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
 
@@ -816,6 +756,7 @@ namespace {
 	#if _WINDOWS
 		StringUtil::convUTF8ToSJIS(binFileName, binFileName);
 	#endif
+		retBinFileName = binFileName;
 
 		// 出力ディレクトリ.
 		std::string fileDir = sceneData->getFileDir();
@@ -826,9 +767,10 @@ namespace {
 		// ファイル拡張子 (gltf/glb).
 		const std::string fileExtension = sceneData->getFileExtension();
 
-		// binの出力バッファ.
+		// binの出力バッファ。これはglTF出力の場合はそのままバイナリ情報として参照する.
+		// draco圧縮する場合はbinを参照するため、出力する.
 		std::shared_ptr<GLTFResourceWriter> binWriter;
-		if (fileExtension == "gltf") {
+		if (fileExtension == "gltf" || (sceneData->exportParam.dracoCompression)) {
 			auto binStreamWriter = std::make_unique<BinStreamWriter>(fileDir, binFileName);
 			binWriter.reset(new GLTFResourceWriter(std::move(binStreamWriter)));
 		}
@@ -1018,7 +960,7 @@ namespace {
 
 					// バッファ情報として格納.
 					if (binWriter) {
-						std::vector<unsigned char> buff = convert_vec4_to_uchar(primitiveD.color0, true);
+						std::vector<unsigned char> buff = Shade3DArray::convert_vec4_to_uchar(primitiveD.color0, true);
 						binWriter->Write(gltfDoc.bufferViews[accessorID], &(buff[0]), gltfDoc.accessors[accessorID]);
 					}
 
@@ -1611,7 +1553,9 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		gltfDoc.accessors.Clear();
 
 		std::unique_ptr<BufferBuilder> glbBuilder;
+		bool writeGLB = false; 
 		if (sceneData->getFileExtension() == "glb") {
+			writeGLB = true;
 			auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
 			auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
 			glbBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
@@ -1656,24 +1600,67 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		// バッファ情報を指定.
 		// 拡張子がgltfの場合、binファイルもここで出力.
 		// 拡張子がglbの場合、glbBuilderにバッファ情報を格納.
-		::setBufferData(gltfDoc, sceneData, glbBuilder);
+		std::string binFileName;
+		::setBufferData(gltfDoc, sceneData, glbBuilder, binFileName);
 
 		// 画像情報を格納.
 		::setImagesData(gltfDoc, sceneData, glbBuilder, shade);
 
+		// Draco圧縮する場合.
+		std::shared_ptr<Microsoft::glTF::BufferBuilder> dstBufferBuilder;
+		if (sceneData->exportParam.dracoCompression) {
+			// 一時的にBufferのuriを指定.
+			if (writeGLB) {
+				Microsoft::glTF::Buffer buffer(gltfDoc.buffers[0]);
+				buffer.uri = binFileName;
+				gltfDoc.buffers.Replace(buffer);
+			}
+
+			// 作業用のバイナリ情報(buffersの内容)を格納するバッファ.
+			{
+				auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
+				auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
+				dstBufferBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
+				dstBufferBuilder->AddBuffer(GLB_BUFFER_ID);
+			}
+
+			// Draco圧縮したデータを取得して置き換え.
+			glTFToolKit::CompressionOptions compressOptions;
+			std::shared_ptr<BinStreamReader> binStreamReader;
+			binStreamReader.reset(new BinStreamReader(fileDir2));
+			gltfDoc = glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes(binStreamReader, gltfDoc, compressOptions, fileDir2, writeGLB, dstBufferBuilder);
+
+			// glbの場合は、bufferでのuriは使用しないのでクリア.
+			if (writeGLB) {
+				Microsoft::glTF::Buffer buffer(gltfDoc.buffers[0]);
+				buffer.uri = "";
+				gltfDoc.buffers.Replace(buffer);
+			}
+		}
+
 		if (glbBuilder) {
-			gltfDoc.buffers.Clear();
-			gltfDoc.bufferViews.Clear();
-			gltfDoc.accessors.Clear();
+			if (!sceneData->exportParam.dracoCompression) {		// 圧縮しない場合.
+				gltfDoc.buffers.Clear();
+				gltfDoc.bufferViews.Clear();
+				gltfDoc.accessors.Clear();
 
-			glbBuilder->Output(gltfDoc);	// glbBuilderの情報をgltfDocに反映.
+				glbBuilder->Output(gltfDoc);	// glbBuilderの情報をgltfDocに反映.
 
-			// glbファイルを出力.
-			auto manifest     = Serialize(gltfDoc);
-		    auto outputWriter = dynamic_cast<GLBResourceWriter *>(&glbBuilder->GetResourceWriter());
-			if (outputWriter) outputWriter->Flush(manifest, filePath2);
+				// glbファイルを出力.
+				auto manifest     = Serialize(gltfDoc);
+				auto outputWriter = dynamic_cast<GLBResourceWriter *>(&glbBuilder->GetResourceWriter());
+				if (outputWriter) outputWriter->Flush(manifest, filePath2);
+
+			} else {				// 圧縮する場合.
+				// glbファイルを出力.
+				const auto extensionSerializer = KHR::GetKHRExtensionSerializer();
+				auto manifest     = Serialize(gltfDoc, extensionSerializer);
+				auto outputWriter = dynamic_cast<GLBResourceWriter *>(&dstBufferBuilder->GetResourceWriter());
+				if (outputWriter) outputWriter->Flush(manifest, filePath2);
+			}
 
 		} else {
+
 			// gltfファイルを出力.
 			std::string gltfJson = Serialize(gltfDoc, SerializeFlags::Pretty);
 			std::ofstream outStream(filePath2.c_str(), std::ios::trunc | std::ios::out);

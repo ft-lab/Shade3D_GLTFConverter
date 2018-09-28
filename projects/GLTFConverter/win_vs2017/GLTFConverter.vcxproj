@@ -177,7 +177,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
-      <AdditionalIncludeDirectories>$(BOOSTPATH);$(SXSDKINCLUDEPATH);$(SXSDKINCLUDEPATH)/openexr-1.6.1;$(SXSDKINCLUDEPATH)/opengl;./GLTFSDK/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BOOSTPATH);$(SXSDKINCLUDEPATH);$(SXSDKINCLUDEPATH)/openexr-1.6.1;$(SXSDKINCLUDEPATH)/opengl;./GLTFSDK/include;../draco/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SXWINDOWS;SXWIN32;DEMO_PLUGIN=0;NDEBUG;sxdebug=0;WIN32;_WINDOWS;Windows=1;PLUGIN=1;STDCALL=__stdcall;DLLEXPORT=__declspec(dllexport);_CRT_SECURE_NO_DEPRECATE;SXPLUGIN=1;_SECURE_SCL=0;PLUGIN_EXPORTS;SXCORE=;SXMODEL=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -197,10 +197,10 @@
       <Culture>0x0411</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>GLTFSDK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>GLTFSDK.lib;draco.lib;dracodec.lib;dracoenc.lib;Pathcch.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>./GLTFSDK/lib/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./GLTFSDK/lib/release;../draco/lib/release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <ProgramDatabaseFile>.\$(Configuration)\$(Platform)\$(Configuration).pdb</ProgramDatabaseFile>
@@ -248,7 +248,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BOOSTPATH);$(SXSDKINCLUDEPATH);$(SXSDKINCLUDEPATH)/openexr-1.6.1;$(SXSDKINCLUDEPATH)/opengl;./GLTFSDK/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BOOSTPATH);$(SXSDKINCLUDEPATH);$(SXSDKINCLUDEPATH)/openexr-1.6.1;$(SXSDKINCLUDEPATH)/opengl;./GLTFSDK/include;../draco/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SXWINDOWS;SXWIN32;DEMO_PLUGIN=0;DEBUG;sxdebug=0;WIN32;_WINDOWS;Windows=1;PLUGIN=1;STDCALL=__stdcall;DLLEXPORT=__declspec(dllexport);_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;SXPLUGIN=1;PLUGIN_EXPORTS;SXCORE=;SXMODEL=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -261,9 +261,9 @@
       <PrecompiledHeaderOutputFile>.\$(IntDir)$(Configuration).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>GLTFSDK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>GLTFSDK.lib;draco.lib;dracodec.lib;dracoenc.lib;Pathcch.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>./GLTFSDK/lib/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./GLTFSDK/lib/debug;../draco/lib/debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <ProgramDatabaseFile>\$(Configuration)\$(Platform)\$(Configuration).pdb</ProgramDatabaseFile>
@@ -282,6 +282,7 @@
     <ClCompile Include="..\source\GLTFImporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFLoader.cpp" />
     <ClCompile Include="..\source\GLTFSaver.cpp" />
+    <ClCompile Include="..\source\glTFToolKit\GLTFMeshCompression.cpp" />
     <ClCompile Include="..\source\ImagesBlend.cpp" />
     <ClCompile Include="..\source\LicenseDialogInterface.cpp" />
     <ClCompile Include="..\source\main.cpp" />
@@ -293,6 +294,7 @@
     <ClCompile Include="..\source\OcclusionShaderInterface.cpp" />
     <ClCompile Include="..\source\SceneData.cpp" />
     <ClCompile Include="..\source\ImageData.cpp" />
+    <ClCompile Include="..\source\Shade3DArray.cpp" />
     <ClCompile Include="..\source\Shade3DUtil.cpp" />
     <ClCompile Include="..\source\ShapeStack.cpp" />
     <ClCompile Include="..\source\SkinData.cpp" />
@@ -306,6 +308,10 @@
     <ClInclude Include="..\source\GLTFImporterInterface.h" />
     <ClInclude Include="..\source\GLTFLoader.h" />
     <ClInclude Include="..\source\GLTFSaver.h" />
+    <ClInclude Include="..\source\glTFToolKit\AccessorUtils.h" />
+    <ClInclude Include="..\source\glTFToolKit\GLTFMeshCompression.h" />
+    <ClInclude Include="..\source\glTFToolKit\GLTFSDK.h" />
+    <ClInclude Include="..\source\glTFToolKit\pch.h" />
     <ClInclude Include="..\source\ImagesBlend.h" />
     <ClInclude Include="..\source\LicenseDialogInterface.h" />
     <ClInclude Include="..\source\MaterialData.h" />
@@ -316,6 +322,7 @@
     <ClInclude Include="..\source\OcclusionShaderInterface.h" />
     <ClInclude Include="..\source\SceneData.h" />
     <ClInclude Include="..\source\ImageData.h" />
+    <ClInclude Include="..\source\Shade3DArray.h" />
     <ClInclude Include="..\source\Shade3DUtil.h" />
     <ClInclude Include="..\source\ShapeStack.h" />
     <ClInclude Include="..\source\SkinData.h" />

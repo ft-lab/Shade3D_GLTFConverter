@@ -73,6 +73,12 @@
     <ClCompile Include="..\source\LicenseDialogInterface.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\glTFToolKit\GLTFMeshCompression.cpp">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\Shade3DArray.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -139,6 +145,21 @@
     <ClInclude Include="..\source\LicenseDialogInterface.h">
       <Filter>mysources</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\glTFToolKit\AccessorUtils.h">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\glTFToolKit\GLTFMeshCompression.h">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\glTFToolKit\GLTFSDK.h">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\glTFToolKit\pch.h">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\Shade3DArray.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="script2.rc" />
@@ -173,6 +194,9 @@
     </Filter>
     <Filter Include="mysources">
       <UniqueIdentifier>{337909e2-677d-4ef0-89b9-ff6bbef94434}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mysources\glTFToolKit">
+      <UniqueIdentifier>{54ac1f8d-aa69-48fe-8c41-9fb13fdcf342}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
