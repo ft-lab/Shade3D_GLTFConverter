@@ -3,8 +3,19 @@
  * https://github.com/Microsoft/glTF-Toolkit の GLTFMeshCompressionUtils より.
  * gltf/glbのどちらでもDraco圧縮できるように機能追加.
  */
-#include "pch.h"
 #include "GLTFMeshCompression.h"
+
+#include <algorithm>
+#include <exception>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <stdio.h>
+#include <io.h>
+#include <sys/stat.h>
 
 #include <GLTFSDK/MeshPrimitiveUtils.h>
 #include <GLTFSDK/ExtensionsKHR.h>
@@ -26,43 +37,6 @@
 using namespace Microsoft::glTF;
 
 namespace {
-
-std::wstring PathConcat (const std::wstring& part1, const std::wstring& part2)
-{
-    wchar_t uriAbsoluteRaw[MAX_PATH];
-    // Note: PathCchCombine will return the last argument if it's an absolute path
-    if (FAILED(::PathCchCombine(uriAbsoluteRaw, ARRAYSIZE(uriAbsoluteRaw), part1.c_str(), part2.c_str())))
-    {
-        auto msg = L"Could not combine the path names: " + part1 + L" and " + part2;
-        throw std::invalid_argument(std::string(msg.begin(), msg.end()));
-    }
-
-    return uriAbsoluteRaw;
-}
-
-std::string PathConcat (const std::string& part1, const std::string& part2)
-{
-    std::wstring part1W = std::wstring(part1.begin(), part1.end());
-    std::wstring part2W = std::wstring(part2.begin(), part2.end());
-
-    auto pathW = PathConcat(part1W, part2W);
-    return std::string(pathW.begin(), pathW.end());
-}
-
-class FilepathStreamWriter : public IStreamWriter
-{
-public:
-    FilepathStreamWriter(std::string uriBase) : m_uriBase(uriBase) {}
-
-    virtual ~FilepathStreamWriter() override {}
-    virtual std::shared_ptr<std::ostream> GetOutputStream(const std::string& filename) const override
-    {
-        return std::make_shared<std::ofstream>(PathConcat(m_uriBase, filename), std::ios::binary);
-    }
-private:
-    const std::string m_uriBase;
-};
-
 /**
  * バイナリ読み込み用.
  */
@@ -245,6 +219,7 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
 				auto indices2 = glbReader->ReadBinaryData<int16_t>(doc, indiciesAccessor);
 				indices.resize(indices2.size());
 				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
+
 			} else if (indiciesAccessor.componentType == COMPONENT_UNSIGNED_INT) {
 				indices = glbReader->ReadBinaryData<uint32_t>(doc, indiciesAccessor);
 			}
@@ -448,19 +423,18 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes (Microsoft::glTF:
     Document resultDocument(doc);
 	if (doc.buffers.Size() == 0) return resultDocument;
 
-	// オリジナルのbinファイル名 (glbのバイナリでも一時的に格納している).
+	// オリジナルのbinファイル名 (gltfファイルの場合).
 	const std::string orgBinFileName = doc.buffers[0].uri;
+
+	// 出力用のbinファイル名.
+	const std::string tmpBinFileName = orgBinFileName + std::string("_tmp_bin");
 
 	// xxx.binファイルの出力用.
 	if (!bufferBuilder) {
-		auto writerStream = std::make_shared<FilepathStreamWriter>(outputDirectory);
-		auto writer = std::make_unique<GLTFResourceWriter>(writerStream);
-		writer->SetUriPrefix(PathConcat(outputDirectory, "MeshCompression"));
-		std::unique_ptr<BufferBuilder> builder = std::make_unique<BufferBuilder>(std::move(writer),
-			[&doc](const BufferBuilder& builder) { return std::to_string(doc.buffers.Size() + builder.GetBufferCount()); },
-			[&doc](const BufferBuilder& builder) { return std::to_string(doc.bufferViews.Size() + builder.GetBufferViewCount()); },
-			[&doc](const BufferBuilder& builder) { return std::to_string(doc.accessors.Size() + builder.GetAccessorCount()); });
-		auto buffer = builder->AddBuffer();
+		auto binStreamWriter = std::make_shared<const BinStreamWriter>(outputDirectory, tmpBinFileName);
+		auto binWriter = std::make_unique<GLTFResourceWriter>(binStreamWriter);
+		auto builder = std::make_unique<BufferBuilder>(std::move(binWriter));
+		builder->AddBuffer(GLB_BUFFER_ID);
 		bufferBuilder.reset(new BufferBuilder(std::move(*builder)));
 	}
 
@@ -477,6 +451,40 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes (Microsoft::glTF:
 	resultDocument.bufferViews.Clear();
 	resultDocument.buffers.Clear();
 	bufferBuilder->Output(resultDocument);
+
+	if (!isGLB) {
+		// 名前変更などのファイル操作を有効にするために、解放.
+		bufferBuilder.reset();
+
+		// binファイル名を変更 (元の名前に入れ替え).
+		try {
+#if _WINDOWS
+			const std::string fileSep("\\");
+#else
+			const std::string fileSep("/");
+#endif
+
+			const std::string srcFileName = outputDirectory + fileSep + orgBinFileName;
+			const std::string dstFileName = outputDirectory + fileSep + tmpBinFileName;
+#if _WINDOWS
+			if (_access_s(srcFileName.c_str(), 0) == 0) {
+#else
+			if (access(srcFileName.c_str(), F_OK) == 0) {
+#endif
+				std::remove(srcFileName.c_str());
+			}
+
+			struct stat buf;
+			if (stat(srcFileName.c_str(), &buf) != 0) {
+				std::rename(dstFileName.c_str(), srcFileName.c_str());
+			}
+		} catch (...) { }
+
+		const Buffer& buffer = resultDocument.buffers[0];
+		Buffer buffer2(buffer);
+		buffer2.uri = orgBinFileName;
+		resultDocument.buffers.Replace(buffer2);
+	}
 
 	resultDocument.extensionsUsed.emplace(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
     resultDocument.extensionsRequired.emplace(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
@@ -544,19 +552,16 @@ bool glTFToolKit::GLTFMeshCompressionUtils::doDracoCompress (const std::string g
 			errStr = std::string("glb file could not be loaded.");
 			return false;
 		}
-	
-		// オリジナルのbinファイル名 (glbのバイナリでも一時的に格納している).
 		if (gltfDoc.buffers.Size() == 0) return false;
-		const std::string orgBinFileName = gltfDoc.buffers[0].uri;
 
-		// Draco圧縮を行い、再度ファイル出力.
-		{
+		if (glbFile) {
 			auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
 			auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
 			dstBufferBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
 			dstBufferBuilder->AddBuffer(GLB_BUFFER_ID);
 		}
 
+		// Draco圧縮を行い、再度ファイル出力.
 		glTFToolKit::CompressionOptions compressOptions;
 		std::shared_ptr<BinStreamReader> binStreamReader;
 		binStreamReader.reset(new BinStreamReader(fileDir2));
@@ -564,12 +569,20 @@ bool glTFToolKit::GLTFMeshCompressionUtils::doDracoCompress (const std::string g
 		compressDoc = CompressMeshes(glbReader.get(), binStreamReader, gltfDoc, compressOptions, fileDir2, glbFile, dstBufferBuilder);
 	}
 
-	// glbファイルを出力.
-	{
+	if (glbFile) {
+		// glbファイルを出力.
 		const auto extensionSerializer = KHR::GetKHRExtensionSerializer();
 		auto manifest     = Serialize(compressDoc, extensionSerializer);
 		auto outputWriter = dynamic_cast<GLBResourceWriter *>(&dstBufferBuilder->GetResourceWriter());
 		if (outputWriter) outputWriter->Flush(manifest, gltfFileName);
+
+	} else {
+		// gltfファイルを出力.
+		const auto extensionSerializer = KHR::GetKHRExtensionSerializer();
+		std::string gltfJson = Serialize(compressDoc, extensionSerializer, SerializeFlags::Pretty);
+		std::ofstream outStream(gltfFileName.c_str(), std::ios::trunc | std::ios::out);
+		outStream << gltfJson;
+		outStream.flush();
 	}
 
 	return true;
