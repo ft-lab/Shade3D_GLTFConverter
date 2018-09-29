@@ -98,7 +98,7 @@ void CTempMeshData::optimize ()
 				const int iPos = triIndex * 3;
 				for (int j = 0; j < 3; ++j) triangleIndices.erase(triangleIndices.begin() + iPos);
 				if (!triangleFaceGroupIndex.empty()) {
-					for (int j = 0; j < 3; ++j) triangleFaceGroupIndex.erase(triangleFaceGroupIndex.begin() + iPos);
+					triangleFaceGroupIndex.erase(triangleFaceGroupIndex.begin() + triIndex);
 				}
 				if (!triangleNormals.empty()) {
 					for (int j = 0; j < 3; ++j) triangleNormals.erase(triangleNormals.begin() + iPos);
