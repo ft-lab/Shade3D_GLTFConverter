@@ -6,9 +6,10 @@
 #include "pch.h"
 #include "GLTFMeshCompression.h"
 
-#include "GLTFSDK/MeshPrimitiveUtils.h"
-#include "GLTFSDK/ExtensionsKHR.h"
-#include "GLTFSDK/BufferBuilder.h"
+#include <GLTFSDK/MeshPrimitiveUtils.h>
+#include <GLTFSDK/ExtensionsKHR.h>
+#include <GLTFSDK/BufferBuilder.h>
+#include <GLTFSDK/GLBResourceWriter.h>
 #include "AccessorUtils.h"
 
 #pragma warning(push)
@@ -20,7 +21,11 @@
 #include "draco/io/point_cloud_io.h"
 #pragma warning(pop)
 
+#include "../StringUtil.h"
+
 using namespace Microsoft::glTF;
+
+namespace {
 
 std::wstring PathConcat (const std::wstring& part1, const std::wstring& part2)
 {
@@ -56,6 +61,52 @@ public:
     }
 private:
     const std::string m_uriBase;
+};
+
+/**
+ * バイナリ読み込み用.
+ */
+class BinStreamReader : public IStreamReader
+{
+private:
+	std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
+
+public:
+	BinStreamReader (std::string basePath) : m_basePath(basePath)
+	{
+	}
+
+	virtual std::shared_ptr<std::istream> GetInputStream(const std::string& filename) const override
+	{
+		const std::string path = m_basePath + std::string("/") + filename;
+		return std::make_shared<std::ifstream>(path, std::ios::binary);
+	}
+};
+
+/**
+ * GLTFのバイナリ出力用.
+ */
+class BinStreamWriter : public IStreamWriter
+{
+private:
+	std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
+	std::string m_fileName;		// 出力ファイル名.
+	bool m_appendMode;			// 既存ファイルの末尾に追記.
+
+public:
+	BinStreamWriter (std::string basePath, std::string fileName, const bool appendMode = false) : m_basePath(basePath), m_fileName(fileName), m_appendMode(appendMode)
+	{
+	}
+	virtual ~BinStreamWriter () {
+	}
+
+	virtual std::shared_ptr<std::ostream> GetOutputStream (const std::string& filename) const override
+	{
+		const std::string path = m_basePath + std::string("/") + m_fileName;
+		int flags = std::ios::binary | std::ios::out;
+		if (m_appendMode) flags |= std::ios::app;
+		return std::make_shared<std::ofstream>(path, flags);
+	}
 };
 
 draco::GeometryAttribute::Type GetTypeFromAttributeName (const std::string& name)
@@ -110,7 +161,7 @@ draco::DataType GetDataType (const Accessor& accessor)
 }
 
 template<typename T>
-int InitializePointAttribute (draco::Mesh& dracoMesh, const std::string& attributeName, const Document& doc, GLTFResourceReader& reader, Accessor& accessor)
+int InitializePointAttribute (draco::Mesh& dracoMesh, const std::string& attributeName, const Document& doc, GLBResourceReader* glbReader, GLTFResourceReader& reader, Accessor& accessor)
 {
     auto stride = sizeof(T) * Accessor::GetTypeCount(accessor.type);
     auto numComponents = Accessor::GetTypeCount(accessor.type);
@@ -119,7 +170,7 @@ int InitializePointAttribute (draco::Mesh& dracoMesh, const std::string& attribu
     int attId = dracoMesh.AddAttribute(pointAttr, true, static_cast<unsigned int>(accessor.count));
     auto attrActual = dracoMesh.attribute(attId);
 
-    std::vector<T> values = reader.ReadBinaryData<T>(doc, accessor);
+    std::vector<T> values = glbReader ? (glbReader->ReadBinaryData<T>(doc, accessor)) : reader.ReadBinaryData<T>(doc, accessor);
 
     if ((accessor.min.empty() || accessor.max.empty()) && !values.empty())
     {
@@ -155,7 +206,10 @@ void SetEncoderOptions (draco::Encoder& encoder, const glTFToolKit::CompressionO
     encoder.SetTrackEncodedProperties(true);
 }
 
+}		// namespace.
+
 Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
+	GLBResourceReader* glbReader, 
     std::shared_ptr<IStreamReader> streamReader,
     const Document & doc,
     CompressionOptions options,
@@ -179,7 +233,25 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
         }
         auto dracoExtension = std::make_unique<KHR::MeshPrimitives::DracoMeshCompression>();
         draco::Mesh dracoMesh;
-        auto indices = MeshPrimitiveUtils::GetIndices32(doc, reader, primitive);
+        Accessor indiciesAccessor(doc.accessors[primitive.indicesAccessorId]);
+        std::vector<uint32_t> indices;
+		if (glbReader) {
+			if (indiciesAccessor.componentType == COMPONENT_UNSIGNED_SHORT) {
+				auto indices2 = glbReader->ReadBinaryData<uint16_t>(doc, indiciesAccessor);
+				indices.resize(indices2.size());
+				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
+
+			} else if (indiciesAccessor.componentType == COMPONENT_SHORT) {
+				auto indices2 = glbReader->ReadBinaryData<int16_t>(doc, indiciesAccessor);
+				indices.resize(indices2.size());
+				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
+			} else if (indiciesAccessor.componentType == COMPONENT_UNSIGNED_INT) {
+				indices = glbReader->ReadBinaryData<uint32_t>(doc, indiciesAccessor);
+			}
+
+		} else {
+			indices = MeshPrimitiveUtils::GetIndices32(doc, reader, primitive);
+		}
         size_t numFaces = indices.size() / 3;
         dracoMesh.SetNumFaces(numFaces);
         for (uint32_t i = 0; i < numFaces; i++)
@@ -191,7 +263,6 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
             dracoMesh.SetFace(draco::FaceIndex(i), face);
         }
 
-        Accessor indiciesAccessor(doc.accessors[primitive.indicesAccessorId]);
         bufferViewsToRemove.emplace(indiciesAccessor.bufferViewId);
         indiciesAccessor.bufferViewId = "";
         indiciesAccessor.byteOffset = 0;
@@ -204,12 +275,12 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
             int attId;
             switch (accessor.componentType)
             {
-            case COMPONENT_BYTE:           attId = InitializePointAttribute<int8_t>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
-            case COMPONENT_UNSIGNED_BYTE:  attId = InitializePointAttribute<uint8_t>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
-            case COMPONENT_SHORT:          attId = InitializePointAttribute<int16_t>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
-            case COMPONENT_UNSIGNED_SHORT: attId = InitializePointAttribute<uint16_t>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
-            case COMPONENT_UNSIGNED_INT:   attId = InitializePointAttribute<uint32_t>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
-            case COMPONENT_FLOAT:          attId = InitializePointAttribute<float>(dracoMesh, attribute.first, doc, reader, attributeAccessor); break;
+            case COMPONENT_BYTE:           attId = InitializePointAttribute<int8_t>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
+            case COMPONENT_UNSIGNED_BYTE:  attId = InitializePointAttribute<uint8_t>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
+            case COMPONENT_SHORT:          attId = InitializePointAttribute<int16_t>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
+            case COMPONENT_UNSIGNED_SHORT: attId = InitializePointAttribute<uint16_t>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
+            case COMPONENT_UNSIGNED_INT:   attId = InitializePointAttribute<uint32_t>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
+            case COMPONENT_FLOAT:          attId = InitializePointAttribute<float>(dracoMesh, attribute.first, doc, glbReader, reader, attributeAccessor); break;
             default: throw GLTFException("Unknown component type.");
             }
             
@@ -247,8 +318,18 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
             resultDocument.accessors.Replace(encodedAccessor);
         }
 
+		// 4 byte alignment.
+		std::vector<uint8_t> dataBuff;
+		size_t dCou = 0;
+		{
+			dCou = buffer.size();
+			dataBuff.resize(dCou + 4, 0);
+			for (size_t i = 0; i < dCou; ++i) dataBuff[i] = buffer.data()[i];
+			if (dCou & 3) dCou += 4 - (dCou & 3);
+		}
+
         // Finally put the encoded data in place.
-        auto bufferView = builder->AddBufferView(buffer.data(), buffer.size());
+        auto bufferView = builder->AddBufferView(&(dataBuff[0]), dCou);
         dracoExtension->bufferViewId = bufferView.id;
         MeshPrimitive resultPrim(primitive);
         resultPrim.SetExtension(std::move(dracoExtension));
@@ -262,19 +343,20 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
 /**
  * 指定のaccessorIDの情報を取得し、builderに移し替え。この際に、accessorで参照しているbufferViewのIDを入れ替えることになる.
  *  float型のみの対応.
- * @param[in]     reader               オリジナルのglTF情報の読み込み用.
+ * @param[in]     glbReader            オリジナルのglbリソース情報の読み込み用.
+ * @param[in]     reader               オリジナルのbinリソース情報の読み込み用.
  * @param[in/out] doc                  glTF document.
  * @param[in]     accessorIDStr        対象のaccessorID.
  * @param[out]    builder              バッファ情報の格納クラス.
  * @param[in]     bufferViewsToRemove  削除するBufferViewのID.
  */
-void restoreBuffersFloat (GLTFResourceReader& reader, Document& doc, const std::string& accessorIDStr, BufferBuilder* builder) {
+void restoreBuffersFloat (GLBResourceReader* glbReader, GLTFResourceReader& reader, Document& doc, const std::string& accessorIDStr, BufferBuilder* builder) {
 	if (accessorIDStr == "") return;
 
 	const int accessorID = std::stoi(accessorIDStr);
 	const Accessor& accessor = doc.accessors[accessorID];
 	if (accessor.bufferViewId == "") return;
-	const std::vector<float> values = reader.ReadBinaryData<float>(doc, accessor);
+	const std::vector<float> values = glbReader ? (glbReader->ReadBinaryData<float>(doc, (doc, accessor))) : reader.ReadBinaryData<float>(doc, accessor);
 	const auto stride = sizeof(float) * Accessor::GetTypeCount(accessor.type);
 	const auto bufferView = builder->AddBufferView(values, stride);
 	Accessor accessor2(accessor);
@@ -288,19 +370,40 @@ void restoreBuffersFloat (GLTFResourceReader& reader, Document& doc, const std::
  * @param[in/out] doc                  glTF document.
  * @param[out]    builder              バッファ情報の格納クラス.
  */
-void adjustmentBuffers (std::shared_ptr<IStreamReader> streamReader, Document& doc, BufferBuilder* builder) {
+void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamReader> streamReader, Document& doc, BufferBuilder* builder) {
     GLTFResourceReader reader(streamReader);
 
 	// draco(2.2)で圧縮対象にならないものが参照しているaccessorでのbufferViewIDがある場合、.
 	// 参照しているbufferViewIDの更新とbufferBuilderへの情報追加を行う.
-	// skins / animations / primitivesのMorph Targetsが対象.
+	// images / skins / animations / primitivesのMorph Targetsが対象.
+
+	// images (一時的にbin内に画像もbufferViewとして格納/binにバイナリとして格納しているので、それを取り出す).
+	if (glbReader) {
+		const size_t imagesCou = doc.images.Size();
+		for (size_t i = 0; i < imagesCou; ++i) {
+			const Image& image = doc.images[i];
+			if (image.bufferViewId != "") {
+				std::vector<uint8_t> values = glbReader->ReadBinaryData(doc, image);
+				// 4 byte alignment.
+				if (values.size() & 3) {
+					const int cou = 4 - (int)(values.size() & 3);
+					for (int j = 0; j < cou; ++j) values.push_back(0);
+				}
+
+				const auto bufferView2 = builder->AddBufferView(values);
+				Image image2(image);
+				image2.bufferViewId = bufferView2.id;
+				doc.images.Replace(image2);
+			}
+		}
+	}
 
 	// Skins.
 	{
 		const size_t skinsCou = doc.skins.Size();
 		for (size_t i = 0; i < skinsCou; ++i) {
 			const Skin& skin = doc.skins[i];
-			restoreBuffersFloat(reader, doc, skin.inverseBindMatricesAccessorId, builder);
+			restoreBuffersFloat(glbReader, reader, doc, skin.inverseBindMatricesAccessorId, builder);
 		}
 	}
 
@@ -315,9 +418,9 @@ void adjustmentBuffers (std::shared_ptr<IStreamReader> streamReader, Document& d
 				const size_t targetsCou = srcPrimitive.targets.size();
 				for (size_t i = 0; i < targetsCou; ++i) {
 					const MorphTarget& morphTarget = srcPrimitive.targets[i];
-					restoreBuffersFloat(reader, doc, morphTarget.positionsAccessorId, builder);
-					restoreBuffersFloat(reader, doc, morphTarget.tangentsAccessorId, builder);
-					restoreBuffersFloat(reader, doc, morphTarget.normalsAccessorId, builder);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.positionsAccessorId, builder);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.tangentsAccessorId, builder);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.normalsAccessorId, builder);
 				}
 			}
 		}
@@ -331,14 +434,14 @@ void adjustmentBuffers (std::shared_ptr<IStreamReader> streamReader, Document& d
 			const size_t sampCou = animD.samplers.Size();
 			for (size_t i = 0; i < sampCou; ++i) {
 				const AnimationSampler& sampD = animD.samplers[i];
-				restoreBuffersFloat(reader, doc, sampD.inputAccessorId, builder);
-				restoreBuffersFloat(reader, doc, sampD.outputAccessorId, builder);
+				restoreBuffersFloat(glbReader, reader, doc, sampD.inputAccessorId, builder);
+				restoreBuffersFloat(glbReader, reader, doc, sampD.outputAccessorId, builder);
 			}
 		}
 	}
 }
 	 
-Document glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes (std::shared_ptr<IStreamReader> streamReader, const Document& doc, CompressionOptions options,
+Document glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes (Microsoft::glTF::GLBResourceReader* glbReader, std::shared_ptr<IStreamReader> streamReader, const Document& doc, CompressionOptions options,
 	const std::string& outputDirectory, const bool isGLB,
 	std::shared_ptr<Microsoft::glTF::BufferBuilder>& bufferBuilder)
 {
@@ -361,33 +464,113 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes (std::shared_ptr<
 		bufferBuilder.reset(new BufferBuilder(std::move(*builder)));
 	}
 
-	std::unordered_set<std::string> bufferViewsToRemove;
-
-	// bufferBuilderに圧縮しない情報を格納し、accessorのIDを置き換え.
-	adjustmentBuffers(streamReader, resultDocument, bufferBuilder.get());
+	// bufferBuilderに圧縮しない情報を格納し、accessor内のbufferViewIDを置き換え.
+	adjustmentBuffers(glbReader, streamReader, resultDocument, bufferBuilder.get());
 
 	// メッシュ情報を圧縮し、bufferBuilderに格納.
-    for (const auto& mesh : doc.meshes.Elements()) {
-        resultDocument = CompressMesh(streamReader, resultDocument, options, mesh, bufferBuilder.get(), bufferViewsToRemove);
+	std::unordered_set<std::string> bufferViewsToRemove;
+	for (const auto& mesh : doc.meshes.Elements()) {
+        resultDocument = CompressMesh(glbReader, streamReader, resultDocument, options, mesh, bufferBuilder.get(), bufferViewsToRemove);
     }
-
-	// mesh - primitiveでbufferViewから不要な要素を削除.
-	{
-		const size_t bufferViewCou = doc.bufferViews.Size();
-		for (const auto& bufferViewId : bufferViewsToRemove) {
-			if (resultDocument.bufferViews.Has(bufferViewId)) {
-				resultDocument.bufferViews.Remove(bufferViewId);
-			}
-		}
-	}
 
 	// bufferBuilder内のbufferViews/buffersの情報を、Documentに反映.
 	resultDocument.bufferViews.Clear();
 	resultDocument.buffers.Clear();
 	bufferBuilder->Output(resultDocument);
 
-    resultDocument.extensionsUsed.emplace(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
+	resultDocument.extensionsUsed.emplace(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
     resultDocument.extensionsRequired.emplace(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
 
     return resultDocument;
+}
+
+/**
+ * 指定のgltf/glbファイルを読み込み、Draco圧縮を行う.
+ */
+bool glTFToolKit::GLTFMeshCompressionUtils::doDracoCompress (const std::string gltfFileName)
+{
+	const std::string fileDir2  = StringUtil::getFileDir(gltfFileName);
+	const std::string fileName2 = StringUtil::getFileName(gltfFileName);
+
+	// fileNameがglb(vrm)ファイルかどうか.
+	const std::string fileExtStr = StringUtil::getFileExtension(gltfFileName);
+	const bool glbFile = (fileExtStr == std::string("glb") || fileExtStr == std::string("vrm"));
+
+	Document gltfDoc;
+	Document compressDoc;
+	std::shared_ptr<Microsoft::glTF::BufferBuilder> dstBufferBuilder;
+	{
+		// gltfファイルを読み込み.
+		std::shared_ptr<GLBResourceReader> glbReader;
+
+		std::string errStr = "";
+		try {
+			std::string jsonStr = "";
+
+			if (glbFile) {
+				// glb/vrmファイルを読み込み.
+				auto glbStream = std::make_shared<std::ifstream>(gltfFileName, std::ios::binary);
+				std::shared_ptr<BinStreamReader> binStreamReader;
+				binStreamReader.reset(new BinStreamReader(""));
+				glbReader.reset(new GLBResourceReader(binStreamReader, glbStream));
+
+				// glbファイルからjson部を取得.
+				jsonStr = glbReader->GetJson();
+
+			} else {
+				// gltfファイルを読み込み.
+				std::ifstream gltfStream(gltfFileName);
+				if (!gltfStream) return false;
+
+				// json部を取得.
+				jsonStr = "";
+				{
+					std::string str;
+					while (!gltfStream.eof()) {
+						std::getline(gltfStream, str);
+						jsonStr += str + std::string("\n");
+					}
+				}
+			}
+			if (jsonStr == "") return false;
+
+			// jsonデータをパース.
+			gltfDoc = Deserialize(jsonStr);
+
+		} catch (GLTFException e) {
+			errStr = std::string(e.what());
+			return false;
+		} catch (...) {
+			errStr = std::string("glb file could not be loaded.");
+			return false;
+		}
+	
+		// オリジナルのbinファイル名 (glbのバイナリでも一時的に格納している).
+		if (gltfDoc.buffers.Size() == 0) return false;
+		const std::string orgBinFileName = gltfDoc.buffers[0].uri;
+
+		// Draco圧縮を行い、再度ファイル出力.
+		{
+			auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
+			auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
+			dstBufferBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
+			dstBufferBuilder->AddBuffer(GLB_BUFFER_ID);
+		}
+
+		glTFToolKit::CompressionOptions compressOptions;
+		std::shared_ptr<BinStreamReader> binStreamReader;
+		binStreamReader.reset(new BinStreamReader(fileDir2));
+
+		compressDoc = CompressMeshes(glbReader.get(), binStreamReader, gltfDoc, compressOptions, fileDir2, glbFile, dstBufferBuilder);
+	}
+
+	// glbファイルを出力.
+	{
+		const auto extensionSerializer = KHR::GetKHRExtensionSerializer();
+		auto manifest     = Serialize(compressDoc, extensionSerializer);
+		auto outputWriter = dynamic_cast<GLBResourceWriter *>(&dstBufferBuilder->GetResourceWriter());
+		if (outputWriter) outputWriter->Flush(manifest, gltfFileName);
+	}
+
+	return true;
 }

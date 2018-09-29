@@ -27,6 +27,11 @@ namespace glTFToolKit {
     class GLTFMeshCompressionUtils
     {
     public:
+		/**
+		 * 指定のgltf/glbファイルを読み込み、Draco圧縮を行う.
+		 */
+		static bool doDracoCompress (const std::string gltfFileName);
+
         /// <summary>
         /// Applies <see cref="CompressMesh" /> to every mesh in the document, following the same parameter structure as that function.
         /// </summary>
@@ -38,6 +43,7 @@ namespace glTFToolKit {
         /// A new glTF manifest that uses the KHR_draco_mesh_compression extension to point to the compressed meshes.
         /// </returns>
         static Microsoft::glTF::Document CompressMeshes (
+			Microsoft::glTF::GLBResourceReader* glbReader,
             std::shared_ptr<Microsoft::glTF::IStreamReader> streamReader,
             const Microsoft::glTF::Document & doc,
             CompressionOptions options,
@@ -58,6 +64,7 @@ namespace glTFToolKit {
         /// A new glTF manifest that uses the KHR_draco_mesh_compression extension to point to the compressed meshes.
         /// </returns>
         static Microsoft::glTF::Document CompressMesh (
+			Microsoft::glTF::GLBResourceReader* glbReader,
             std::shared_ptr<Microsoft::glTF::IStreamReader> streamReader,
             const Microsoft::glTF::Document & doc,
             CompressionOptions options,

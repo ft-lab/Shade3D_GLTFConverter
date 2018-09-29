@@ -61,9 +61,10 @@ namespace {
 	private:
 		std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
 		std::string m_fileName;		// 出力ファイル名.
+		bool m_appendMode;			// 既存ファイルの末尾に追記.
 
 	public:
-		BinStreamWriter (std::string basePath, std::string fileName) : m_basePath(basePath), m_fileName(fileName)
+		BinStreamWriter (std::string basePath, std::string fileName, const bool appendMode = false) : m_basePath(basePath), m_fileName(fileName), m_appendMode(appendMode)
 		{
 		}
 		virtual ~BinStreamWriter () {
@@ -72,7 +73,9 @@ namespace {
 		virtual std::shared_ptr<std::ostream> GetOutputStream (const std::string& filename) const override
 		{
 			const std::string path = m_basePath + std::string("/") + m_fileName;
-			return std::make_shared<std::ofstream>(path, std::ios::binary | std::ios::out);
+			int flags = std::ios::binary | std::ios::out;
+			if (m_appendMode) flags |= std::ios::app;
+			return std::make_shared<std::ofstream>(path, flags);
 		}
 	};
 
@@ -740,7 +743,7 @@ namespace {
 	 *   拡張子gltfの場合、バッファは外部のbinファイル。.
 	 *   格納は、格納要素のOffsetごとに4バイト alignmentを考慮（そうしないとエラーになる）.
 	 */
-	void setBufferData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, std::string& retBinFileName) {
+	void setBufferData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
 
@@ -756,7 +759,6 @@ namespace {
 	#if _WINDOWS
 		StringUtil::convUTF8ToSJIS(binFileName, binFileName);
 	#endif
-		retBinFileName = binFileName;
 
 		// 出力ディレクトリ.
 		std::string fileDir = sceneData->getFileDir();
@@ -768,9 +770,8 @@ namespace {
 		const std::string fileExtension = sceneData->getFileExtension();
 
 		// binの出力バッファ。これはglTF出力の場合はそのままバイナリ情報として参照する.
-		// draco圧縮する場合はbinを参照するため、出力する.
 		std::shared_ptr<GLTFResourceWriter> binWriter;
-		if (fileExtension == "gltf" || (sceneData->exportParam.dracoCompression)) {
+		if (fileExtension == "gltf") {
 			auto binStreamWriter = std::make_unique<BinStreamWriter>(fileDir, binFileName);
 			binWriter.reset(new GLTFResourceWriter(std::move(binStreamWriter)));
 		}
@@ -1600,67 +1601,24 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		// バッファ情報を指定.
 		// 拡張子がgltfの場合、binファイルもここで出力.
 		// 拡張子がglbの場合、glbBuilderにバッファ情報を格納.
-		std::string binFileName;
-		::setBufferData(gltfDoc, sceneData, glbBuilder, binFileName);
+		::setBufferData(gltfDoc, sceneData, glbBuilder);
 
 		// 画像情報を格納.
 		::setImagesData(gltfDoc, sceneData, glbBuilder, shade);
 
-		// Draco圧縮する場合.
-		std::shared_ptr<Microsoft::glTF::BufferBuilder> dstBufferBuilder;
-		if (sceneData->exportParam.dracoCompression) {
-			// 一時的にBufferのuriを指定.
-			if (writeGLB) {
-				Microsoft::glTF::Buffer buffer(gltfDoc.buffers[0]);
-				buffer.uri = binFileName;
-				gltfDoc.buffers.Replace(buffer);
-			}
-
-			// 作業用のバイナリ情報(buffersの内容)を格納するバッファ.
-			{
-				auto binStreamWriter = std::make_shared<const BinStreamWriter>(fileDir2, fileName2);
-				auto glbWriter = std::make_unique<GLBResourceWriter>(binStreamWriter);
-				dstBufferBuilder = std::make_unique<BufferBuilder>(std::move(glbWriter));
-				dstBufferBuilder->AddBuffer(GLB_BUFFER_ID);
-			}
-
-			// Draco圧縮したデータを取得して置き換え.
-			glTFToolKit::CompressionOptions compressOptions;
-			std::shared_ptr<BinStreamReader> binStreamReader;
-			binStreamReader.reset(new BinStreamReader(fileDir2));
-			gltfDoc = glTFToolKit::GLTFMeshCompressionUtils::CompressMeshes(binStreamReader, gltfDoc, compressOptions, fileDir2, writeGLB, dstBufferBuilder);
-
-			// glbの場合は、bufferでのuriは使用しないのでクリア.
-			if (writeGLB) {
-				Microsoft::glTF::Buffer buffer(gltfDoc.buffers[0]);
-				buffer.uri = "";
-				gltfDoc.buffers.Replace(buffer);
-			}
-		}
-
 		if (glbBuilder) {
-			if (!sceneData->exportParam.dracoCompression) {		// 圧縮しない場合.
-				gltfDoc.buffers.Clear();
-				gltfDoc.bufferViews.Clear();
-				gltfDoc.accessors.Clear();
+			gltfDoc.buffers.Clear();
+			gltfDoc.bufferViews.Clear();
+			gltfDoc.accessors.Clear();
 
-				glbBuilder->Output(gltfDoc);	// glbBuilderの情報をgltfDocに反映.
+			glbBuilder->Output(gltfDoc);	// glbBuilderの情報をgltfDocに反映.
 
-				// glbファイルを出力.
-				auto manifest     = Serialize(gltfDoc);
-				auto outputWriter = dynamic_cast<GLBResourceWriter *>(&glbBuilder->GetResourceWriter());
-				if (outputWriter) outputWriter->Flush(manifest, filePath2);
-
-			} else {				// 圧縮する場合.
-				// glbファイルを出力.
-				const auto extensionSerializer = KHR::GetKHRExtensionSerializer();
-				auto manifest     = Serialize(gltfDoc, extensionSerializer);
-				auto outputWriter = dynamic_cast<GLBResourceWriter *>(&dstBufferBuilder->GetResourceWriter());
-				if (outputWriter) outputWriter->Flush(manifest, filePath2);
-			}
+			// glbファイルを出力.
+			auto manifest     = Serialize(gltfDoc);
+			auto outputWriter = dynamic_cast<GLBResourceWriter *>(&glbBuilder->GetResourceWriter());
+			if (outputWriter) outputWriter->Flush(manifest, filePath2);
 
 		} else {
-
 			// gltfファイルを出力.
 			std::string gltfJson = Serialize(gltfDoc, SerializeFlags::Pretty);
 			std::ofstream outStream(filePath2.c_str(), std::ios::trunc | std::ios::out);
@@ -1668,13 +1626,17 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 			outStream.flush();
 		}
 
-		return true;
-
 	} catch (GLTFException e) {
 		const std::string errorStr(e.what());
 		g_errorMessage = errorStr;
+		return false;
 	}
 
-	return false;
+	// Draco圧縮を行う.
+	if (sceneData->exportParam.dracoCompression) {
+		glTFToolKit::GLTFMeshCompressionUtils::doDracoCompress(filePath2);
+	}
+
+	return true;
 }
 

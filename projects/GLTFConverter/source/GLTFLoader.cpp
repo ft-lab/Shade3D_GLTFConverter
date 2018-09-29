@@ -861,7 +861,7 @@ namespace {
 				dstImageData.clear();
 			}
 
-			// イメージ名をUTF－8のものに入れ替え.
+			// イメージ名をUTF-8のものに入れ替え.
 			if (!reader) {
 				dstImageData.name = nameUTF8;
 			}
