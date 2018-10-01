@@ -192,15 +192,20 @@ namespace {
 
 					const size_t indicesMapSize = attr->indices_map_size();
 
+					// indices_mapを参照しないかどうかの判定用.
+					// trueの場合はattr->mapped_indexを使用せずに要素を取り出す。この場合の要素数はsizeを使用.
+					const bool identityMapping = attr->is_mapping_identity();
+					const size_t vSize = identityMapping ? size : indicesMapSize;
+
 					if (type == draco::GeometryAttribute::Type::POSITION) {
-						if (dataType != draco::DataType::DT_FLOAT32 || attrKeyName != ACCESSOR_POSITION) {
+						if (dataType != draco::DataType::DT_FLOAT32) {
 							errF = true;
 							break;
 						}
-						dstMeshData.vertices.resize(indicesMapSize * 3);
+						dstMeshData.vertices.resize(vSize * 3);
 						std::array<float, 3> value;
-						for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 3) {
-							const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+						for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 3) {
+							const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 							if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 							dstMeshData.vertices[iPos + 0] = value[0];
 							dstMeshData.vertices[iPos + 1] = value[1];
@@ -209,14 +214,14 @@ namespace {
 						continue;
 					}
 					if (type == draco::GeometryAttribute::Type::NORMAL) {
-						if (dataType != draco::DataType::DT_FLOAT32 || attrKeyName != ACCESSOR_NORMAL) {
+						if (dataType != draco::DataType::DT_FLOAT32) {
 							errF = true;
 							break;
 						}
-						dstMeshData.normals.resize(indicesMapSize * 3);
+						dstMeshData.normals.resize(vSize * 3);
 						std::array<float, 3> value;
-						for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 3) {
-							const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+						for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 3) {
+							const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 							if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 							dstMeshData.normals[iPos + 0] = value[0];
 							dstMeshData.normals[iPos + 1] = value[1];
@@ -231,20 +236,20 @@ namespace {
 						}
 
 						if (attrKeyName == ACCESSOR_TEXCOORD_0) {
-							dstMeshData.uvs0.resize(indicesMapSize * 2);
+							dstMeshData.uvs0.resize(vSize * 2);
 							std::array<float, 2> value;
-							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 2) {
-								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 2) {
+								const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 								if (!attr->ConvertValue<float, 2>(index, &value[0])) continue;
 								dstMeshData.uvs0[iPos + 0] = value[0];
 								dstMeshData.uvs0[iPos + 1] = value[1];
 							}
 						}
 						if (attrKeyName == ACCESSOR_TEXCOORD_1) {
-							dstMeshData.uvs1.resize(indicesMapSize * 2);
+							dstMeshData.uvs1.resize(vSize * 2);
 							std::array<float, 2> value;
-							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 2) {
-								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 2) {
+								const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 								if (!attr->ConvertValue<float, 2>(index, &value[0])) continue;
 								dstMeshData.uvs1[iPos + 0] = value[0];
 								dstMeshData.uvs1[iPos + 1] = value[1];
@@ -259,10 +264,10 @@ namespace {
 						}
 						
 						if (dataType == draco::DataType::DT_UINT8) {
-							dstMeshData.colors0.resize(indicesMapSize * 4);
+							dstMeshData.colors0.resize(vSize * 4);
 							std::array<uint8_t, 4> value;
-							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+								const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 								if (!attr->ConvertValue<uint8_t, 4>(index, &value[0])) continue;
 								dstMeshData.colors0[iPos + 0] = (float)value[0] / 255.0f;
 								dstMeshData.colors0[iPos + 1] = (float)value[1] / 255.0f;
@@ -270,10 +275,10 @@ namespace {
 								dstMeshData.colors0[iPos + 3] = (float)value[3] / 255.0f;
 							}
 						} else if (dataType == draco::DataType::DT_FLOAT32) {
-							dstMeshData.colors0.resize(indicesMapSize * 4);
+							dstMeshData.colors0.resize(vSize * 4);
 							std::array<float, 4> value;
-							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+								const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 								if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
 								dstMeshData.colors0[iPos + 0] = value[0];
 								dstMeshData.colors0[iPos + 1] = value[1];
@@ -292,10 +297,10 @@ namespace {
 						}
 						if (attrKeyName == ACCESSOR_JOINTS_0) {
 							if (dataType == draco::DataType::DT_UINT16) {
-								dstMeshData.joints.resize(indicesMapSize * 4);
+								dstMeshData.joints.resize(vSize * 4);
 								std::array<unsigned short, 4> value;
-								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<unsigned short, 4>(index, &value[0])) continue;
 									dstMeshData.joints[iPos + 0] = (int)value[0];
 									dstMeshData.joints[iPos + 1] = (int)value[1];
@@ -303,10 +308,10 @@ namespace {
 									dstMeshData.joints[iPos + 3] = (int)value[3];
 								}
 							} else if (dataType == draco::DataType::DT_UINT32) {
-								dstMeshData.joints.resize(indicesMapSize * 4);
+								dstMeshData.joints.resize(vSize * 4);
 								std::array<int, 4> value;
-								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<int, 4>(index, &value[0])) continue;
 									dstMeshData.joints[iPos + 0] = value[0];
 									dstMeshData.joints[iPos + 1] = value[1];
@@ -314,10 +319,10 @@ namespace {
 									dstMeshData.joints[iPos + 3] = value[3];
 								}
 							} else if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.joints.resize(indicesMapSize * 4);
+								dstMeshData.joints.resize(vSize * 4);
 								std::array<float, 4> value;
-								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
 									dstMeshData.joints[iPos + 0] = (int)value[0];
 									dstMeshData.joints[iPos + 1] = (int)value[1];
@@ -327,10 +332,10 @@ namespace {
 							}
 						} else if (attrKeyName == ACCESSOR_WEIGHTS_0) {
 							if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.weights.resize(indicesMapSize * 4);
+								dstMeshData.weights.resize(vSize * 4);
 								std::array<float, 4> value;
-								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
 									dstMeshData.weights[iPos + 0] = value[0];
 									dstMeshData.weights[iPos + 1] = value[1];
@@ -340,10 +345,10 @@ namespace {
 							}
 						} else if (attrKeyName == ACCESSOR_TANGENT) {
 							if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.weights.resize(indicesMapSize * 3);
+								dstMeshData.weights.resize(vSize * 3);
 								std::array<float, 3> value;
-								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
-									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 									dstMeshData.tangents[iPos + 0] = value[0];
 									dstMeshData.tangents[iPos + 1] = value[1];
