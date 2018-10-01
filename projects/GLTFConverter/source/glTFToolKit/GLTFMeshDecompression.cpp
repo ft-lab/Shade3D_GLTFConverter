@@ -112,16 +112,16 @@ namespace {
 				const KHR::MeshPrimitives::DracoMeshCompression& dracoMeshComp = srcPrimitive.GetExtension<KHR::MeshPrimitives::DracoMeshCompression>();
 				if (dracoMeshComp.bufferViewId == "") continue;
 
-				// glTFとしてのprimitive - attributesのkeyリスト(POSITION/NORMAL/TEXCOORD_0 など)を取得.
+				// glTFとしてのprimitive - extensions - KHR_draco_mesh_compression - attributesのkeyリスト(POSITION/NORMAL/TEXCOORD_0 など)を取得.
 				// 参照IDの小さい順に並び替える.
 				std::vector<std::string> attrKeyNames;
 				{
 					std::vector<int> attrIDList;
-					for (auto attribute = srcPrimitive.attributes.begin(); attribute != srcPrimitive.attributes.end(); ++attribute) {
+					for (auto attribute = dracoMeshComp.attributes.begin(); attribute != dracoMeshComp.attributes.end(); ++attribute) {
 						const std::string v1 = attribute->first;
-						const std::string v2 = attribute->second;
+						const int id = attribute->second;
 						attrKeyNames.push_back(v1);
-						attrIDList.push_back(std::stoi(v2));
+						attrIDList.push_back(id);
 					}
 					const size_t sCou = attrKeyNames.size();
 					for(size_t i = 0; i < sCou; ++i) {
@@ -198,7 +198,7 @@ namespace {
 					const size_t vSize = identityMapping ? size : indicesMapSize;
 
 					if (type == draco::GeometryAttribute::Type::POSITION) {
-						if (dataType != draco::DataType::DT_FLOAT32) {
+						if (dataType != draco::DataType::DT_FLOAT32 || (attrKeyName != ACCESSOR_POSITION)) {
 							errF = true;
 							break;
 						}
@@ -214,7 +214,7 @@ namespace {
 						continue;
 					}
 					if (type == draco::GeometryAttribute::Type::NORMAL) {
-						if (dataType != draco::DataType::DT_FLOAT32) {
+						if (dataType != draco::DataType::DT_FLOAT32 || (attrKeyName != ACCESSOR_NORMAL)) {
 							errF = true;
 							break;
 						}
