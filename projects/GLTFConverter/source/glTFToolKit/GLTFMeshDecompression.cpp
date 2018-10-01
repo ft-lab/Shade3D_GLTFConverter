@@ -46,6 +46,9 @@ glTFToolKit::DecompressMeshData::~DecompressMeshData ()
 }
 glTFToolKit::DecompressMeshData::DecompressMeshData (const glTFToolKit::DecompressMeshData& v)
 {
+	this->meshIndex = v.meshIndex;
+	this->primitiveIndex = v.primitiveIndex;
+	this->pointsCou = v.pointsCou;
 	this->indices  = v.indices;
 	this->vertices = v.vertices;
 	this->normals  = v.normals;
@@ -55,11 +58,13 @@ glTFToolKit::DecompressMeshData::DecompressMeshData (const glTFToolKit::Decompre
 	this->joints   = v.joints;
 	this->weights  = v.weights;
 	this->tangents = v.tangents;
-	this->pointsCou = v.pointsCou;
 }
 
 void glTFToolKit::DecompressMeshData::clear()
 {
+	meshIndex = -1;
+	primitiveIndex = -1;
+	pointsCou = 0;
 	indices.clear();
 	vertices.clear();
 	normals.clear();
@@ -69,7 +74,23 @@ void glTFToolKit::DecompressMeshData::clear()
 	joints.clear();
 	weights.clear();
 	tangents.clear();
-	pointsCou = 0;
+}
+
+//----------------------------------------------------------.
+/**
+ * meshDataListのうち、指定のmeshIndex - primitiveIndexの要素番号を取得.
+ */
+int glTFToolKit::findMeshPrimitiveIndex (const std::vector<glTFToolKit::DecompressMeshData>& meshDataList, const int meshIndex, const int primitiveIndex)
+{
+	int index = -1;
+	for(size_t i = 0; i < meshDataList.size(); ++i) {
+		const glTFToolKit::DecompressMeshData& meshD = meshDataList[i];
+		if (meshD.meshIndex == meshIndex && meshD.primitiveIndex == primitiveIndex) {
+			index = (int)i;
+			break;
+		}
+	}
+	return index;
 }
 
 //----------------------------------------------------------.
@@ -92,10 +113,25 @@ namespace {
 				if (dracoMeshComp.bufferViewId == "") continue;
 
 				// glTFとしてのprimitive - attributesのkeyリスト(POSITION/NORMAL/TEXCOORD_0 など)を取得.
+				// 参照IDの小さい順に並び替える.
 				std::vector<std::string> attrKeyNames;
-				for (auto attribute = srcPrimitive.attributes.begin(); attribute != srcPrimitive.attributes.end(); ++attribute) {
-					const std::string v1 = attribute->first;
-					attrKeyNames.push_back(v1);
+				{
+					std::vector<int> attrIDList;
+					for (auto attribute = srcPrimitive.attributes.begin(); attribute != srcPrimitive.attributes.end(); ++attribute) {
+						const std::string v1 = attribute->first;
+						const std::string v2 = attribute->second;
+						attrKeyNames.push_back(v1);
+						attrIDList.push_back(std::stoi(v2));
+					}
+					const size_t sCou = attrKeyNames.size();
+					for(size_t i = 0; i < sCou; ++i) {
+						for(size_t j = i + 1; j < sCou; ++j) {
+							if (attrIDList[i] > attrIDList[j]) {
+								std::swap(attrKeyNames[i], attrKeyNames[j]);
+								std::swap(attrIDList[i], attrIDList[j]);
+							}
+						}
+					}
 				}
 
 				// bufferViewからバイナリ情報を取得.
@@ -125,6 +161,8 @@ namespace {
 				// 展開されたメッシュ情報をmeshDataListに格納.
 				meshDataList.push_back(glTFToolKit::DecompressMeshData());
 				glTFToolKit::DecompressMeshData& dstMeshData = meshDataList.back();
+				dstMeshData.meshIndex      = (int)mLoop;
+				dstMeshData.primitiveIndex = (int)primLoop;
 
 				const int facesCou = mesh->num_faces();
 				const int attrCou  = mesh->num_attributes();
@@ -152,15 +190,18 @@ namespace {
 					const size_t size = attr->size();
 					const std::string& attrKeyName = attrKeyNames[aLoop];
 
+					const size_t indicesMapSize = attr->indices_map_size();
+
 					if (type == draco::GeometryAttribute::Type::POSITION) {
 						if (dataType != draco::DataType::DT_FLOAT32 || attrKeyName != ACCESSOR_POSITION) {
 							errF = true;
 							break;
 						}
-						dstMeshData.vertices.resize(size * 3);
+						dstMeshData.vertices.resize(indicesMapSize * 3);
 						std::array<float, 3> value;
-						for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 3) {
-							if (!attr->ConvertValue<float, 3>(draco::AttributeValueIndex(i), &value[0])) continue;
+						for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 3) {
+							const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 							dstMeshData.vertices[iPos + 0] = value[0];
 							dstMeshData.vertices[iPos + 1] = value[1];
 							dstMeshData.vertices[iPos + 2] = value[2];
@@ -172,10 +213,11 @@ namespace {
 							errF = true;
 							break;
 						}
-						dstMeshData.normals.resize(size * 3);
+						dstMeshData.normals.resize(indicesMapSize * 3);
 						std::array<float, 3> value;
-						for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 3) {
-							if (!attr->ConvertValue<float, 3>(draco::AttributeValueIndex(i), &value[0])) continue;
+						for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 3) {
+							const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+							if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 							dstMeshData.normals[iPos + 0] = value[0];
 							dstMeshData.normals[iPos + 1] = value[1];
 							dstMeshData.normals[iPos + 2] = value[2];
@@ -189,19 +231,21 @@ namespace {
 						}
 
 						if (attrKeyName == ACCESSOR_TEXCOORD_0) {
-							dstMeshData.uvs0.resize(size * 2);
+							dstMeshData.uvs0.resize(indicesMapSize * 2);
 							std::array<float, 2> value;
-							for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 2) {
-								if (!attr->ConvertValue<float, 2>(draco::AttributeValueIndex(i), &value[0])) continue;
+							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 2) {
+								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								if (!attr->ConvertValue<float, 2>(index, &value[0])) continue;
 								dstMeshData.uvs0[iPos + 0] = value[0];
 								dstMeshData.uvs0[iPos + 1] = value[1];
 							}
 						}
 						if (attrKeyName == ACCESSOR_TEXCOORD_1) {
-							dstMeshData.uvs1.resize(size * 2);
+							dstMeshData.uvs1.resize(indicesMapSize * 2);
 							std::array<float, 2> value;
-							for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 2) {
-								if (!attr->ConvertValue<float, 2>(draco::AttributeValueIndex(i), &value[0])) continue;
+							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 2) {
+								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								if (!attr->ConvertValue<float, 2>(index, &value[0])) continue;
 								dstMeshData.uvs1[iPos + 0] = value[0];
 								dstMeshData.uvs1[iPos + 1] = value[1];
 							}
@@ -215,20 +259,22 @@ namespace {
 						}
 						
 						if (dataType == draco::DataType::DT_UINT8) {
-							dstMeshData.colors0.resize(size * 4);
+							dstMeshData.colors0.resize(indicesMapSize * 4);
 							std::array<uint8_t, 4> value;
-							for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-								if (!attr->ConvertValue<uint8_t, 4>(draco::AttributeValueIndex(i), &value[0])) continue;
+							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								if (!attr->ConvertValue<uint8_t, 4>(index, &value[0])) continue;
 								dstMeshData.colors0[iPos + 0] = (float)value[0] / 255.0f;
 								dstMeshData.colors0[iPos + 1] = (float)value[1] / 255.0f;
 								dstMeshData.colors0[iPos + 2] = (float)value[2] / 255.0f;
 								dstMeshData.colors0[iPos + 3] = (float)value[3] / 255.0f;
 							}
 						} else if (dataType == draco::DataType::DT_FLOAT32) {
-							dstMeshData.colors0.resize(size * 4);
+							dstMeshData.colors0.resize(indicesMapSize * 4);
 							std::array<float, 4> value;
-							for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-								if (!attr->ConvertValue<float, 4>(draco::AttributeValueIndex(i), &value[0])) continue;
+							for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+								const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+								if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
 								dstMeshData.colors0[iPos + 0] = value[0];
 								dstMeshData.colors0[iPos + 1] = value[1];
 								dstMeshData.colors0[iPos + 2] = value[2];
@@ -246,32 +292,46 @@ namespace {
 						}
 						if (attrKeyName == ACCESSOR_JOINTS_0) {
 							if (dataType == draco::DataType::DT_UINT16) {
-								dstMeshData.joints.resize(size * 4);
+								dstMeshData.joints.resize(indicesMapSize * 4);
 								std::array<unsigned short, 4> value;
-								for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-									if (!attr->ConvertValue<unsigned short, 4>(draco::AttributeValueIndex(i), &value[0])) continue;
+								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+									if (!attr->ConvertValue<unsigned short, 4>(index, &value[0])) continue;
 									dstMeshData.joints[iPos + 0] = (int)value[0];
 									dstMeshData.joints[iPos + 1] = (int)value[1];
 									dstMeshData.joints[iPos + 2] = (int)value[2];
 									dstMeshData.joints[iPos + 3] = (int)value[3];
 								}
 							} else if (dataType == draco::DataType::DT_UINT32) {
-								dstMeshData.joints.resize(size * 4);
+								dstMeshData.joints.resize(indicesMapSize * 4);
 								std::array<int, 4> value;
-								for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-									if (!attr->ConvertValue<int, 4>(draco::AttributeValueIndex(i), &value[0])) continue;
+								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+									if (!attr->ConvertValue<int, 4>(index, &value[0])) continue;
 									dstMeshData.joints[iPos + 0] = value[0];
 									dstMeshData.joints[iPos + 1] = value[1];
 									dstMeshData.joints[iPos + 2] = value[2];
 									dstMeshData.joints[iPos + 3] = value[3];
 								}
+							} else if (dataType == draco::DataType::DT_FLOAT32) {
+								dstMeshData.joints.resize(indicesMapSize * 4);
+								std::array<float, 4> value;
+								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+									if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
+									dstMeshData.joints[iPos + 0] = (int)value[0];
+									dstMeshData.joints[iPos + 1] = (int)value[1];
+									dstMeshData.joints[iPos + 2] = (int)value[2];
+									dstMeshData.joints[iPos + 3] = (int)value[3];
+								}
 							}
 						} else if (attrKeyName == ACCESSOR_WEIGHTS_0) {
 							if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.weights.resize(size * 4);
+								dstMeshData.weights.resize(indicesMapSize * 4);
 								std::array<float, 4> value;
-								for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-									if (!attr->ConvertValue<float, 4>(draco::AttributeValueIndex(i), &value[0])) continue;
+								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+									if (!attr->ConvertValue<float, 4>(index, &value[0])) continue;
 									dstMeshData.weights[iPos + 0] = value[0];
 									dstMeshData.weights[iPos + 1] = value[1];
 									dstMeshData.weights[iPos + 2] = value[2];
@@ -280,10 +340,11 @@ namespace {
 							}
 						} else if (attrKeyName == ACCESSOR_TANGENT) {
 							if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.weights.resize(size * 3);
+								dstMeshData.weights.resize(indicesMapSize * 3);
 								std::array<float, 3> value;
-								for (size_t i = 0, iPos = 0; i < size; ++i, iPos += 4) {
-									if (!attr->ConvertValue<float, 3>(draco::AttributeValueIndex(i), &value[0])) continue;
+								for (size_t i = 0, iPos = 0; i < indicesMapSize; ++i, iPos += 4) {
+									const draco::AttributeValueIndex index = attr->mapped_index(draco::PointIndex(i));
+									if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 									dstMeshData.tangents[iPos + 0] = value[0];
 									dstMeshData.tangents[iPos + 1] = value[1];
 									dstMeshData.tangents[iPos + 2] = value[2];
@@ -309,6 +370,7 @@ namespace {
  */
 bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::string gltfFileName, std::vector<DecompressMeshData>& meshDataList)
 {
+	meshDataList.clear();
 	const std::string fileDir2  = StringUtil::getFileDir(gltfFileName);
 	const std::string fileName2 = StringUtil::getFileName(gltfFileName);
 
@@ -356,6 +418,10 @@ bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::stri
 			// jsonデータをパース.
 			const auto extensionDeserializer = KHR::GetKHRExtensionDeserializer();
 			gltfDoc = Deserialize(jsonStr, extensionDeserializer);
+
+			if (gltfDoc.extensionsUsed.size() == 0) return false;
+			auto extUsedV = gltfDoc.extensionsUsed.find(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
+			if (*extUsedV != KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME) return false;
 
 		} catch (GLTFException e) {
 			errStr = std::string(e.what());

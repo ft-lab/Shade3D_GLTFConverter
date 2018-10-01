@@ -16,6 +16,8 @@ namespace glTFToolKit {
 	 */
 	class DecompressMeshData {
 	public:
+		int meshIndex;						// glTFでのmesh番号.
+		int primitiveIndex;					// glTFでのprimitive番号.
 		std::vector<int> indices;			// 三角形の頂点インデックス.
 		std::vector<float> vertices;		// 頂点座標 (xyz).
 		std::vector<float> normals;			// 法線 (xyz).
@@ -34,6 +36,9 @@ namespace glTFToolKit {
 		~DecompressMeshData ();
 
 		DecompressMeshData& operator = (const DecompressMeshData &v) {
+			this->meshIndex = v.meshIndex;
+			this->primitiveIndex = v.primitiveIndex;
+			this->pointsCou = v.pointsCou;
 			this->indices  = v.indices;
 			this->vertices = v.vertices;
 			this->normals  = v.normals;
@@ -43,12 +48,17 @@ namespace glTFToolKit {
 			this->joints   = v.joints;
 			this->weights  = v.weights;
 			this->tangents = v.tangents;
-			this->pointsCou = v.pointsCou;
 			return (*this);
 		}
 
 		void clear();
 	};
+
+	//----------------------------------------------------------.
+	/**
+	 * meshDataListのうち、指定のmeshIndex - primitiveIndexの要素番号を取得.
+	 */
+	int findMeshPrimitiveIndex (const std::vector<DecompressMeshData>& meshDataList, const int meshIndex, const int primitiveIndex);
 
 	//----------------------------------------------------------.
 	/**

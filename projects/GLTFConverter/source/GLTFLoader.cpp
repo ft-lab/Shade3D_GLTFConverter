@@ -80,7 +80,7 @@ namespace {
 	/**
 	 * GLTFのMesh情報を取得して格納.
 	 */
-	void storeGLTFMeshes (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData) {
+	void storeGLTFMeshes (Document& gltfDoc, std::shared_ptr<GLBResourceReader>& reader, CSceneData* sceneData, std::vector<glTFToolKit::DecompressMeshData>& dracoMeshDataList) {
 		const size_t meshesSize = gltfDoc.meshes.Size();
 
 		// gltfからの読み込みの場合、buffers[0]のバイナリ要素(*.bin)を取得する必要がある.
@@ -120,6 +120,9 @@ namespace {
 
 				const MeshPrimitive& meshPrim = mesh.primitives[primLoop];
 
+				// draco圧縮したデータを持つか.
+				const int dracoMeshIndex = glTFToolKit::findMeshPrimitiveIndex(dracoMeshDataList, i, primLoop);
+
 				// meshMode = MESH_TRIANGLES(4)の場合は、三角形.
 				MeshMode meshMode = meshPrim.mode;
 
@@ -131,7 +134,7 @@ namespace {
 
 				// 頂点座標を取得.
 				std::string accessorID;
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_POSITION, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_POSITION, accessorID)) {
 					// positionsAccessorIdを取得 → accessorsよりbufferViewIdを取得 → ResourceReaderよりバッファ情報を取得、とたどる.
 					const int positionID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[positionID];
@@ -157,7 +160,7 @@ namespace {
 				}
 
 				// 法線を取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_NORMAL, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_NORMAL, accessorID)) {
 					const int normalID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[normalID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -181,7 +184,7 @@ namespace {
 				}
 
 				// UV0を取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_0, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_0, accessorID)) {
 					const int uv0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -207,7 +210,7 @@ namespace {
 				}
 
 				// UV1を取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_1, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_TEXCOORD_1, accessorID)) {
 					const int uv1ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[uv1ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -232,7 +235,7 @@ namespace {
 				}
 
 				// Color0を取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_COLOR_0, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_COLOR_0, accessorID)) {
 					const int color0ID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[color0ID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -318,9 +321,8 @@ namespace {
 
 				}
 
-
 				// 三角形の頂点インデックスを取得.
-				if (meshPrim.indicesAccessorId != "") {
+				if (dracoMeshIndex < 0 && meshPrim.indicesAccessorId != "") {
 					const int indicesID = std::stoi(meshPrim.indicesAccessorId);
 					const Accessor& acce = gltfDoc.accessors[indicesID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -376,7 +378,7 @@ namespace {
 				}
 
 				// スキンのWeightを取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_WEIGHTS_0, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_WEIGHTS_0, accessorID)) {
 					const int weightsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[weightsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -403,7 +405,7 @@ namespace {
 				}
 
 				// スキンのJointsを取得.
-				if (meshPrim.TryGetAttributeAccessorId(ACCESSOR_JOINTS_0, accessorID)) {
+				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_JOINTS_0, accessorID)) {
 					const int jointsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[jointsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
@@ -428,6 +430,69 @@ namespace {
 						dstPrimitiveData.skinJoints.resize(vCou);
 						for (size_t j = 0, iPos = 0; j < vCou; ++j, iPos += 4) {
 							dstPrimitiveData.skinJoints[j] = sx::vec<int,4>(joints[iPos + 0], joints[iPos + 1], joints[iPos + 2], joints[iPos + 3]);
+						}
+					}
+				}
+
+				// draco圧縮した情報を展開したものを格納.
+				if (dracoMeshIndex >= 0) { 
+					const glTFToolKit::DecompressMeshData& decompMeshD = dracoMeshDataList[dracoMeshIndex];
+					const int triCou = (int)decompMeshD.indices.size() / 3;
+					{
+						dstPrimitiveData.triangleIndices.resize(triCou * 3);
+						for (int j = 0, iPos = 0; j < triCou; ++j, iPos += 3) {
+							dstPrimitiveData.triangleIndices[iPos + 0] = decompMeshD.indices[iPos + 0];
+							dstPrimitiveData.triangleIndices[iPos + 1] = decompMeshD.indices[iPos + 1];
+							dstPrimitiveData.triangleIndices[iPos + 2] = decompMeshD.indices[iPos + 2];
+						}
+					}
+					if (!decompMeshD.vertices.empty()) {
+						const size_t vSize = decompMeshD.vertices.size() / 3;
+						dstPrimitiveData.vertices.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 3) {
+							dstPrimitiveData.vertices[j] = sxsdk::vec3(decompMeshD.vertices[iPos + 0], decompMeshD.vertices[iPos + 1], decompMeshD.vertices[iPos + 2]);
+						}
+					}
+					if (!decompMeshD.normals.empty()) {
+						const size_t vSize = decompMeshD.normals.size() / 3;
+						dstPrimitiveData.normals.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 3) {
+							dstPrimitiveData.normals[j] = sxsdk::vec3(decompMeshD.normals[iPos + 0], decompMeshD.normals[iPos + 1], decompMeshD.normals[iPos + 2]);
+						}
+					}
+					if (!decompMeshD.uvs0.empty()) {
+						const size_t vSize = decompMeshD.uvs0.size() / 2;
+						dstPrimitiveData.uv0.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 2) {
+							dstPrimitiveData.uv0[j] = sxsdk::vec2(decompMeshD.uvs0[iPos + 0], decompMeshD.uvs0[iPos + 1]);
+						}
+					}
+					if (!decompMeshD.uvs1.empty()) {
+						const size_t vSize = decompMeshD.uvs1.size() / 2;
+						dstPrimitiveData.uv1.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 2) {
+							dstPrimitiveData.uv1[j] = sxsdk::vec2(decompMeshD.uvs1[iPos + 0], decompMeshD.uvs1[iPos + 1]);
+						}
+					}
+					if (!decompMeshD.colors0.empty()) {
+						const size_t vSize = decompMeshD.colors0.size() / 4;
+						dstPrimitiveData.color0.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 4) {
+							dstPrimitiveData.color0[j] = sxsdk::vec4(decompMeshD.colors0[iPos + 0], decompMeshD.colors0[iPos + 1], decompMeshD.colors0[iPos + 2], decompMeshD.colors0[iPos + 3]);
+						}
+					}
+					if (!decompMeshD.weights.empty()) {
+						const size_t vSize = decompMeshD.weights.size() / 4;
+						dstPrimitiveData.skinWeights.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 4) {
+							dstPrimitiveData.skinWeights[j] = sxsdk::vec4(decompMeshD.weights[iPos + 0], decompMeshD.weights[iPos + 1], decompMeshD.weights[iPos + 2], decompMeshD.weights[iPos + 3]);
+						}
+					}
+					if (!decompMeshD.joints.empty()) {
+						const size_t vSize = decompMeshD.joints.size() / 4;
+						dstPrimitiveData.skinJoints.resize(vSize);
+						for (size_t j = 0, iPos = 0; j < vSize; ++j, iPos += 4) {
+							dstPrimitiveData.skinJoints[j] = sx::vec<int,4>(decompMeshD.joints[iPos + 0], decompMeshD.joints[iPos + 1], decompMeshD.joints[iPos + 2], decompMeshD.joints[iPos + 3]);
 						}
 					}
 				}
@@ -1426,7 +1491,7 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		::storeAssetExtrasData(gltfDoc, sceneData);
 
 		// メッシュ情報を取得.
-		::storeGLTFMeshes(gltfDoc, reader, sceneData);
+		::storeGLTFMeshes(gltfDoc, reader, sceneData, dracoMeshDataList);
 
 		// イメージ情報を取得.
 		::storeGLTFImages(gltfDoc, reader, sceneData);
