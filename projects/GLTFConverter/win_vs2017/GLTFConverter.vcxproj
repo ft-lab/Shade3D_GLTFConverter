@@ -283,6 +283,7 @@
     <ClCompile Include="..\source\GLTFLoader.cpp" />
     <ClCompile Include="..\source\GLTFSaver.cpp" />
     <ClCompile Include="..\source\glTFToolKit\GLTFMeshCompression.cpp" />
+    <ClCompile Include="..\source\glTFToolKit\GLTFMeshDecompression.cpp" />
     <ClCompile Include="..\source\ImagesBlend.cpp" />
     <ClCompile Include="..\source\LicenseDialogInterface.cpp" />
     <ClCompile Include="..\source\main.cpp" />
@@ -303,6 +304,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\AnimationData.h" />
+    <ClInclude Include="..\source\BinStreamReaderWriter.h" />
     <ClInclude Include="..\source\GlobalHeader.h" />
     <ClInclude Include="..\source\GLTFExporterInterface.h" />
     <ClInclude Include="..\source\GLTFImporterInterface.h" />
@@ -310,8 +312,8 @@
     <ClInclude Include="..\source\GLTFSaver.h" />
     <ClInclude Include="..\source\glTFToolKit\AccessorUtils.h" />
     <ClInclude Include="..\source\glTFToolKit\GLTFMeshCompression.h" />
+    <ClInclude Include="..\source\glTFToolKit\GLTFMeshDecompression.h" />
     <ClInclude Include="..\source\glTFToolKit\GLTFSDK.h" />
-    <ClInclude Include="..\source\glTFToolKit\pch.h" />
     <ClInclude Include="..\source\ImagesBlend.h" />
     <ClInclude Include="..\source\LicenseDialogInterface.h" />
     <ClInclude Include="..\source\MaterialData.h" />

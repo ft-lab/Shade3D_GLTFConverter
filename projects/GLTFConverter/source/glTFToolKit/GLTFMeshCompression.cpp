@@ -4,6 +4,7 @@
  * gltf/glbのどちらでもDraco圧縮できるように機能追加.
  */
 #include "GLTFMeshCompression.h"
+#include "../BinStreamReaderWriter.h"
 
 #include <algorithm>
 #include <exception>
@@ -37,52 +38,6 @@
 using namespace Microsoft::glTF;
 
 namespace {
-/**
- * バイナリ読み込み用.
- */
-class BinStreamReader : public IStreamReader
-{
-private:
-	std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
-
-public:
-	BinStreamReader (std::string basePath) : m_basePath(basePath)
-	{
-	}
-
-	virtual std::shared_ptr<std::istream> GetInputStream(const std::string& filename) const override
-	{
-		const std::string path = m_basePath + std::string("/") + filename;
-		return std::make_shared<std::ifstream>(path, std::ios::binary);
-	}
-};
-
-/**
- * GLTFのバイナリ出力用.
- */
-class BinStreamWriter : public IStreamWriter
-{
-private:
-	std::string m_basePath;		// gltfファイルの絶対パスのディレクトリ.
-	std::string m_fileName;		// 出力ファイル名.
-	bool m_appendMode;			// 既存ファイルの末尾に追記.
-
-public:
-	BinStreamWriter (std::string basePath, std::string fileName, const bool appendMode = false) : m_basePath(basePath), m_fileName(fileName), m_appendMode(appendMode)
-	{
-	}
-	virtual ~BinStreamWriter () {
-	}
-
-	virtual std::shared_ptr<std::ostream> GetOutputStream (const std::string& filename) const override
-	{
-		const std::string path = m_basePath + std::string("/") + m_fileName;
-		int flags = std::ios::binary | std::ios::out;
-		if (m_appendMode) flags |= std::ios::app;
-		return std::make_shared<std::ofstream>(path, flags);
-	}
-};
-
 draco::GeometryAttribute::Type GetTypeFromAttributeName (const std::string& name)
 {
     if (name == ACCESSOR_POSITION)
@@ -229,9 +184,9 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
 		}
         size_t numFaces = indices.size() / 3;
         dracoMesh.SetNumFaces(numFaces);
+		draco::Mesh::Face face;
         for (uint32_t i = 0; i < numFaces; i++)
         {
-            draco::Mesh::Face face;
             face[0] = indices[(i * 3) + 0];
             face[1] = indices[(i * 3) + 1];
             face[2] = indices[(i * 3) + 2];
@@ -341,7 +296,8 @@ void restoreBuffersFloat (GLBResourceReader* glbReader, GLTFResourceReader& read
 
 /**
  * bufferBuilderに圧縮しない情報を格納し、accessorのIDを置き換え.
- * @param[in]     streamReader         オリジナルのglTF情報の読み込み用.
+ * @param[in]     glbReader            オリジナルのglbリソース情報の読み込み用.
+ * @param[in]     streamReader         オリジナルのbinリソース情報の読み込み用.
  * @param[in/out] doc                  glTF document.
  * @param[out]    builder              バッファ情報の格納クラス.
  */
@@ -352,7 +308,7 @@ void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamRea
 	// 参照しているbufferViewIDの更新とbufferBuilderへの情報追加を行う.
 	// images / skins / animations / primitivesのMorph Targetsが対象.
 
-	// images (一時的にbin内に画像もbufferViewとして格納/binにバイナリとして格納しているので、それを取り出す).
+	// images (glbの場合はbufferViewに画像が格納されている。gltfの場合は外部ファイルなので不要).
 	if (glbReader) {
 		const size_t imagesCou = doc.images.Size();
 		for (size_t i = 0; i < imagesCou; ++i) {

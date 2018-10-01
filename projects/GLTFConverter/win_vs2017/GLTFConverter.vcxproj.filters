@@ -79,6 +79,9 @@
     <ClCompile Include="..\source\Shade3DArray.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\glTFToolKit\GLTFMeshDecompression.cpp">
+      <Filter>mysources\glTFToolKit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -154,10 +157,13 @@
     <ClInclude Include="..\source\glTFToolKit\GLTFSDK.h">
       <Filter>mysources\glTFToolKit</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\glTFToolKit\pch.h">
+    <ClInclude Include="..\source\Shade3DArray.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\glTFToolKit\GLTFMeshDecompression.h">
       <Filter>mysources\glTFToolKit</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\Shade3DArray.h">
+    <ClInclude Include="..\source\BinStreamReaderWriter.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

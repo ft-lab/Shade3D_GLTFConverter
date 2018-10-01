@@ -20,6 +20,7 @@
 #include <GLTFSDK/GLTFResourceWriter.h>
 #include <GLTFSDK/GLBResourceReader.h>
 #include <GLTFSDK/GLTFResourceReader.h>
+#include "glTFToolKit/GLTFMeshDecompression.h"
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -1323,6 +1324,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 	std::shared_ptr<GLBResourceReader> reader;
 	Document gltfDoc;
 	std::string jsonStr = "";
+
+	// draco圧縮された情報を展開して取得.
+	std::vector<glTFToolKit::DecompressMeshData> dracoMeshDataList;
+	glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress(fileName2, dracoMeshDataList);
 
 	// fileNameがglb(vrm)ファイルかどうか.
 	const bool glbFile = (StringUtil::getFileExtension(fileName) == std::string("glb") || StringUtil::getFileExtension(fileName) == std::string("vrm"));
