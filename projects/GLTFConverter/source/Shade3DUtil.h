@@ -111,6 +111,13 @@ namespace Shade3DUtil
 	 * @return アルファ要素が1.0でないものがある場合はtrueを返す.
 	 */
 	bool hasImageAlpha (sxsdk::master_image_class* masterImage);
+
+	/**
+	 * 画像を指定のサイズにリサイズ。アルファも考慮（image->duplicate_imageはアルファを考慮しないため）.
+	 * @param[in] image  元の画像.
+	 * @param[in] size   変更するサイズ.
+	 */
+	compointer<sxsdk::image_interface> resizeImageWithAlpha (sxsdk::scene_interface* scene, sxsdk::image_interface* image, const sx::vec<int,2>& size);
 }
 
 #endif

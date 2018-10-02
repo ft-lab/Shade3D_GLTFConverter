@@ -31,6 +31,7 @@ using namespace Microsoft::glTF;
 #include "SceneData.h"
 #include "MathUtil.h"
 #include "Shade3DArray.h"
+#include "Shade3DUtil.h"
 
 namespace {
 	std::string g_errorMessage = "";		// エラーメッセージの保持用.
@@ -1249,6 +1250,8 @@ namespace {
 		// 最大テクスチャサイズ.
 		const int maxTexSize = sceneData->exportParam.getMaxTextureSize();
 
+		compointer<sxsdk::scene_interface> scene(shade->get_scene_interface());
+
 		for (size_t i = 0; i < imagesCou; ++i) {
 			const CImageData& imageD = sceneData->images[i];
 			if (!imageD.shadeMasterImage && !imageD.shadeImage) continue;
@@ -1301,7 +1304,7 @@ namespace {
 							}
 						}
 						if (newSize.x != srcWidth || newSize.y != srcHeight) {
-							image2 = image->duplicate_image(&newSize);
+							image2 = Shade3DUtil::resizeImageWithAlpha(scene, image, newSize);
 						}
 					}
 				}
