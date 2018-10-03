@@ -1,7 +1,8 @@
 # glTF Converter for Shade3D
 
 Shade3DでglTF(拡張子 gltf/glb)をインポート/エクスポートするプラグインです。  
-glTFの処理で、「Microsoft glTF SDK」( https://github.com/Microsoft/glTF-SDK )を使用しています。
+glTFの処理で、「Microsoft glTF SDK」( https://github.com/Microsoft/glTF-SDK )を使用しています。    
+圧縮処理で、「draco」 ( https://github.com/google/draco ) を使用しています。    
 
 ## 機能
 
@@ -402,9 +403,10 @@ glTF Converter for Shade3Dでは個々の3Dモデルの扱いについては責�
 
 ## ビルド方法 (開発者向け)
 
-Shade3DプラグインSDK( https://github.com/shadedev/pluginsdk )をダウンロードします。  
+Shade3DプラグインSDKをダウンロードします。  
 Shade3D_GLTFConverter/projects/GLTFConverterフォルダをShade3DのプラグインSDKのprojectsフォルダに複製します。  
-Microsoft glTF SDK ( https://github.com/Microsoft/glTF-SDK )は事前にビルドしておく必要があります。    
+Microsoft glTF SDKは事前にビルドしておく必要があります。    
+Google dracoは事前にビルドしておく必要があります。    
 
 ### WindowsでのMicrosoft glTF SDKのビルド
 
@@ -430,10 +432,41 @@ CMakeでXcode用のプロジェクトを作成し、ビルドします。
 「Buildディレクトリ/RapidJSON-src/include」の下の「rapidjson」ディレクトリとその中のファイル、    
 を使用します。    
 
+### dracoのビルド
+
+Win/Macともに同じで、CMakeを使用してプロジェクトを作成し、ビルドします。    
+WindowsはVS 2017/MacはXcode 10 のプロジェクトを作成して確認しています。    
+
+Windowsは「draco.lib」「dracodec.lib」「dracoenc.lib」の静的ライブラリが生成されます。   
+Macは「libdraco.a」「libdracodec.a」「libdracoenc.a」の静的ライブラリが生成されます。   
+
+また、「/src」内のファイル、ビルドディレクトリの「draco/draco_features.h」をincludeとして参照します。
+
 ### Windows
 ```c
-  [GLTFConverter]  
+  [GLTFConverter]
+    [draco]              draco関連のファイル
+      [lib]
+        [debug]
+          draco.lib
+          draco.pdb
+          dracodec.lib
+          dracodec.pdb
+          dracoenc.lib
+          dracoenc.pdb
+        [release]
+          draco.lib
+          dracodec.lib
+          dracoenc.lib
+      [src]
+        [draco]           dracoで使用するヘッダファイル類
+           [animation]
+           [attributes]
+           ...
+           draco_features.h
+
     [source]             プラグインのソースコード  
+
     [win_vs2017]         
     　GLTFConverter.sln　　Win(vs2017)のプロジェクトファイル  　　
       [GLTFSDK]
@@ -447,12 +480,31 @@ CMakeでXcode用のプロジェクトを作成し、ビルドします。
             GLTFSDK.lib  Release用のGLTFSDKの静的ライブラリ
 ```
 [GLTFSDK]ディレクトリ内が、Shade3Dのプラグイン以外で必要なMicrosoft glTF SDKの関連ファイルです。    
+[draco]ディレクトリ内が、draco圧縮で必要な関連ファイルです。    
 GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドします。  
 
 ### Mac
 ```c
   [GLTFConverter]  
+    [draco]              draco関連のファイル
+      [lib]
+        [debug]
+          libdraco.a
+          libdracodec.a
+          libdracoenc.a
+        [release]
+          libdraco.a
+          libdracodec.a
+          libdracoenc.a
+      [src]
+        [draco]           dracoで使用するヘッダファイル類
+           [animation]
+           [attributes]
+           ...
+           draco_features.h
+
     [source]             プラグインのソースコード  
+
     [mac]                
       [plugins]
         Template.xcodeproj   Macのプロジェクトファイル 
@@ -464,13 +516,16 @@ GLTFConverter/win_vs2017/GLTFConverter.sln をVS2017で開き、ビルドしま�
           [release]
             libGLTFSDK.a  Release用のGLTFSDKの静的ライブラリ
 ```
-[GLTFSDK]ディレクトリ内が、Shade3Dのプラグイン以外で必要なMicrosoft glTF SDKの関連ファイルです。    
+[GLTFSDK]ディレクトリ内が、Shade3Dのプラグイン以外で必要なMicrosoft glTF SDKの関連ファイルです。   
+[draco]ディレクトリ内が、draco圧縮で必要な関連ファイルです。    
 GLTFConverter/mac/plugins/Template.xcodeproj をXcodeで開き、ビルドします。  
 
 ## 使用しているモジュール (開発者向け)
 
-* Microsoft glTF SDK ( https://github.com/Microsoft/glTF-SDK )
-* rapidjson ( https://github.com/Tencent/rapidjson/ )
+* Shade3D プラグイン SDK v.15.1.0 ( https://github.com/shadedev/pluginsdk ) 
+* Microsoft glTF SDK r1.6.3.1 ( https://github.com/Microsoft/glTF-SDK )
+* rapidjson v.0.0.2.20 ( https://github.com/Tencent/rapidjson/ )
+* Google draco v.1.3.4 ( https://github.com/google/draco )
 
 rapidjsonは、Microsoft glTF SDK内で使用されています。   
 
@@ -479,6 +534,11 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/10/03] ver.0.2.0.2   
+* Export : 「最大テクスチャサイズ」オプションを追加
+* Import/Export : Draco圧縮に対応
+* Export : メッシュでフェイスグループ使用時 + 面積がない面がある場合に、エクスポート時にクラッシュすることがある問題を修正
 
 [2018/09/16] ver.0.2.0.1   
 * [内部処理] : MotionUtilプラグインが存在しない場合でもクラッシュしないようにした

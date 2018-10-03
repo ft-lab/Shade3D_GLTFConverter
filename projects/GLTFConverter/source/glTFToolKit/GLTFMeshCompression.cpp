@@ -15,7 +15,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <stdio.h>
+#if _WINDOWS
 #include <io.h>
+#endif
 #include <sys/stat.h>
 
 #include <GLTFSDK/MeshPrimitiveUtils.h>
