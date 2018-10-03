@@ -9,6 +9,18 @@
 /* Begin PBXBuildFile section */
 		9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9213EBA01B12E3E00023FEDA /* GlobalHeader.h */; };
 		9213EBA71B12E3E00023FEDA /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9213EBA11B12E3E00023FEDA /* main.cpp */; };
+		9224B4EE21647D3100A38EEA /* Shade3DArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9224B4EB21647D3100A38EEA /* Shade3DArray.cpp */; };
+		9224B4EF21647D3100A38EEA /* BinStreamReaderWriter.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4EC21647D3100A38EEA /* BinStreamReaderWriter.h */; };
+		9224B4F021647D3100A38EEA /* Shade3DArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4ED21647D3100A38EEA /* Shade3DArray.h */; };
+		9224B4F821647D4100A38EEA /* AccessorUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4F221647D4100A38EEA /* AccessorUtils.h */; };
+		9224B4F921647D4100A38EEA /* GLTFMeshCompression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9224B4F321647D4100A38EEA /* GLTFMeshCompression.cpp */; };
+		9224B4FA21647D4100A38EEA /* GLTFMeshCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4F421647D4100A38EEA /* GLTFMeshCompression.h */; };
+		9224B4FB21647D4100A38EEA /* GLTFMeshDecompression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9224B4F521647D4100A38EEA /* GLTFMeshDecompression.cpp */; };
+		9224B4FC21647D4100A38EEA /* GLTFMeshDecompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4F621647D4100A38EEA /* GLTFMeshDecompression.h */; };
+		9224B4FD21647D4100A38EEA /* GLTFSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 9224B4F721647D4100A38EEA /* GLTFSDK.h */; };
+		9224B50121647E0D00A38EEA /* libdracoenc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B4FE21647E0D00A38EEA /* libdracoenc.a */; };
+		9224B50221647E0D00A38EEA /* libdraco.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B4FF21647E0D00A38EEA /* libdraco.a */; };
+		9224B50321647E0D00A38EEA /* libdracodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B50021647E0D00A38EEA /* libdracodec.a */; };
 		92F6FC0A213E409F005655E6 /* glTFConverter.info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 92F6FC09213E409F005655E6 /* glTFConverter.info.plist */; };
 		92F6FC0C213E4209005655E6 /* libGLTFSDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F6FC0B213E4209005655E6 /* libGLTFSDK.a */; };
 		92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC0D213E4238005655E6 /* GLTFSaver.h */; };
@@ -90,6 +102,18 @@
 		32DBCF630370AF2F00C91783 /* xplugins_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xplugins_Prefix.pch; sourceTree = "<group>"; };
 		9213EBA01B12E3E00023FEDA /* GlobalHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GlobalHeader.h; path = ../../source/GlobalHeader.h; sourceTree = "<group>"; };
 		9213EBA11B12E3E00023FEDA /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../source/main.cpp; sourceTree = "<group>"; };
+		9224B4EB21647D3100A38EEA /* Shade3DArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Shade3DArray.cpp; path = ../../source/Shade3DArray.cpp; sourceTree = "<group>"; };
+		9224B4EC21647D3100A38EEA /* BinStreamReaderWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BinStreamReaderWriter.h; path = ../../source/BinStreamReaderWriter.h; sourceTree = "<group>"; };
+		9224B4ED21647D3100A38EEA /* Shade3DArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Shade3DArray.h; path = ../../source/Shade3DArray.h; sourceTree = "<group>"; };
+		9224B4F221647D4100A38EEA /* AccessorUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AccessorUtils.h; sourceTree = "<group>"; };
+		9224B4F321647D4100A38EEA /* GLTFMeshCompression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GLTFMeshCompression.cpp; sourceTree = "<group>"; };
+		9224B4F421647D4100A38EEA /* GLTFMeshCompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLTFMeshCompression.h; sourceTree = "<group>"; };
+		9224B4F521647D4100A38EEA /* GLTFMeshDecompression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GLTFMeshDecompression.cpp; sourceTree = "<group>"; };
+		9224B4F621647D4100A38EEA /* GLTFMeshDecompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLTFMeshDecompression.h; sourceTree = "<group>"; };
+		9224B4F721647D4100A38EEA /* GLTFSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLTFSDK.h; sourceTree = "<group>"; };
+		9224B4FE21647E0D00A38EEA /* libdracoenc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdracoenc.a; path = ../../draco/lib/release/libdracoenc.a; sourceTree = "<group>"; };
+		9224B4FF21647E0D00A38EEA /* libdraco.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdraco.a; path = ../../draco/lib/release/libdraco.a; sourceTree = "<group>"; };
+		9224B50021647E0D00A38EEA /* libdracodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdracodec.a; path = ../../draco/lib/release/libdracodec.a; sourceTree = "<group>"; };
 		92F6FC09213E409F005655E6 /* glTFConverter.info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = glTFConverter.info.plist; path = plists/glTFConverter.info.plist; sourceTree = "<group>"; };
 		92F6FC0B213E4209005655E6 /* libGLTFSDK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLTFSDK.a; path = ../GLTFSDK/lib/release/libGLTFSDK.a; sourceTree = "<group>"; };
 		92F6FC0D213E4238005655E6 /* GLTFSaver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFSaver.h; path = ../../source/GLTFSaver.h; sourceTree = "<group>"; };
@@ -151,7 +175,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9224B50321647E0D00A38EEA /* libdracodec.a in Frameworks */,
+				9224B50121647E0D00A38EEA /* libdracoenc.a in Frameworks */,
 				FFE6EF791A6667E60006CB66 /* Foundation.framework in Frameworks */,
+				9224B50221647E0D00A38EEA /* libdraco.a in Frameworks */,
 				FFE6EF7A1A6667E60006CB66 /* Cocoa.framework in Frameworks */,
 				FFE6EF7B1A6667E60006CB66 /* SystemConfiguration.framework in Frameworks */,
 				FFE6EF7C1A6667E60006CB66 /* libiconv.dylib in Frameworks */,
@@ -180,6 +207,9 @@
 		089C1671FE841209C02AAC07 /* Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				9224B4FF21647E0D00A38EEA /* libdraco.a */,
+				9224B50021647E0D00A38EEA /* libdracodec.a */,
+				9224B4FE21647E0D00A38EEA /* libdracoenc.a */,
 				92F6FC0B213E4209005655E6 /* libGLTFSDK.a */,
 				C7A45C7D13DFD68B005C78EC /* Foundation.framework */,
 				C7A45C8313DFD69F005C78EC /* Cocoa.framework */,
@@ -248,6 +278,10 @@
 		4A3E5BC70B0029410006A4FF /* sources */ = {
 			isa = PBXGroup;
 			children = (
+				9224B4F121647D4100A38EEA /* glTFToolKit */,
+				9224B4EC21647D3100A38EEA /* BinStreamReaderWriter.h */,
+				9224B4EB21647D3100A38EEA /* Shade3DArray.cpp */,
+				9224B4ED21647D3100A38EEA /* Shade3DArray.h */,
 				92F6FC28213E423C005655E6 /* AnimationData.cpp */,
 				92F6FC0F213E4239005655E6 /* GLTFExporterInterface.cpp */,
 				92F6FC24213E423C005655E6 /* GLTFImporterInterface.cpp */,
@@ -273,6 +307,20 @@
 			name = sources;
 			sourceTree = "<group>";
 		};
+		9224B4F121647D4100A38EEA /* glTFToolKit */ = {
+			isa = PBXGroup;
+			children = (
+				9224B4F221647D4100A38EEA /* AccessorUtils.h */,
+				9224B4F321647D4100A38EEA /* GLTFMeshCompression.cpp */,
+				9224B4F421647D4100A38EEA /* GLTFMeshCompression.h */,
+				9224B4F521647D4100A38EEA /* GLTFMeshDecompression.cpp */,
+				9224B4F621647D4100A38EEA /* GLTFMeshDecompression.h */,
+				9224B4F721647D4100A38EEA /* GLTFSDK.h */,
+			);
+			name = glTFToolKit;
+			path = ../../source/glTFToolKit;
+			sourceTree = "<group>";
+		};
 		B8F429BB04BCB35A00A80009 /* plists */ = {
 			isa = PBXGroup;
 			children = (
@@ -290,11 +338,14 @@
 			files = (
 				92F6FC48213E423F005655E6 /* ImagesBlend.h in Headers */,
 				9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */,
+				9224B4F021647D3100A38EEA /* Shade3DArray.h in Headers */,
 				92F6FC40213E423F005655E6 /* ImageData.h in Headers */,
 				92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */,
 				92F6FC44213E423F005655E6 /* Shade3DUtil.h in Headers */,
 				92F6FC56213E423F005655E6 /* MaterialData.h in Headers */,
+				9224B4EF21647D3100A38EEA /* BinStreamReaderWriter.h in Headers */,
 				92F6FC39213E423F005655E6 /* GLTFLoader.h in Headers */,
+				9224B4F821647D4100A38EEA /* AccessorUtils.h in Headers */,
 				92F6FC4A213E423F005655E6 /* StringUtil.h in Headers */,
 				92F6FC3D213E423F005655E6 /* StreamCtrl.h in Headers */,
 				92F6FC4E213E423F005655E6 /* MathUtil.h in Headers */,
@@ -305,10 +356,13 @@
 				92F6FC4F213E423F005655E6 /* MorphTargetsData.h in Headers */,
 				92F6FC4B213E423F005655E6 /* LicenseDialogInterface.h in Headers */,
 				92F6FC55213E423F005655E6 /* AnimationData.h in Headers */,
+				9224B4FC21647D4100A38EEA /* GLTFMeshDecompression.h in Headers */,
 				92F6FC47213E423F005655E6 /* GLTFExporterInterface.h in Headers */,
 				92F6FC41213E423F005655E6 /* MotionExternalAccess.h in Headers */,
 				92F6FC49213E423F005655E6 /* OcclusionShaderInterface.h in Headers */,
+				9224B4FD21647D4100A38EEA /* GLTFSDK.h in Headers */,
 				92F6FC53213E423F005655E6 /* ShapeStack.h in Headers */,
+				9224B4FA21647D4100A38EEA /* GLTFMeshCompression.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +452,7 @@
 				92F6FC46213E423F005655E6 /* StringUtil.cpp in Sources */,
 				92F6FC3C213E423F005655E6 /* MeshData.cpp in Sources */,
 				9213EBA71B12E3E00023FEDA /* main.cpp in Sources */,
+				9224B4FB21647D4100A38EEA /* GLTFMeshDecompression.cpp in Sources */,
 				92F6FC51213E423F005655E6 /* MaterialData.cpp in Sources */,
 				92F6FC58213E423F005655E6 /* SkinData.cpp in Sources */,
 				92F6FC37213E423F005655E6 /* GLTFExporterInterface.cpp in Sources */,
@@ -406,9 +461,11 @@
 				92F6FC50213E423F005655E6 /* AnimationData.cpp in Sources */,
 				92F6FC52213E423F005655E6 /* MotionExternalAccess.cpp in Sources */,
 				92F6FC3F213E423F005655E6 /* Shade3DUtil.cpp in Sources */,
+				9224B4F921647D4100A38EEA /* GLTFMeshCompression.cpp in Sources */,
 				92F6FC5A213E423F005655E6 /* ShapeStack.cpp in Sources */,
 				FFE6EF741A6667E60006CB66 /* debug.cpp in Sources */,
 				92F6FC45213E423F005655E6 /* LicenseDialogInterface.cpp in Sources */,
+				9224B4EE21647D3100A38EEA /* Shade3DArray.cpp in Sources */,
 				92F6FC59213E423F005655E6 /* ImageData.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -453,7 +510,8 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
+				VALID_ARCHS = x86_64;
 			};
 			name = Development;
 		};
@@ -481,7 +539,8 @@
 				);
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
+				VALID_ARCHS = x86_64;
 			};
 			name = Deployment;
 		};
@@ -510,7 +569,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = NO;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
+				VALID_ARCHS = x86_64;
 			};
 			name = Default;
 		};
@@ -532,15 +592,19 @@
 					"$(INCLUDEPATH)/openexr-1.6.1/macos",
 					"$(INCLUDEPATH)/openexr-1.6.1/**",
 					../GLTFSDK/include,
+					../../draco/src,
 				);
 				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_SEARCH_PATHS = (
+					../GLTFSDK/lib/Release,
+					../../draco/lib/release,
+				);
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = glTFConverter;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-w";
 				WRAPPER_EXTENSION = shdplugin;
@@ -564,16 +628,20 @@
 					"$(INCLUDEPATH)/openexr-1.6.1/macos",
 					"$(INCLUDEPATH)/openexr-1.6.1/**",
 					../GLTFSDK/include,
+					../../draco/src,
 				);
 				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_SEARCH_PATHS = (
+					../GLTFSDK/lib/Release,
+					../../draco/lib/release,
+				);
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				"MACOSX_DEPLOYMENT_TARGET[arch=i386]" = 10.11;
 				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.11;
 				PRODUCT_NAME = glTFConverter;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-w";
 				WRAPPER_EXTENSION = shdplugin;
@@ -597,14 +665,18 @@
 					"$(INCLUDEPATH)/openexr-1.6.1/macos",
 					"$(INCLUDEPATH)/openexr-1.6.1/**",
 					../GLTFSDK/include,
+					../../draco/src,
 				);
 				INFOPLIST_FILE = plists/glTFConverter.Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = ../GLTFSDK/lib/Release;
+				LIBRARY_SEARCH_PATHS = (
+					../GLTFSDK/lib/Release,
+					../../draco/lib/release,
+				);
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = glTFConverter;
-				SDKROOT = macosx10.13;
+				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-w";
 				WRAPPER_EXTENSION = shdplugin;
