@@ -59,8 +59,9 @@ void CTempMeshData::clear ()
 
 /**
  * 最適化 (不要頂点の除去など).
+ * @param[in]  removeUnusedVertices   未使用頂点を削除する場合はtrue.
  */
-void CTempMeshData::optimize ()
+void CTempMeshData::optimize (const bool removeUnusedVertices)
 {
 	// 面積が0の面を削除.
 	{
@@ -117,7 +118,7 @@ void CTempMeshData::optimize ()
 	}
 
 	// 不要頂点を削除.
-	{
+	if (removeUnusedVertices) {
 		const size_t versCou = vertices.size();
 
 		std::vector<int> useVersList;
@@ -397,11 +398,12 @@ void CPrimitiveData::calcBoundingBox (sxsdk::vec3& bbMin, sxsdk::vec3& bbMax) co
 /**
  * CTempMeshDataからコンバート(フェイスグループを考慮して分離).
  * @param[in]  tempMeshData        作業用のメッシュ情報.
+ * @param[in]  shareVerticesMesh   頂点情報を共有する場合はtrue.
  * @param[out] primitiveData       プリミティブ情報が返る.
  * @param[out] faceGroupIndexList  プリミティブごとのフェイスグループ番号が返る.
  * @return メッシュの数.
  */
-int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList)
+int CPrimitiveData::convert (const CTempMeshData& tempMeshData, const bool shareVerticesMesh, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList)
 {
 	// 使用しているフェイスグループ番号を取得.
 	faceGroupIndexList.clear();
@@ -414,19 +416,17 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 	}
 
 	primitivesData.clear();
-	for (size_t fgLoop = 0; fgLoop < faceGroupIndexList.size(); ++fgLoop) {
-		const int faceGroupIndex = faceGroupIndexList[fgLoop];
-
+	if (shareVerticesMesh) {		// 1Meshで複数Primitiveの頂点を共有する場合.
 		CTempMeshData tempMeshD;
 		tempMeshD.name             = tempMeshData.name;
 		tempMeshD.vertices         = tempMeshData.vertices;
 		tempMeshD.skinWeights      = tempMeshData.skinWeights;
 		tempMeshD.skinJointsHandle = tempMeshData.skinJointsHandle;
 		tempMeshD.morphTargets     = tempMeshData.morphTargets;
+		tempMeshD.faceGroupMaterialIndex.resize(triCou, 0);
 
 		for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-			const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
-			if (fgIndex != faceGroupIndex) continue;
+			tempMeshD.faceGroupMaterialIndex[i] = tempMeshData.triangleFaceGroupIndex[i];
 			{
 				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 0]);
 				tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 1]);
@@ -457,9 +457,85 @@ int CPrimitiveData::convert (const CTempMeshData& tempMeshData, std::vector<CPri
 		// 不要頂点の除去.
 		tempMeshD.optimize();
 
-		primitivesData.push_back(CPrimitiveData());
-		CPrimitiveData& primitiveD = primitivesData.back();
-		primitiveD.convert(tempMeshD);
+		CPrimitiveData primitiveAllD;
+		primitiveAllD.convert(tempMeshD);
+
+		// 面のフェイスグループ番号ごとに分離して格納.
+		for (size_t fgLoop = 0; fgLoop < faceGroupIndexList.size(); ++fgLoop) {
+			const int faceGroupIndex = faceGroupIndexList[fgLoop];
+
+			primitivesData.push_back(CPrimitiveData());
+			CPrimitiveData& primitiveD = primitivesData.back();
+
+			if (fgLoop == 0) {
+				primitiveD.name             = tempMeshD.name;
+				primitiveD.vertices         = primitiveAllD.vertices;
+				primitiveD.normals          = primitiveAllD.normals;
+				primitiveD.uv0              = primitiveAllD.uv0;
+				primitiveD.uv1              = primitiveAllD.uv1;
+				primitiveD.color0           = primitiveAllD.color0;
+				primitiveD.skinWeights      = primitiveAllD.skinWeights;
+				primitiveD.skinJointsHandle = primitiveAllD.skinJointsHandle;
+				primitiveD.morphTargets     = primitiveAllD.morphTargets;
+			}
+			const size_t triCou = primitiveAllD.triangleIndices.size() / 3;
+			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				const int fgIndex = tempMeshD.faceGroupMaterialIndex[i];
+				if (fgIndex != faceGroupIndex) continue;
+				primitiveD.triangleIndices.push_back(primitiveAllD.triangleIndices[iPos + 0]);
+				primitiveD.triangleIndices.push_back(primitiveAllD.triangleIndices[iPos + 1]);
+				primitiveD.triangleIndices.push_back(primitiveAllD.triangleIndices[iPos + 2]);
+			}
+		}
+
+	} else {						// 複数Primitiveで独自の頂点に分離する場合.
+		for (size_t fgLoop = 0; fgLoop < faceGroupIndexList.size(); ++fgLoop) {
+			const int faceGroupIndex = faceGroupIndexList[fgLoop];
+
+			CTempMeshData tempMeshD;
+			tempMeshD.name             = tempMeshData.name;
+			tempMeshD.vertices         = tempMeshData.vertices;
+			tempMeshD.skinWeights      = tempMeshData.skinWeights;
+			tempMeshD.skinJointsHandle = tempMeshData.skinJointsHandle;
+			tempMeshD.morphTargets     = tempMeshData.morphTargets;
+
+			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+				const int fgIndex = tempMeshData.triangleFaceGroupIndex[i];
+				if (fgIndex != faceGroupIndex) continue;
+				{
+					tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 0]);
+					tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 1]);
+					tempMeshD.triangleIndices.push_back(tempMeshData.triangleIndices[iPos + 2]);
+				}
+				if (!tempMeshData.triangleNormals.empty()) {
+					tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 0]);
+					tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 1]);
+					tempMeshD.triangleNormals.push_back(tempMeshData.triangleNormals[iPos + 2]);
+				}
+				if (!tempMeshData.triangleUV0.empty()) {
+					tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 0]);
+					tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 1]);
+					tempMeshD.triangleUV0.push_back(tempMeshData.triangleUV0[iPos + 2]);
+				}
+				if (!tempMeshData.triangleUV1.empty()) {
+					tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 0]);
+					tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 1]);
+					tempMeshD.triangleUV1.push_back(tempMeshData.triangleUV1[iPos + 2]);
+				}
+				if (!tempMeshData.triangleColor0.empty()) {
+					tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 0]);
+					tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 1]);
+					tempMeshD.triangleColor0.push_back(tempMeshData.triangleColor0[iPos + 2]);
+				}
+			}
+
+			// 不要頂点の除去.
+			tempMeshD.optimize();
+
+			primitivesData.push_back(CPrimitiveData());
+			CPrimitiveData& primitiveD = primitivesData.back();
+			primitiveD.convert(tempMeshD);
+		}
 	}
 
 	return (int)primitivesData.size();

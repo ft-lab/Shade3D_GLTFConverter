@@ -21,6 +21,7 @@ enum
 	dlg_output_animation_id = 104,			// アニメーションを出力.
 	dlg_output_draco_compression_id = 105,	// Draco圧縮.
 	dlg_output_max_texture_size_id = 106,	// 最大テクスチャサイズ.
+	dlg_output_share_vertices_mesh_id = 107,	// Mesh内のPrimitiveの頂点情報を共有.
 
 	dlg_asset_title_id = 201,				// タイトル.
 	dlg_asset_author_id = 202,				// 制作者.
@@ -625,7 +626,7 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 	// フェイスグループごとにメッシュを分離.
 	std::vector<CPrimitiveData> primitivesDataList;
 	std::vector<int> faceGroupIndexList;
-	const int primitivesCou = CPrimitiveData::convert(m_meshData, primitivesDataList, faceGroupIndexList);
+	const int primitivesCou = CPrimitiveData::convert(m_meshData, m_exportParam.shareVerticesMesh, primitivesDataList, faceGroupIndexList);
 	if (primitivesCou == 0) return;
 
 	// マテリアル情報を格納.
@@ -780,6 +781,11 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 	}
 	{
 		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_share_vertices_mesh_id));
+		item->set_bool(m_exportParam.shareVerticesMesh);
+	}
+	{
+		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_asset_title_id));
 		item->set_string(m_exportParam.assetExtrasTitle.c_str());
 	}
@@ -862,6 +868,11 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_output_max_texture_size_id) {
 		m_exportParam.maxTextureSize = (GLTFConverter::export_max_texture_size)item.get_selection();
+		return true;
+	}
+
+	if (id == dlg_output_share_vertices_mesh_id) {
+		m_exportParam.shareVerticesMesh = item.get_bool();
 		return true;
 	}
 

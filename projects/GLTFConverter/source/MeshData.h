@@ -66,8 +66,9 @@ public:
 
 	/**
 	 * 最適化 (不要頂点の除去など).
+	 * @param[in]  removeUnusedVertices   未使用頂点を削除する場合はtrue.
 	 */
-	void optimize ();
+	void optimize (const bool removeUnusedVertices = true);
 };
 
 //---------------------------------------------------------------.
@@ -127,11 +128,12 @@ public:
 	/**
 	 * CTempMeshDataからコンバート(フェイスグループを考慮して分離).
 	 * @param[in]  tempMeshData        作業用のメッシュ情報.
+	 * @param[in]  shareVerticesMesh   頂点情報を共有する場合はtrue.
      * @param[out] primitivesData      プリミティブ情報が返る.
 	 * @param[out] faceGroupIndexList  プリミティブごとのフェイスグループ番号が返る.
 	 * @return メッシュの数.
 	 */
-	static int convert (const CTempMeshData& tempMeshData, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList);
+	static int convert (const CTempMeshData& tempMeshData, const bool shareVerticesMesh, std::vector<CPrimitiveData>& primitivesData, std::vector<int>& faceGroupIndexList);
 
 	/**
 	 * 頂点座標のバウンディングボックスを計算.

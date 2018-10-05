@@ -246,6 +246,9 @@ namespace {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return 0;
 
+		// Mesh内のPrimitiveの頂点を共有するかどうか.
+		bool shareVerticesMesh = sceneData->exportParam.shareVerticesMesh;
+
 		int accessorID = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
 			const CMeshData& meshD = sceneData->getMeshData(meshLoop);
@@ -275,37 +278,79 @@ namespace {
 				}
 
 				meshPrimitive.indicesAccessorId = std::to_string(accessorID++);
-				meshPrimitive.attributes[ACCESSOR_NORMAL] = std::to_string(accessorID++);
-				meshPrimitive.attributes[ACCESSOR_POSITION] = std::to_string(accessorID++);
-				if (!primitiveD.uv0.empty()) {
-					meshPrimitive.attributes[ACCESSOR_TEXCOORD_0] = std::to_string(accessorID++);
-				}
-				if (!primitiveD.uv1.empty()) {
-					meshPrimitive.attributes[ACCESSOR_TEXCOORD_1] = std::to_string(accessorID++);
+				if (shareVerticesMesh && primLoop > 0) {	// Mesh内のPrimitiveの頂点情報を共有する.
+					const CPrimitiveData& primitiveD0 = meshD.primitives[0];
 
-				}
-				if (!primitiveD.color0.empty()) {
-					meshPrimitive.attributes[ACCESSOR_COLOR_0] = std::to_string(accessorID++);
+					if (!primitiveD0.normals.empty()) {
+						meshPrimitive.attributes[ACCESSOR_NORMAL]     = mesh.primitives[0].attributes[ACCESSOR_NORMAL];
+					}
+					if (!primitiveD0.vertices.empty()) {
+						meshPrimitive.attributes[ACCESSOR_POSITION]   = mesh.primitives[0].attributes[ACCESSOR_POSITION];
+					}
+					if (!primitiveD0.uv0.empty()) {
+						meshPrimitive.attributes[ACCESSOR_TEXCOORD_0] = mesh.primitives[0].attributes[ACCESSOR_TEXCOORD_0];
+					}
+					if (!primitiveD0.uv1.empty()) {
+						meshPrimitive.attributes[ACCESSOR_TEXCOORD_1] = mesh.primitives[0].attributes[ACCESSOR_TEXCOORD_1];
+					}
+					if (!primitiveD0.color0.empty()) {
+						meshPrimitive.attributes[ACCESSOR_COLOR_0]    = mesh.primitives[0].attributes[ACCESSOR_COLOR_0];
+					}
+					if (!primitiveD0.skinJoints.empty()) {
+						meshPrimitive.attributes[ACCESSOR_JOINTS_0]   = mesh.primitives[0].attributes[ACCESSOR_JOINTS_0];
+					}
+					if (!primitiveD0.skinWeights.empty()) {
+						meshPrimitive.attributes[ACCESSOR_WEIGHTS_0]  = mesh.primitives[0].attributes[ACCESSOR_WEIGHTS_0];
+					}
 
-				}
-				if (!primitiveD.skinJoints.empty()) {
-					meshPrimitive.attributes[ACCESSOR_JOINTS_0] = std::to_string(accessorID++);
-				}
-				if (!primitiveD.skinWeights.empty()) {
-					meshPrimitive.attributes[ACCESSOR_WEIGHTS_0] = std::to_string(accessorID++);
-				}
-				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
-					const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
-					for (size_t tLoop = 0; tLoop < morphTargetsD.morphTargetsData.size(); ++tLoop) {
-						const COneMorphTargetData& mTargetD = morphTargetsD.morphTargetsData[tLoop];
-						meshPrimitive.targets.push_back(MorphTarget());
-						MorphTarget& dstTarget = meshPrimitive.targets.back();
-						dstTarget.positionsAccessorId = std::to_string(accessorID++);
-						if (!mTargetD.normal.empty()) dstTarget.normalsAccessorId = std::to_string(accessorID++);
-						//if (!mTargetD.tangent.empty()) dstTarget.tangentsAccessorId = std::to_string(accessorID++);
+				} else {
+					meshPrimitive.attributes[ACCESSOR_NORMAL] = std::to_string(accessorID++);
+					meshPrimitive.attributes[ACCESSOR_POSITION] = std::to_string(accessorID++);
+					if (!primitiveD.uv0.empty()) {
+						meshPrimitive.attributes[ACCESSOR_TEXCOORD_0] = std::to_string(accessorID++);
+					}
+					if (!primitiveD.uv1.empty()) {
+						meshPrimitive.attributes[ACCESSOR_TEXCOORD_1] = std::to_string(accessorID++);
 
-						// mesh内のすべてのprimitiveは、同一のMorph Targets数でウエイト値も同じという仕様.
-						if (primLoop == 0) weights.push_back(mTargetD.weight);
+					}
+					if (!primitiveD.color0.empty()) {
+						meshPrimitive.attributes[ACCESSOR_COLOR_0] = std::to_string(accessorID++);
+
+					}
+					if (!primitiveD.skinJoints.empty()) {
+						meshPrimitive.attributes[ACCESSOR_JOINTS_0] = std::to_string(accessorID++);
+					}
+					if (!primitiveD.skinWeights.empty()) {
+						meshPrimitive.attributes[ACCESSOR_WEIGHTS_0] = std::to_string(accessorID++);
+					}
+				}
+
+				if (!primitiveD.morphTargets.morphTargetsData.empty() || (shareVerticesMesh && primLoop > 0)) {
+					if (shareVerticesMesh && primLoop > 0) {
+						// 1番目のprimitive以降は0番目のtargetを複製.
+						const CPrimitiveData& primitiveD0 = meshD.primitives[0];
+						if (!primitiveD0.morphTargets.morphTargetsData.empty()) {
+							const CMorphTargetsData& morphTargetsD0 = primitiveD0.morphTargets;
+							for (size_t tLoop = 0; tLoop < morphTargetsD0.morphTargetsData.size(); ++tLoop) {
+								meshPrimitive.targets.push_back(MorphTarget());
+								MorphTarget& dstTarget = meshPrimitive.targets.back();
+								dstTarget.positionsAccessorId = mesh.primitives[0].targets[tLoop].positionsAccessorId;
+								dstTarget.normalsAccessorId   = mesh.primitives[0].targets[tLoop].normalsAccessorId;
+							}
+						}
+					} else {
+						const CMorphTargetsData& morphTargetsD = primitiveD.morphTargets;
+						for (size_t tLoop = 0; tLoop < morphTargetsD.morphTargetsData.size(); ++tLoop) {
+							const COneMorphTargetData& mTargetD = morphTargetsD.morphTargetsData[tLoop];
+							meshPrimitive.targets.push_back(MorphTarget());
+							MorphTarget& dstTarget = meshPrimitive.targets.back();
+							dstTarget.positionsAccessorId = std::to_string(accessorID++);
+							if (!mTargetD.normal.empty()) dstTarget.normalsAccessorId = std::to_string(accessorID++);
+							//if (!mTargetD.tangent.empty()) dstTarget.tangentsAccessorId = std::to_string(accessorID++);
+
+							// mesh内のすべてのprimitiveは、同一のMorph Targets数でウエイト値も同じという仕様.
+							if (primLoop == 0) weights.push_back(mTargetD.weight);
+						}
 					}
 				}
 
@@ -331,6 +376,9 @@ namespace {
 	void setBufferData_to_BufferBuilder (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder) {
 		const size_t meshCou = sceneData->meshes.size();
 		if (meshCou == 0) return;
+
+		// Mesh内のPrimitiveの頂点を共有するかどうか.
+		bool shareVerticesMesh = sceneData->exportParam.shareVerticesMesh;
 
 		int accessorID = 0;
 		size_t byteOffset = 0;
@@ -377,7 +425,7 @@ namespace {
 				}
 
 				// normalsAccessor.
-				{
+				if (primLoop == 0 || !shareVerticesMesh) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC3;
 					acceDesc.componentType = COMPONENT_FLOAT;
@@ -394,7 +442,7 @@ namespace {
 				}
 
 				// positionsAccessor.
-				{
+				if (primLoop == 0 || !shareVerticesMesh) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC3;
 					acceDesc.componentType = COMPONENT_FLOAT;
@@ -417,7 +465,7 @@ namespace {
 				}
 
 				// uv0Accessor.
-				if (!primitiveD.uv0.empty()) {
+				if (!primitiveD.uv0.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC2;
 					acceDesc.componentType = COMPONENT_FLOAT;
@@ -434,7 +482,7 @@ namespace {
 				}
 
 				// uv1Accessor.
-				if (!primitiveD.uv1.empty()) {
+				if (!primitiveD.uv1.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC2;
 					acceDesc.componentType = COMPONENT_FLOAT;
@@ -451,7 +499,7 @@ namespace {
 				}
 
 				// color0Accessor.
-				if (!primitiveD.color0.empty()) {
+				if (!primitiveD.color0.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC4;
 					acceDesc.componentType = COMPONENT_UNSIGNED_BYTE;
@@ -469,7 +517,7 @@ namespace {
 				}
 
 				// SkinのJoints.
-				if (!primitiveD.skinJoints.empty()) {
+				if (!primitiveD.skinJoints.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					// short型で格納.
 					const bool storeUShort = (primitiveD.skinJoints.size() < 65530);
 
@@ -511,7 +559,7 @@ namespace {
 				}
 
 				// SkinのWeights.
-				if (!primitiveD.skinWeights.empty()) {
+				if (!primitiveD.skinWeights.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					AccessorDesc acceDesc;
 					acceDesc.accessorType  = TYPE_VEC4;
 					acceDesc.componentType = COMPONENT_FLOAT;
@@ -529,7 +577,7 @@ namespace {
 
 				// Morph Targets情報を格納.
 				// Targetとして格納する頂点数は、primitiveの頂点数と同じである必要がある.
-				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
+				if (!primitiveD.morphTargets.morphTargetsData.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					const size_t primVersCou = primitiveD.vertices.size();
 					std::vector<sxsdk::vec3> vec3List, vec4List;
 					vec3List.resize(primVersCou);
@@ -733,6 +781,9 @@ namespace {
 			binWriter.reset(new GLTFResourceWriter(std::move(binStreamWriter)));
 		}
 
+		// Mesh内のPrimitiveの頂点を共有するかどうか.
+		bool shareVerticesMesh = sceneData->exportParam.shareVerticesMesh;
+
 		int accessorID = 0;
 		size_t byteOffset = 0;
 		for (size_t meshLoop = 0; meshLoop < meshCou; ++meshLoop) {
@@ -792,7 +843,7 @@ namespace {
 				}
 
 				// normalsAccessor.
-				{
+				if (primLoop == 0 || !shareVerticesMesh) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -817,7 +868,7 @@ namespace {
 				}
 
 				// positionsAccessor.
-				{
+				if (primLoop == 0 || !shareVerticesMesh) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -848,7 +899,7 @@ namespace {
 				}
 
 				// uv0Accessor.
-				if (!primitiveD.uv0.empty()) {
+				if (!primitiveD.uv0.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -873,7 +924,7 @@ namespace {
 				}
 
 				// uv1Accessor.
-				if (!primitiveD.uv1.empty()) {
+				if (!primitiveD.uv1.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -898,7 +949,7 @@ namespace {
 				}
 
 				// color0Accessor.
-				if (!primitiveD.color0.empty()) {
+				if (!primitiveD.color0.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -927,7 +978,7 @@ namespace {
 				}
 
 				// SkinのJoints.
-				if (!primitiveD.skinJoints.empty()) {
+				if (!primitiveD.skinJoints.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					// short型で格納.
 					const bool storeUShort = (primitiveD.skinJoints.size() < 65530);
 
@@ -977,7 +1028,7 @@ namespace {
 				}
 
 				// SkinのWeights.
-				if (!primitiveD.skinWeights.empty()) {
+				if (!primitiveD.skinWeights.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					Accessor acce;
 					acce.id             = std::to_string(accessorID);
 					acce.bufferViewId   = std::to_string(accessorID);
@@ -1011,7 +1062,7 @@ namespace {
 				}
 
 				// Morph Targets.
-				if (!primitiveD.morphTargets.morphTargetsData.empty()) {
+				if (!primitiveD.morphTargets.morphTargetsData.empty() && (primLoop == 0 || !shareVerticesMesh)) {
 					const size_t primVersCou = primitiveD.vertices.size();
 					std::vector<sxsdk::vec3> vec3List, vec4List;
 					vec3List.resize(primVersCou);

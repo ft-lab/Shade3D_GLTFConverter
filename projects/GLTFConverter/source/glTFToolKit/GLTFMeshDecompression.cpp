@@ -428,6 +428,7 @@ bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::stri
 
 			if (gltfDoc.extensionsUsed.size() == 0) return false;
 			auto extUsedV = gltfDoc.extensionsUsed.find(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
+			if (extUsedV == gltfDoc.extensionsUsed.end()) return false;
 			if (*extUsedV != KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME) return false;
 
 		} catch (GLTFException e) {

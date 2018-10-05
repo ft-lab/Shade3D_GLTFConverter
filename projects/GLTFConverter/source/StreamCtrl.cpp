@@ -140,6 +140,12 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 			stream->write_int(iDat);
 		}
 
+		// ver.0.2.0.3 - 
+		{
+			iDat = data.shareVerticesMesh ? 1 : 0;
+			stream->write_int(iDat);
+		}
+
 	} catch (...) { }
 }
 
@@ -204,6 +210,14 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 			{
 				stream->read_int(iDat);
 				data.maxTextureSize = (GLTFConverter::export_max_texture_size)iDat;
+			}
+		}
+
+		// ver.0.2.0.2 - 
+		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_102) {
+			{
+				stream->read_int(iDat);
+				data.shareVerticesMesh = iDat ? true : false;
 			}
 		}
 

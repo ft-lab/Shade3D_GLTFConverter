@@ -19,7 +19,8 @@
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
 
-#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x101
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x102
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_102	0x102
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_101	0x101
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_100	0x100
 
@@ -107,12 +108,12 @@ public:
 	bool outputVertexColor;									// 頂点カラーを出力.
 	bool outputAnimation;									// アニメーションを出力.
 	bool dracoCompression;									// Draco圧縮.
+	bool shareVerticesMesh;									// Mesh内のPrimitiveの頂点情報を共有.
 
 	std::string assetExtrasTitle;							// タイトル.
 	std::string assetExtrasAuthor;							// 作成者.
 	std::string assetExtrasLicense;							// ライセンス.
 	std::string assetExtrasSource;							// オリジナルモデルの参照先.
-
 
 public:
 	CExportDlgParam () {
@@ -127,6 +128,7 @@ public:
 		outputVertexColor   = true;
 		outputAnimation     = true;
 		dracoCompression    = false;
+		shareVerticesMesh   = true;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";
