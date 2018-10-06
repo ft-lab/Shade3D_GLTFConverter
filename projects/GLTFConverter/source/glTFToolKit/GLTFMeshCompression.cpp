@@ -181,6 +181,16 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
 				indices.resize(indices2.size());
 				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
 
+			} else if (indiciesAccessor.componentType == COMPONENT_BYTE) {
+				auto indices2 = glbReader->ReadBinaryData<int8_t>(doc, indiciesAccessor);
+				indices.resize(indices2.size());
+				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
+
+			} else if (indiciesAccessor.componentType == COMPONENT_UNSIGNED_BYTE) {
+				auto indices2 = glbReader->ReadBinaryData<uint8_t>(doc, indiciesAccessor);
+				indices.resize(indices2.size());
+				for (size_t i = 0; i < indices.size(); ++i) indices[i] = (uint32_t)indices2[i];
+
 			} else if (indiciesAccessor.componentType == COMPONENT_UNSIGNED_INT) {
 				indices = glbReader->ReadBinaryData<uint32_t>(doc, indiciesAccessor);
 			}
