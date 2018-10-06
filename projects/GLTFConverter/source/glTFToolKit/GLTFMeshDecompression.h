@@ -72,7 +72,7 @@ namespace glTFToolKit {
 		 * @param[in]  gltfFileName  gltf/glbのファイル名.
 		 * @param[out] meshDataList  メッシュ情報が展開されて入る.
 		 */
-		static bool doDracoDecompress (const std::string gltfFileName, std::vector<DecompressMeshData>& meshDataList);
+		static bool doDracoDecompress (const std::string gltfFileName, std::vector<DecompressMeshData>& meshDataList, std::string& errorStr);
 	};
 }
 

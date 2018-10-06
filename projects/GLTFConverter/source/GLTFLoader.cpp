@@ -1392,7 +1392,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 	// draco圧縮された情報を展開して取得.
 	std::vector<glTFToolKit::DecompressMeshData> dracoMeshDataList;
-	glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress(fileName2, dracoMeshDataList);
+	if (!glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress(fileName2, dracoMeshDataList, g_errorMessage)) {
+		return false;
+	}
 
 	// fileNameがglb(vrm)ファイルかどうか.
 	const bool glbFile = (StringUtil::getFileExtension(fileName) == std::string("glb") || StringUtil::getFileExtension(fileName) == std::string("vrm"));

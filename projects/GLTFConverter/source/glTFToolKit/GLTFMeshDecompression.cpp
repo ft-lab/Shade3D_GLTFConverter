@@ -100,7 +100,7 @@ namespace {
 	/**
 	 * メッシュ情報を展開.
 	 */
-	bool decompressMeshes (GLBResourceReader* glbReader, std::shared_ptr<IStreamReader> streamReader, Document& doc, std::vector<glTFToolKit::DecompressMeshData>& meshDataList) {
+	bool decompressMeshes (GLBResourceReader* glbReader, std::shared_ptr<IStreamReader> streamReader, Document& doc, std::vector<glTFToolKit::DecompressMeshData>& meshDataList, std::string& errorStr) {
 		meshDataList.clear();
 		GLTFResourceReader reader(streamReader);
 
@@ -149,7 +149,10 @@ namespace {
 
 				// メッシュ情報を展開.
 				auto meshBuffer = decoder.DecodeMeshFromBuffer(&buffer);
-				if (!meshBuffer.ok()) return false;
+				if (!meshBuffer.ok()) {
+					errorStr = std::string("draco : ") + meshBuffer.status().error_msg_string();
+					return false;
+				}
 				std::unique_ptr<draco::Mesh> in_mesh = std::move(meshBuffer).value();
 
 				std::unique_ptr<draco::PointCloud> pc;
@@ -362,7 +365,10 @@ namespace {
 						continue;
 					}
 				}
-				if (errF) return false;
+				if (errF) {
+					errorStr = std::string("draco : read failed.");
+					return false;
+				}
 			}
 		}
 		return true;
@@ -375,8 +381,9 @@ namespace {
  * @param[out] meshDataList  メッシュ情報が展開されて入る.
 
  */
-bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::string gltfFileName, std::vector<DecompressMeshData>& meshDataList)
+bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::string gltfFileName, std::vector<DecompressMeshData>& meshDataList, std::string& errorStr)
 {
+	errorStr = "";
 	meshDataList.clear();
 	const std::string fileDir2  = StringUtil::getFileDir(gltfFileName);
 	const std::string fileName2 = StringUtil::getFileName(gltfFileName);
@@ -391,7 +398,6 @@ bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::stri
 		std::shared_ptr<GLBResourceReader> glbReader;
 		std::shared_ptr<BinStreamReader> binStreamReader;
 
-		std::string errStr = "";
 		try {
 			std::string jsonStr = "";
 
@@ -408,7 +414,10 @@ bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::stri
 			} else {
 				// gltfファイルを読み込み.
 				std::ifstream gltfStream(gltfFileName);
-				if (!gltfStream) return false;
+				if (!gltfStream) {
+					errorStr = "glb file could not be loaded.";
+					return false;
+				}
 
 				// json部を取得.
 				jsonStr = "";
@@ -420,32 +429,39 @@ bool glTFToolKit::GLTFMeshDecompressionUtils::doDracoDecompress (const std::stri
 					}
 				}
 			}
-			if (jsonStr == "") return false;
+			if (jsonStr == "") {
+				errorStr = "glb file could not be loaded.";
+				return false;
+			}
 
 			// jsonデータをパース.
 			const auto extensionDeserializer = KHR::GetKHRExtensionDeserializer();
 			gltfDoc = Deserialize(jsonStr, extensionDeserializer);
 
-			if (gltfDoc.extensionsUsed.size() == 0) return false;
+			// dracoの情報がないかチェック.
+			if (gltfDoc.extensionsUsed.size() == 0) return true;
 			auto extUsedV = gltfDoc.extensionsUsed.find(KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME);
-			if (extUsedV == gltfDoc.extensionsUsed.end()) return false;
-			if (*extUsedV != KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME) return false;
+			if (extUsedV == gltfDoc.extensionsUsed.end()) return true;
+			if (*extUsedV != KHR::MeshPrimitives::DRACOMESHCOMPRESSION_NAME) return true;
 
 		} catch (GLTFException e) {
-			errStr = std::string(e.what());
+			errorStr = std::string(e.what());
 			return false;
 		} catch (...) {
-			errStr = std::string("glb file could not be loaded.");
+			errorStr = std::string("glb file could not be loaded.");
 			return false;
 		}
-		if (gltfDoc.buffers.Size() == 0) return false;
+		if (gltfDoc.buffers.Size() == 0) {
+			errorStr = std::string("glb file has not buffers.");
+			return false;
+		}
 
 		if (!glbFile) {
 			binStreamReader.reset(new BinStreamReader(fileDir2));
 		}
 
 		// Mesh情報を取得.
-		if (!decompressMeshes(glbReader.get(), binStreamReader, gltfDoc, meshDataList)) return false;
+		if (!decompressMeshes(glbReader.get(), binStreamReader, gltfDoc, meshDataList, errorStr)) return false;
 	}
 
 	return true;

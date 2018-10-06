@@ -153,6 +153,10 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
     draco::Encoder encoder;
     SetEncoderOptions(encoder, options);
 
+	// 格納したAccessorの判断用.
+	std::vector<bool> storedAccessors;
+	storedAccessors.resize(doc.accessors.Size(), false);
+
     Mesh resultMesh(mesh);
     resultMesh.primitives.clear();
     for (const auto& primitive : mesh.primitives)
@@ -203,6 +207,7 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
         for (const auto& attribute : primitive.attributes)
         {
             const auto& accessor = doc.accessors[attribute.second];
+			const int accessorID = std::stoi(attribute.second);
             Accessor attributeAccessor(accessor);
             int attId;
             switch (accessor.componentType)
@@ -216,10 +221,13 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
             default: throw GLTFException("Unknown component type.");
             }
             
-            bufferViewsToRemove.emplace(accessor.bufferViewId);
-            attributeAccessor.bufferViewId = "";
-            attributeAccessor.byteOffset = 0;
-            resultDocument.accessors.Replace(attributeAccessor);
+			if (!storedAccessors[accessorID]) {
+				storedAccessors[accessorID] = true;
+				bufferViewsToRemove.emplace(accessor.bufferViewId);
+				attributeAccessor.bufferViewId = "";
+				attributeAccessor.byteOffset = 0;
+				resultDocument.accessors.Replace(attributeAccessor);
+			}
 
             dracoExtension->attributes.emplace(attribute.first, dracoMesh.attribute(attId)->unique_id());
         }
@@ -280,12 +288,13 @@ Document glTFToolKit::GLTFMeshCompressionUtils::CompressMesh (
  * @param[in/out] doc                  glTF document.
  * @param[in]     accessorIDStr        対象のaccessorID.
  * @param[out]    builder              バッファ情報の格納クラス.
- * @param[in]     bufferViewsToRemove  削除するBufferViewのID.
+ * @param[in]     storedAccessors      すでに格納済みのAccessorのフラグ立て.
  */
-void restoreBuffersFloat (GLBResourceReader* glbReader, GLTFResourceReader& reader, Document& doc, const std::string& accessorIDStr, BufferBuilder* builder) {
+void restoreBuffersFloat (GLBResourceReader* glbReader, GLTFResourceReader& reader, Document& doc, const std::string& accessorIDStr, BufferBuilder* builder, std::vector<bool>& storedAccessors) {
 	if (accessorIDStr == "") return;
 
 	const int accessorID = std::stoi(accessorIDStr);
+	if (storedAccessors[accessorID]) return;
 	const Accessor& accessor = doc.accessors[accessorID];
 	if (accessor.bufferViewId == "") return;
 	const std::vector<float> values = glbReader ? (glbReader->ReadBinaryData<float>(doc, (doc, accessor))) : reader.ReadBinaryData<float>(doc, accessor);
@@ -294,6 +303,8 @@ void restoreBuffersFloat (GLBResourceReader* glbReader, GLTFResourceReader& read
 	Accessor accessor2(accessor);
 	accessor2.bufferViewId = bufferView.id;
 	doc.accessors.Replace(accessor2);
+
+	storedAccessors[accessorID] = true;
 }
 
 /**
@@ -309,6 +320,9 @@ void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamRea
 	// draco(2.2)で圧縮対象にならないものが参照しているaccessorでのbufferViewIDがある場合、.
 	// 参照しているbufferViewIDの更新とbufferBuilderへの情報追加を行う.
 	// images / skins / animations / primitivesのMorph Targetsが対象.
+
+	std::vector<bool> storedAccessors;
+	storedAccessors.resize(doc.accessors.Size(), false);
 
 	// images (glbの場合はbufferViewに画像が格納されている。gltfの場合は外部ファイルなので不要).
 	if (glbReader) {
@@ -336,7 +350,7 @@ void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamRea
 		const size_t skinsCou = doc.skins.Size();
 		for (size_t i = 0; i < skinsCou; ++i) {
 			const Skin& skin = doc.skins[i];
-			restoreBuffersFloat(glbReader, reader, doc, skin.inverseBindMatricesAccessorId, builder);
+			restoreBuffersFloat(glbReader, reader, doc, skin.inverseBindMatricesAccessorId, builder, storedAccessors);
 		}
 	}
 
@@ -351,9 +365,9 @@ void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamRea
 				const size_t targetsCou = srcPrimitive.targets.size();
 				for (size_t i = 0; i < targetsCou; ++i) {
 					const MorphTarget& morphTarget = srcPrimitive.targets[i];
-					restoreBuffersFloat(glbReader, reader, doc, morphTarget.positionsAccessorId, builder);
-					restoreBuffersFloat(glbReader, reader, doc, morphTarget.tangentsAccessorId, builder);
-					restoreBuffersFloat(glbReader, reader, doc, morphTarget.normalsAccessorId, builder);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.positionsAccessorId, builder, storedAccessors);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.tangentsAccessorId, builder, storedAccessors);
+					restoreBuffersFloat(glbReader, reader, doc, morphTarget.normalsAccessorId, builder, storedAccessors);
 				}
 			}
 		}
@@ -367,8 +381,8 @@ void adjustmentBuffers (GLBResourceReader* glbReader, std::shared_ptr<IStreamRea
 			const size_t sampCou = animD.samplers.Size();
 			for (size_t i = 0; i < sampCou; ++i) {
 				const AnimationSampler& sampD = animD.samplers[i];
-				restoreBuffersFloat(glbReader, reader, doc, sampD.inputAccessorId, builder);
-				restoreBuffersFloat(glbReader, reader, doc, sampD.outputAccessorId, builder);
+				restoreBuffersFloat(glbReader, reader, doc, sampD.inputAccessorId, builder, storedAccessors);
+				restoreBuffersFloat(glbReader, reader, doc, sampD.outputAccessorId, builder, storedAccessors);
 			}
 		}
 	}
