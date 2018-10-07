@@ -296,7 +296,7 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 
 ## Draco圧縮について (ver.0.2.0.2 - )
 
-glTF Converter for Shade3D では、Draco圧縮に対応していますが、
+glTF Converter for Shade3D ではDraco圧縮に対応していますが、
 glTFの表示エンジン/インポータによってはDraco圧縮に対応していないものもあります。    
 Draco圧縮は、メッシュ情報（三角形の頂点インデックス/位置/法線/UV/頂点カラー/スキンのウエイト）を圧縮します。    
 Draco(1.3.4)およびglTF2.0の仕様上、Animation/Morph Targets/テクスチャイメージの圧縮には対応していません。    
@@ -315,7 +315,7 @@ Shade3Dでフェイスグループを使用している場合、glTFでは1つ�
 ただし、「Mesh内のPrimitiveの頂点情報を共有」をオンにしてDraco圧縮と併用した場合に、    
 Draco圧縮の構造上不要な頂点情報が重複することになり、圧縮率が低下する場合があります。    
 
-また、glTFの表示エンジンによっては「Mesh内のPrimitiveの頂点情報を共有」をオン　＋Draco圧縮に対応していないものもあります。    
+また、glTFの表示エンジンによっては「Mesh内のPrimitiveの頂点情報を共有」をオン+Draco圧縮に対応していないものもあります。    
 
 ## Morph Targetsの対応 (ver.0.2.0.0 - )
 
