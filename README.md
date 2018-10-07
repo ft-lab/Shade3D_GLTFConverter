@@ -294,7 +294,7 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 「頂点カラー/拡散反射」を指定できます(ただし、頂点カラー1のみ使用)。    
 「イメージ/法線」では、適用率がglTFの法線マップのscale値として格納されます（ver.0.1.0.14 対応）。    
 
-## Draco圧縮について (ver.0.2.0.2 - )
+### Draco圧縮について (ver.0.2.0.2 - )
 
 glTF Converter for Shade3D ではDraco圧縮に対応していますが、
 glTFの表示エンジン/インポータによってはDraco圧縮に対応していないものもあります。    
@@ -304,7 +304,7 @@ Draco(1.3.4)およびglTF2.0の仕様上、Animation/Morph Targets/テクスチ�
 また、Morph Targetsと組み合わせた場合、「Mesh内のPrimitiveの頂点情報を共有」と組み合わせた場合、
 glTFの表示エンジン/インポータでうまく処理できない場合がありました。    
 
-## エクスポート時の「Mesh内のPrimitiveの頂点情報を共有」について (ver.0.2.0.3 - )
+### エクスポート時の「Mesh内のPrimitiveの頂点情報を共有」について (ver.0.2.0.3 - )
 
 Shade3Dでフェイスグループを使用している場合、glTFでは1つのMesh構造内に複数のPrimitiveを設けます。    
 このときの1Primitiveが1つのフェイスグループ情報に相当します。    
