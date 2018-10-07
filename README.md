@@ -463,6 +463,19 @@ CMakeでXcode用のプロジェクトを作成し、ビルドします。
 「Buildディレクトリ/RapidJSON-src/include」の下の「rapidjson」ディレクトリとその中のファイル、    
 を使用します。    
 
+### dracoのソース修正
+
+Draco 1.3.4で、    
+glTFでのDraco圧縮 + Morph Targets + 1Meshの複数Primitiveの頂点情報を共有した場合、にdecode(展開/インポート)時にエラーが起きるパターンがありました。    
+以下の修正を行ってます。    
+
+src/draco/compression/mesh/mesh_sequential_decoder.cc    
+MeshSequentialDecoder::DecodeConnectivity関数内。    
+
+    // if (points_64 > faces_64 * 3) return false;    
+
+のようにコメントアウトしました。
+
 ### dracoのビルド
 
 Win/Macともに同じで、CMakeを使用してプロジェクトを作成し、ビルドします。    
