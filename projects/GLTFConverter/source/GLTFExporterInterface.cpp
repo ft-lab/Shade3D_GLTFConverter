@@ -925,6 +925,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		materialData.metallicFactor  = 0.0f;
 		materialData.roughnessFactor = 1.0f;
 		materialData.transparency    = 0.0f;
+		materialData.unlit           = false;
 
 		if (surface->get_has_diffuse()) {
 			// 反射が大きい場合にbaseColorを黒にするとglTFとして見たときは黒くなるため、reflectionも考慮.
@@ -956,6 +957,10 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		}
 		if (surface->get_has_transparency()) {
 			materialData.transparency = surface->get_transparency();
+		}
+
+		if (surface->get_no_shading()) {
+			materialData.unlit = true;
 		}
 
 		bool storeDiffuseImage, storeNormalImage, storeEmissiveImage;

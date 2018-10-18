@@ -151,9 +151,22 @@ namespace {
 			if (repeatTex) break;
 		}
 
+		// unlitの指定があるかチェック.
+		bool unlitMaterial = false;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
+			if (materialD.unlit) {
+				unlitMaterial = true;
+				break;
+			}
+		}
+
 		// 拡張として使用する要素名を追加.
 		if (repeatTex) {
 			gltfDoc.extensionsUsed.insert("KHR_texture_transform");
+		}
+		if (unlitMaterial) {
+			gltfDoc.extensionsUsed.insert("KHR_materials_unlit");
 		}
 
 		for (size_t i = 0; i < mCou; ++i) {
@@ -232,6 +245,14 @@ namespace {
 				}
 				// 透明度をBaseColorのAlphaに反映.
 				material.metallicRoughness.baseColorFactor.a = 1.0f - materialD.transparency;
+			}
+
+			// Unlitの指定.
+			if (materialD.unlit) {
+				material.emissiveFactor = Color3(0.0f, 0.0f, 0.0f);
+				material.metallicRoughness.metallicFactor  = 0.0f;
+				material.metallicRoughness.roughnessFactor = 1.0f;
+				material.extensions["KHR_materials_unlit"] = "{ }";
 			}
 
 			gltfDoc.materials.Append(material);

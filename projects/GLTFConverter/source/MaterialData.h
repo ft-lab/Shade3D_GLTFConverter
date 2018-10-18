@@ -19,6 +19,7 @@ public:
 	float alphaCutOff;					// Alphaのカットオフの敷居値.
 	int alphaMode;						// 合成モード(0:UNKNOWN , 1:OPAQUE, 2:BLEND, 3:MASK).
 	bool doubleSided;					// 両面表示するか.
+	bool unlit;							// 陰影付けしない.
 
 	sxsdk::rgb_class baseColorFactor;	// BaseColorの色.
 	sxsdk::rgb_class emissiveFactor;	// 発光の色.
@@ -65,6 +66,7 @@ public:
 		this->alphaCutOff       = v.alphaCutOff;
 		this->alphaMode         = v.alphaMode;
 		this->doubleSided       = v.doubleSided;
+		this->unlit             = v.unlit;
 		this->baseColorFactor   = v.baseColorFactor;
 		this->emissiveFactor    = v.emissiveFactor;
 		this->occlusionStrength = v.occlusionStrength;

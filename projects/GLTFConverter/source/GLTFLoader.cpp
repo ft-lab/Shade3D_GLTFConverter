@@ -1,9 +1,6 @@
 ﻿/**
- * GLTFの読み込みクラス.
- * Microsoft.glTF.CPP を使用.
- *
- *  Microsoft.glTF.CPPはnugetを使用して
- *  [win_vs2017]ディレクトリ内に packages.configと[packages]ディレクトリを配置する必要がある.
+ * GLTFの読み込み.
+ * Microsoft glTF SDK を使用.
  *
  * GLTF 2.0フォーマットの参考:
  * https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md
