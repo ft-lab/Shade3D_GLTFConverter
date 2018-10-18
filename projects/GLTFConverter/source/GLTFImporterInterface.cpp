@@ -691,6 +691,11 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			const float transparency = alphaBlend ? materialD.transparency : 0.0f;
 			surface->set_transparency(transparency);
 
+			// 陰影付けなしの指定.
+			if (materialD.unlit) {
+				surface->set_no_shading(true);
+			}
+
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
 				surface->append_mapping_layer();

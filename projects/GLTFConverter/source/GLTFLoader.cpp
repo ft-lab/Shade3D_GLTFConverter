@@ -814,6 +814,14 @@ namespace {
 					}
 				}
 			}
+
+			// Unlit(陰影付けなし)を取得.
+			dstMaterialData.unlit = false;
+			if (material.extensions.size() > 0) {
+				if (material.extensions.find("KHR_materials_unlit") != material.extensions.end()) {
+					dstMaterialData.unlit = true;
+				}
+			}
 		}
 
 		// イメージ名はGLTFには格納されないようであるので、.
