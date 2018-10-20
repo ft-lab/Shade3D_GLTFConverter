@@ -64,6 +64,7 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * Morph Targets情報の入出力。ver.0.2.0.0で追加。ただし、Morph Targetsを使用したキーフレームアニメーションはまだ未対応です。    
 * ジオメトリのDraco圧縮。ver.0.2.0.2で追加。    
 Draco圧縮はAnimation/Morph Targets/Texture Imageの圧縮には対応していません。
+* マテリアルのunlit対応（Shade3Dの表面材質の「陰影付けしない」のチェックボックス）。ver.0.2.0.4で追加。
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -316,6 +317,12 @@ Shade3Dでフェイスグループを使用している場合、glTFでは1つ�
 Draco圧縮の構造上不要な頂点情報が重複することになり、圧縮率が低下する場合があります。    
 
 また、glTFの表示エンジンによっては「Mesh内のPrimitiveの頂点情報を共有」をオン+Draco圧縮に対応していないものもあります。    
+
+### マテリアルのunlitについて (ver.0.2.0.4 - )
+
+glTFでは、拡張オプション（ https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit/README.md ）でマテリアルのunlitを指定できます。    
+これは、シェーディングを行わないBaseColorまたはBaseColorテクスチャ（Shade3Dでの拡散反射色相当）をそのまま反映する指定になります。    
+Shade3Dでは、表面材質の「その他」-「陰影付けしない」チェックボックスに対応します。    
 
 ## Morph Targetsの対応 (ver.0.2.0.0 - )
 
@@ -578,6 +585,9 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2018/10/20] ver.0.2.0.4   
+* Import/Export : マテリアルのunlit対応（Shade3Dの表面材質の「陰影付けしない」のチェックボックス）
 
 [2018/10/07] ver.0.2.0.3   
 * Export : 「Mesh内のPrimitiveの頂点情報を共有」オプションを追加
