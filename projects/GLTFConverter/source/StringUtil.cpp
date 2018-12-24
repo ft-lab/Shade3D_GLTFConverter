@@ -42,6 +42,20 @@ const std::string StringUtil::getFileName (const std::string& filePath, const bo
 }
 
 /**
+ * ファイル名として使用できない文字('/'など)を"_"に置き換え.
+ */
+const std::string StringUtil::convAsFileName (const std::string& fileName)
+{
+	 std::string name = fileName;
+	 name = replaceString(name, "/", "_");
+	 name = replaceString(name, "#", "_");
+	 name = replaceString(name, "*", "_");
+	 name = replaceString(name, "<", "_");
+	 name = replaceString(name, ">", "_");
+	 return name;
+}
+
+/**
  * ファイル名を除いたディレクトリを取得.
  * @param[in] filePath      ファイルフルパス.
  */

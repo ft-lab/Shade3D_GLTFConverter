@@ -138,7 +138,8 @@ std::string CSceneData::outputTempImage (const int imageIndex, const std::string
 	const CImageData& imageD = images[imageIndex];
 
 	// ファイル名.
-	std::string name = (imageD.name == "") ? (std::string("image_") + std::to_string(imageIndex)) : imageD.name;
+	std::string name = std::string("image_") + std::to_string(imageIndex);
+
 	if (imageD.mimeType.find("/png") > 0) {
 		name += ".png";
 	} else {

@@ -17,6 +17,11 @@ namespace StringUtil
 	const std::string getFileName (const std::string& filePath, const bool hasExtension = true);
 
 	/**
+	 * ファイル名として使用できない文字('/'など)を"_"に置き換え.
+	 */
+	const std::string convAsFileName (const std::string& fileName);
+
+	/**
 	 * ファイル名を除いたディレクトリを取得.
 	 * @param[in] filePath      ファイルフルパス.
 	 */
