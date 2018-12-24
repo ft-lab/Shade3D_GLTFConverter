@@ -586,6 +586,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2018/12/24] ver.0.2.0.5   
+* Import : イメージ名に「/」などのファイル名として指定できない文字を使用している場合、イメージの読み込みに失敗する問題を修正
+
 [2018/10/20] ver.0.2.0.4   
 * Import/Export : マテリアルのunlit対応（Shade3Dの表面材質の「陰影付けしない」のチェックボックス）
 
