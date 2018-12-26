@@ -20,5 +20,7 @@
 	<string id="license_CC_BY-NC-ND" value="You must give appropriate credit.&#10;NoDerivatives/NonCommercial" />
 	<string id="license_public_domain" value="No Copyright." />
 	<string id="license_other" value="Other licenses." />
+
+	<string id="message_input_author" value="Please specify the author's name." />
 </strings>
 

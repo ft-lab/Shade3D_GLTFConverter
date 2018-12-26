@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
 	<group label="Asset information">
-		<slong-string id="201" label="Title:" />
+		<long-string id="201" label="Title:" />
 		<long-string id="202" label="Author:" />
 		<selection id="203" label="Select license:|All rights reserved|CC BY|CC BY-SA|CC BY-NC|CC BY-ND|CC BY-NC-SA|CC BY-NC-ND|CC0(Public domain)|Other" />
 		<long-string id="204" label="License:" />
