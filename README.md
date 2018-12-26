@@ -586,6 +586,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2018/12/26] ver.0.2.0.6   
+* Export : 英語でShade3Dを使用している場合に、glTF Export処理を行うとダイアログボックスが出る前にフリーズする問題を修正
+
 [2018/12/24] ver.0.2.0.5   
 * Import : イメージ名に「/」などのファイル名として指定できない文字を使用している場合、イメージの読み込みに失敗する問題を修正
 
