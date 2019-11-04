@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
+	<selection id="301" label="出力形式:|glb|gltf" />
 	<group label="Asset情報">
 		<long-string id="201" label="タイトル:" />
 		<long-string id="202" label="作成者:" />

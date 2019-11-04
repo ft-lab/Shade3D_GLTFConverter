@@ -19,7 +19,8 @@
 // streamに保存するstreamのバージョン.
 #define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
 
-#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x102
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x103
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_103	0x103
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_102	0x102
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_101	0x101
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_100	0x100
@@ -104,6 +105,8 @@ public:
 	GLTFConverter::export_texture_type outputTexture;		// エクスポート時のテクスチャの種類.
 	GLTFConverter::export_max_texture_size maxTextureSize;	// 最大テクスチャサイズ.
 
+	int exportFileFormat;									// 出力ファイル形式 (0:glb / 1:gltf)
+
 	bool outputBonesAndSkins;								// ボーンとスキン情報を出力.
 	bool outputVertexColor;									// 頂点カラーを出力.
 	bool outputAnimation;									// アニメーションを出力.
@@ -121,6 +124,7 @@ public:
 	}
 
 	void clear () {
+		exportFileFormat = 0;
 		outputTexture       = GLTFConverter::export_texture_name;
 		maxTextureSize      = GLTFConverter::export_max_texture_size_undefined;
 

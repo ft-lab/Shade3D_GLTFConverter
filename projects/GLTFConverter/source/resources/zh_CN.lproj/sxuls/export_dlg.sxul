@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Export">
+	<selection id="301" label="File format:|glb|gltf" />
 	<group label="Asset information">
 		<long-string id="201" label="Title:" />
 		<long-string id="202" label="Author:" />

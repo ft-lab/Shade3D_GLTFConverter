@@ -146,6 +146,11 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 			stream->write_int(iDat);
 		}
 
+		// ver.0.2.0.7 - 
+		{
+			stream->write_int(data.exportFileFormat);
+		}
+
 	} catch (...) { }
 }
 
@@ -219,6 +224,11 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 				stream->read_int(iDat);
 				data.shareVerticesMesh = iDat ? true : false;
 			}
+		}
+
+		// ver.0.2.0.7 - 
+		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_103) {
+			stream->read_int(data.exportFileFormat);
 		}
 
 	} catch (...) { }

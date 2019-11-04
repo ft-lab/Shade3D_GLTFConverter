@@ -29,6 +29,8 @@ enum
 	dlg_asset_license_id = 204,				// ライセンス.
 	dlg_asset_license_desc_id = 205,		// ライセンスの説明.
 	dlg_asset_source_id = 206,				// 参照先.
+
+	dlg_export_file_format_id = 301,		// 出力形式 (0:glb / 1:gltf).
 };
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
@@ -59,7 +61,7 @@ CGLTFExporterInterface::~CGLTFExporterInterface ()
  */
 const char *CGLTFExporterInterface::get_file_extension (void *aux)
 {
-	return "glb";
+	return (m_exportParam.exportFileFormat == 0) ? "glb" : "gltf";
 }
 
 /**
@@ -820,6 +822,12 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_asset_source_id));
 		item->set_string(m_exportParam.assetExtrasSource.c_str());
 	}
+
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_export_file_format_id));
+		item->set_selection(m_exportParam.exportFileFormat);
+	}
 }
 
 void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -899,6 +907,10 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 	}
 	if (id == dlg_asset_source_id) {
 		m_exportParam.assetExtrasSource = item.get_string();
+		return true;
+	}
+	if (id == dlg_export_file_format_id) {
+		m_exportParam.exportFileFormat = item.get_selection();
 		return true;
 	}
 
@@ -1076,9 +1088,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				}
 			}
 		}
-		if (materialData.transparency > 0.0f) {
+		if (materialData.transparency > 0.005f) {
 			materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-
 		} else if (imageBlend.getDiffuseAlphaTrans()) {
 			// アルファ透過する場合.
 			materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
