@@ -38,6 +38,8 @@ void CImagesBlend::blendImages ()
 	m_hasGlowImage       = false;
 	m_hasOcclusionImage  = false;
 
+	m_alphaCutoff = 0.9f;
+
 	// Shade3Dでの表面材質のマッピングレイヤで、加工無しの画像が参照されているかチェック.
 	m_checkSingleImage(sxsdk::enums::diffuse_mapping, &m_diffuseMasterImage, m_diffuseTexCoord, m_diffuseRepeat, m_hasDiffuseImage);
 	m_checkSingleImage(sxsdk::enums::normal_mapping, &m_normalMasterImage, m_normalTexCoord, m_normalRepeat, m_hasNormalImage);
@@ -255,6 +257,7 @@ bool CImagesBlend::m_checkDiffuseAlphaTrans ()
 
 		if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
 			alphaTrans = true;
+			m_alphaCutoff = std::min(m_alphaCutoff, mappingLayer.get_weight());
 			break;
 		}
 	}

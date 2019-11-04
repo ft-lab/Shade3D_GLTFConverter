@@ -55,6 +55,8 @@ private:
 	float m_normalWeight;										// Normalのウエイト値.
 	float m_occlusionWeight;									// Occlusionのウエイト値.
 
+	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャのアルファ透明が有効な場合に、「適用率」の値を採用.
+
 private:
 	/**
 	 * 指定のテクスチャの合成処理.
@@ -141,6 +143,11 @@ public:
 	 * アルファ透明を使用しているか.
 	 */
 	bool getDiffuseAlphaTrans () { return m_diffuseAlphaTrans; }
+
+	/**
+	 * AlphaCutoff値を取得.
+	 */
+	float getAlphaCutoff () const { return m_alphaCutoff; }
 
 	/**
 	 * Normalのウエイト値を取得.

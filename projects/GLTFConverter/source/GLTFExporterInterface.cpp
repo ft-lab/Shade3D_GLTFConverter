@@ -1082,7 +1082,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		} else if (imageBlend.getDiffuseAlphaTrans()) {
 			// アルファ透過する場合.
 			materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-			materialData.alphaCutOff = 0.9f;
+			materialData.alphaCutOff = imageBlend.getAlphaCutoff();		//0.9f;
 		}
 
 		// roughness/reflectionテクスチャを持つ場合は、合成.
@@ -1113,7 +1113,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 					// アルファ透過する場合.
 					if (imageBlend.getDiffuseAlphaTrans()) {
 						materialData.alphaMode = 3;			// ALPHA_MASK : アルファを考慮.
-						materialData.alphaCutOff = 0.9f;
+						materialData.alphaCutOff = imageBlend.getAlphaCutoff();		//0.9f;
 
 						CImageData& imageData = m_sceneData->images[imageIndex];
 						imageData.useBaseColorAlpha = true;
