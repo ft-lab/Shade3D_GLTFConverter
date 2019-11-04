@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dialog default_button="true" title="Alpha Mode">
+	<vbox>
+		<selection id="101" label="AlphaMode : |OPAQUE|MASK|BLEND" />
+		<float id="102" label="AlphaCutoff : " />
+	</vbox>
+</dialog>

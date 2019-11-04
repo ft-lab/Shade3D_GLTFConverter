@@ -14,6 +14,7 @@
 #define GLTF_IMPORTER_INTERFACE_ID sx::uuid_class("29C48EA8-1851-4703-AF06-9DEB5A17FF49")
 #define GLTF_EXPORTER_INTERFACE_ID sx::uuid_class("40385ADE-D20F-4694-A817-27CE6B8A1016")
 #define OCCLUSION_SHADER_INTERFACE_ID sx::uuid_class("509D92F5-D9F9-4335-B070-0FBDEE179523")
+#define ALPHA_MODE_INTERFACE_ID sx::uuid_class("F92DECA6-AC2C-4B6C-8C89-A3D2AD0F6A43")
 #define LICENSE_DIALOG_INTERFACE_ID sx::uuid_class("DC1B3583-05DE-4AA7-BE76-1B0B1FC599AD")
 
 // streamに保存するstreamのバージョン.
@@ -26,6 +27,7 @@
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_100	0x100
 
 #define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x100
+#define ALPHA_MODE_DLG_STREAM_VERSION			0x100
 #define GLTF_LICENSE_STREAM_VERSION				0x100
 
 // 作業ディレクトリ名.
@@ -51,6 +53,15 @@ namespace GLTFConverter {
 		export_max_texture_size_1024,			// 1024.
 		export_max_texture_size_2048,			// 2048.
 		export_max_texture_size_4096,			// 4096.
+	};
+
+	/**
+	 * AlphaModeの種類.
+	 */
+	enum alpha_mode_type {
+		alpha_mode_opaque = 0,					// OPAQUE.
+		alpha_mode_mask,						// MASK.
+		alpha_mode_blend,						// BLEND.
 	};
 }
 
@@ -194,6 +205,26 @@ public:
 
 	void clear () {
 		uvIndex = 0;
+	}
+};
+
+/**
+ * AlphaModeの情報.
+ * これは、Diffuseマッピングのレイヤの属性として指定.
+ */
+class CAlphaModeMappingLayerData
+{
+public:
+	GLTFConverter::alpha_mode_type alphaModeType;		// AlphaModeの種類.
+	float alphaCutoff;
+
+	CAlphaModeMappingLayerData () {
+		clear();
+	}
+
+	void clear () {
+		alphaModeType = GLTFConverter::alpha_mode_opaque;
+		alphaCutoff   = 0.5f;
 	}
 };
 

@@ -32,6 +32,7 @@ STRINGS                 SXUL                    "..\\source\\resources\\ja.lproj
 EXPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\export_dlg.sxul"
 IMPORT_DLG              SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\import_dlg.sxul"
 OCCLUSION_MAPPING_DLG   SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\occlusion_mapping_dlg.sxul"
+ALPHA_MODE_DLG          SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\alpha_mode_dlg.sxul"
 LICENSE_DLG             SXUL                    "..\\source\\resources\\ja.lproj\\sxuls\\license_dlg.sxul"
 
 
@@ -121,6 +122,7 @@ STRINGS                 SXUL                    "..\\source\\resources\\zh_CN.lp
 EXPORT_DLG              SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\export_dlg.sxul"
 IMPORT_DLG              SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\import_dlg.sxul"
 OCCLUSION_MAPPING_DLG   SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\occlusion_mapping_dlg.sxul"
+ALPHA_MODE_DLG          SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\alpha_mode_dlg.sxul"
 LICENSE_DLG             SXUL                    "..\\source\\resources\\zh_CN.lproj\\sxuls\\license_dlg.sxul"
 
 #endif    // íÜçëåÍ (P.R.C.) resources
@@ -145,6 +147,7 @@ TEXT                    SXUL                    "..\\source\\resources\\en.lproj
 EXPORT_DLG              SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\export_dlg.sxul"
 IMPORT_DLG              SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\import_dlg.sxul"
 OCCLUSION_MAPPING_DLG   SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\occlusion_mapping_dlg.sxul"
+ALPHA_MODE_DLG          SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\alpha_mode_dlg.sxul"
 LICENSE_DLG             SXUL                    "..\\source\\resources\\en.lproj\\sxuls\\license_dlg.sxul"
 
 #endif    // âpåÍ (ïƒçë) resources

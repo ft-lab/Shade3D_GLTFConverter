@@ -8,6 +8,7 @@
 #include "GLTFExporterInterface.h"
 #include "OcclusionShaderInterface.h"
 #include "LicenseDialogInterface.h"
+#include "AlphaModeMappingLayerAttributeInterface.h"
 
 //**************************************************//
 //	グローバル関数									//
@@ -20,6 +21,8 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
 	
 	if (iid == attribute_iid) {
 		if (i == 0) {
+			u = new CAlphaModeMappingLayerInterface(*shade);
+		} else if (i == 1) {
 			u = new CLicenseDialogInterface(*shade);
 		}
 	}
@@ -50,7 +53,7 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
  */
 extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_interface *shade) {
 
-	if (iid == attribute_iid) return 0;		// TODO.
+	if (iid == attribute_iid) return 1;		// TODO : ライセンスのダイアログボックス.
 	if (iid == importer_iid) return 1;
 	if (iid == exporter_iid) return 1;
 	if (iid == shader_iid) return 1;
@@ -64,6 +67,8 @@ extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_i
 extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxsdk::shade_interface *shade, void *) {
 	if (iid == attribute_iid) {
 		if (i == 0) {
+			return CAlphaModeMappingLayerInterface::name(shade);
+		} else 	if (i == 1) {
 			return CLicenseDialogInterface::name(shade);
 		}
 	}
@@ -92,6 +97,8 @@ extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxs
 extern "C" SXSDKEXPORT sx::uuid_class STDCALL get_uuid (const IID &iid, int i, void *) {
 	if (iid == attribute_iid) {
 		if (i == 0) {
+			return ALPHA_MODE_INTERFACE_ID;
+		} else if (i == 1) {
 			return LICENSE_DIALOG_INTERFACE_ID;
 		}
 	}

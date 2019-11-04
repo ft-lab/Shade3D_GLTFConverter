@@ -447,3 +447,71 @@ bool StreamCtrl::loadOcclusionParam (sxsdk::mapping_layer_class& mappingLayer, C
 	} catch (...) { }
 	return false;
 }
+
+/**
+ * AlphaModeのマッピングレイヤ情報を読み込み.
+ */
+void StreamCtrl::saveAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, const CAlphaModeMappingLayerData& data)
+{
+	try {
+		if (!stream) return;
+		stream->set_pointer(0);
+		stream->set_size(0);
+
+		int iDat;
+		int iVersion = ALPHA_MODE_DLG_STREAM_VERSION;
+		stream->write_int(iVersion);
+
+		iDat = (int)data.alphaModeType;
+		stream->write_int(iDat);
+
+		stream->write_float(data.alphaCutoff);
+
+	} catch (...) { }
+}
+
+void StreamCtrl::saveAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, const CAlphaModeMappingLayerData& data)
+{
+	try {
+		compointer<sxsdk::stream_interface> stream(mappingLayer.create_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		if (!stream) return;
+		saveAlphaModeMappingLayerParam(stream, data);
+	} catch (...) { }
+}
+
+
+/**
+ * AlphaModeのマッピングレイヤ情報を取得.
+ */
+bool StreamCtrl::loadAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, CAlphaModeMappingLayerData& data)
+{
+	data.clear();
+	try {
+		if (!stream) return false;
+		stream->set_pointer(0);
+
+		int iVersion;
+		int iDat;
+		stream->read_int(iVersion);
+
+		stream->read_int(iDat);
+		data.alphaModeType = (GLTFConverter::alpha_mode_type)iDat;
+
+		stream->read_float(data.alphaCutoff);
+
+		return true;
+	} catch (...) { }
+	return false;
+}
+
+bool StreamCtrl::loadAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, CAlphaModeMappingLayerData& data)
+{
+	data.clear();
+	try {
+		compointer<sxsdk::stream_interface> stream(mappingLayer.get_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		if (!stream) return false;
+		return loadAlphaModeMappingLayerParam(stream, data);
+	} catch (...) { }
+	return false;
+}
+
