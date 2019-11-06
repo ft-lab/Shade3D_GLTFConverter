@@ -277,7 +277,7 @@
     <ClCompile Include="..\..\..\include\sxcore\com.cpp" />
     <ClCompile Include="..\..\..\include\sxcore\debug.cpp" />
     <ClCompile Include="..\..\..\include\sxcore\vectors.cpp" />
-    <ClCompile Include="..\source\AlphaModeMappingLayerAttributeInterface.cpp" />
+    <ClCompile Include="..\source\AlphaModeMaterialAttributeInterface.cpp" />
     <ClCompile Include="..\source\AnimationData.cpp" />
     <ClCompile Include="..\source\GLTFExporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFImporterInterface.cpp" />
@@ -304,7 +304,7 @@
     <ClCompile Include="..\source\StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\source\AlphaModeMappingLayerAttributeInterface.h" />
+    <ClInclude Include="..\source\AlphaModeMaterialAttributeInterface.h" />
     <ClInclude Include="..\source\AnimationData.h" />
     <ClInclude Include="..\source\BinStreamReaderWriter.h" />
     <ClInclude Include="..\source\GlobalHeader.h" />

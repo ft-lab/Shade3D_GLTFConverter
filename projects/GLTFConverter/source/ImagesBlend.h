@@ -55,7 +55,8 @@ private:
 	float m_normalWeight;										// Normalのウエイト値.
 	float m_occlusionWeight;									// Occlusionのウエイト値.
 
-	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャのアルファ透明が有効な場合に、「適用率」の値を採用.
+	GLTFConverter::alpha_mode_type m_alphaModeType;				// AlphaModeの種類.
+	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャの属性より取得.
 
 private:
 	/**
@@ -145,7 +146,12 @@ public:
 	bool getDiffuseAlphaTrans () { return m_diffuseAlphaTrans; }
 
 	/**
-	 * AlphaCutoff値を取得.
+	 * AlphaModeの種類を取得.
+	 */
+	GLTFConverter::alpha_mode_type getAlphaModeType () const { return m_alphaModeType; }
+
+	/**
+	 * AlphaModeのCutoff値を取得.
 	 */
 	float getAlphaCutoff () const { return m_alphaCutoff; }
 

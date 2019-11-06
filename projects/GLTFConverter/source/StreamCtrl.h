@@ -52,16 +52,17 @@ namespace StreamCtrl
 	bool loadOcclusionParam (sxsdk::mapping_layer_class& mappingLayer, COcclusionShaderData& data);
 
 	/**
-	 * AlphaModeのマッピングレイヤ情報を読み込み.
+	 * AlphaModeのマテリアル情報を保存.
 	 */
-	void saveAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, const CAlphaModeMappingLayerData& data);
-	void saveAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, const CAlphaModeMappingLayerData& data);
+	void saveAlphaModeMaterialParam (sxsdk::stream_interface* stream, const CAlphaModeMaterialData& data);
+	void saveAlphaModeMaterialParam (sxsdk::surface_interface* surface, const CAlphaModeMaterialData& data);
 
 	/**
-	 * AlphaModeのマッピングレイヤ情報を取得.
+	 * AlphaModeのマテリアル情報を取得.
 	 */
-	bool loadAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, CAlphaModeMappingLayerData& data);
-	bool loadAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, CAlphaModeMappingLayerData& data);
+	bool loadAlphaModeMaterialParam (sxsdk::stream_interface* stream, CAlphaModeMaterialData& data);
+	bool loadAlphaModeMaterialParam (sxsdk::surface_interface* surface, CAlphaModeMaterialData& data);
+	bool loadAlphaModeMaterialParam (sxsdk::surface_class* surface, CAlphaModeMaterialData& data);
 
 }
 

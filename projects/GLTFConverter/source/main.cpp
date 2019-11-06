@@ -8,7 +8,7 @@
 #include "GLTFExporterInterface.h"
 #include "OcclusionShaderInterface.h"
 #include "LicenseDialogInterface.h"
-#include "AlphaModeMappingLayerAttributeInterface.h"
+#include "AlphaModeMaterialAttributeInterface.h"
 
 //**************************************************//
 //	グローバル関数									//
@@ -21,7 +21,7 @@ extern "C" SXSDKEXPORT void STDCALL create_interface (const IID &iid, int i, voi
 	
 	if (iid == attribute_iid) {
 		if (i == 0) {
-			u = new CAlphaModeMappingLayerInterface(*shade);
+			u = new CAlphaModeMaterialInterface(*shade);
 		} else if (i == 1) {
 			u = new CLicenseDialogInterface(*shade);
 		}
@@ -67,7 +67,7 @@ extern "C" SXSDKEXPORT int STDCALL has_interface (const IID &iid, sxsdk::shade_i
 extern "C" SXSDKEXPORT const char * STDCALL get_name (const IID &iid, int i, sxsdk::shade_interface *shade, void *) {
 	if (iid == attribute_iid) {
 		if (i == 0) {
-			return CAlphaModeMappingLayerInterface::name(shade);
+			return CAlphaModeMaterialInterface::name(shade);
 		} else 	if (i == 1) {
 			return CLicenseDialogInterface::name(shade);
 		}

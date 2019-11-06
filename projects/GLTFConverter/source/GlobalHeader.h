@@ -210,15 +210,15 @@ public:
 
 /**
  * AlphaModeの情報.
- * これは、Diffuseマッピングのレイヤの属性として指定.
+ * これは、表面材質の属性として指定.
  */
-class CAlphaModeMappingLayerData
+class CAlphaModeMaterialData
 {
 public:
 	GLTFConverter::alpha_mode_type alphaModeType;		// AlphaModeの種類.
 	float alphaCutoff;
 
-	CAlphaModeMappingLayerData () {
+	CAlphaModeMaterialData () {
 		clear();
 	}
 

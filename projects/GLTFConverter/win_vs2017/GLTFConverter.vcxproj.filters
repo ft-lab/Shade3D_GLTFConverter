@@ -82,7 +82,7 @@
     <ClCompile Include="..\source\glTFToolKit\GLTFMeshDecompression.cpp">
       <Filter>mysources\glTFToolKit</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\AlphaModeMappingLayerAttributeInterface.cpp">
+    <ClCompile Include="..\source\AlphaModeMaterialAttributeInterface.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -169,7 +169,7 @@
     <ClInclude Include="..\source\BinStreamReaderWriter.h">
       <Filter>mysources</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\AlphaModeMappingLayerAttributeInterface.h">
+    <ClInclude Include="..\source\AlphaModeMaterialAttributeInterface.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

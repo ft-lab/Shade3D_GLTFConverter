@@ -449,9 +449,9 @@ bool StreamCtrl::loadOcclusionParam (sxsdk::mapping_layer_class& mappingLayer, C
 }
 
 /**
- * AlphaModeのマッピングレイヤ情報を読み込み.
+ * AlphaModeのマテリアル情報を保存.
  */
-void StreamCtrl::saveAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, const CAlphaModeMappingLayerData& data)
+void StreamCtrl::saveAlphaModeMaterialParam (sxsdk::stream_interface* stream, const CAlphaModeMaterialData& data)
 {
 	try {
 		if (!stream) return;
@@ -470,20 +470,20 @@ void StreamCtrl::saveAlphaModeMappingLayerParam (sxsdk::stream_interface* stream
 	} catch (...) { }
 }
 
-void StreamCtrl::saveAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, const CAlphaModeMappingLayerData& data)
+void StreamCtrl::saveAlphaModeMaterialParam (sxsdk::surface_interface* surface, const CAlphaModeMaterialData& data)
 {
 	try {
-		compointer<sxsdk::stream_interface> stream(mappingLayer.create_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		compointer<sxsdk::stream_interface> stream(surface->create_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
 		if (!stream) return;
-		saveAlphaModeMappingLayerParam(stream, data);
+		saveAlphaModeMaterialParam(stream, data);
 	} catch (...) { }
 }
 
 
 /**
- * AlphaModeのマッピングレイヤ情報を取得.
+ * AlphaModeのマテリアル情報を取得.
  */
-bool StreamCtrl::loadAlphaModeMappingLayerParam (sxsdk::stream_interface* stream, CAlphaModeMappingLayerData& data)
+bool StreamCtrl::loadAlphaModeMaterialParam (sxsdk::stream_interface* stream, CAlphaModeMaterialData& data)
 {
 	data.clear();
 	try {
@@ -504,14 +504,24 @@ bool StreamCtrl::loadAlphaModeMappingLayerParam (sxsdk::stream_interface* stream
 	return false;
 }
 
-bool StreamCtrl::loadAlphaModeMappingLayerParam (sxsdk::mapping_layer_class& mappingLayer, CAlphaModeMappingLayerData& data)
+bool StreamCtrl::loadAlphaModeMaterialParam (sxsdk::surface_interface* surface, CAlphaModeMaterialData& data)
 {
 	data.clear();
 	try {
-		compointer<sxsdk::stream_interface> stream(mappingLayer.get_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		compointer<sxsdk::stream_interface> stream(surface->get_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
 		if (!stream) return false;
-		return loadAlphaModeMappingLayerParam(stream, data);
+		return loadAlphaModeMaterialParam(stream, data);
 	} catch (...) { }
 	return false;
 }
 
+bool StreamCtrl::loadAlphaModeMaterialParam (sxsdk::surface_class* surface, CAlphaModeMaterialData& data)
+{
+	data.clear();
+	try {
+		compointer<sxsdk::stream_interface> stream(surface->get_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		if (!stream) return false;
+		return loadAlphaModeMaterialParam(stream, data);
+	} catch (...) { }
+	return false;
+}

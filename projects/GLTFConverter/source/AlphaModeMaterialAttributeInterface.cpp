@@ -1,7 +1,7 @@
 ﻿/**
- * マッピングレイヤでAlphaModeを指定するインターフェース派生クラス.
+ * 表面材質でAlphaModeを指定するインターフェース派生クラス.
  */
-#include "AlphaModeMappingLayerAttributeInterface.h"
+#include "AlphaModeMaterialAttributeInterface.h"
 #include "StreamCtrl.h"
 
 enum {
@@ -9,15 +9,15 @@ enum {
 	dlg_alpha_cutoff_id = 102,		// AlphaCutoff.
 };
 
-CAlphaModeMappingLayerInterface::CAlphaModeMappingLayerInterface (sxsdk::shade_interface& shade) : shade(shade)
+CAlphaModeMaterialInterface::CAlphaModeMaterialInterface (sxsdk::shade_interface& shade) : shade(shade)
 {
 }
 
-CAlphaModeMappingLayerInterface::~CAlphaModeMappingLayerInterface ()
+CAlphaModeMaterialInterface::~CAlphaModeMaterialInterface ()
 {
 }
 
-bool CAlphaModeMappingLayerInterface::ask_mapping (sxsdk::mapping_layer_class &mapping, void *)
+bool CAlphaModeMaterialInterface::ask_surface (sxsdk::surface_interface *surface, void *)
 {
 	compointer<sxsdk::dialog_interface> dlg(shade.create_dialog_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
 	dlg->set_resource_name("alpha_mode_dlg");
@@ -25,9 +25,9 @@ bool CAlphaModeMappingLayerInterface::ask_mapping (sxsdk::mapping_layer_class &m
 	dlg->set_responder(this);
 	this->AddRef();
 
-	StreamCtrl::loadAlphaModeMappingLayerParam(mapping, m_data);
+	StreamCtrl::loadAlphaModeMaterialParam(surface, m_data);
 	if (dlg->ask()) {
-		StreamCtrl::saveAlphaModeMappingLayerParam(mapping, m_data);
+		StreamCtrl::saveAlphaModeMaterialParam(surface, m_data);
 		return true;
 	}
 	return false;	
@@ -36,19 +36,25 @@ bool CAlphaModeMappingLayerInterface::ask_mapping (sxsdk::mapping_layer_class &m
 /**
  * ダイアログの初期化.
  */
-void CAlphaModeMappingLayerInterface::initialize_dialog (sxsdk::dialog_interface &d, void *)
+void CAlphaModeMaterialInterface::initialize_dialog (sxsdk::dialog_interface &d, void *)
 {
 }
 
 /** 
  * ダイアログのイベントを受け取る.
  */
-bool CAlphaModeMappingLayerInterface::respond (sxsdk::dialog_interface &d, sxsdk::dialog_item_class &item, int action, void *)
+bool CAlphaModeMaterialInterface::respond (sxsdk::dialog_interface &d, sxsdk::dialog_item_class &item, int action, void *)
 {
 	const int id = item.get_id();		// アクションがあったダイアログアイテムのID.
 
+	if (id == sx::iddefault) {
+		m_data.clear();
+		load_dialog_data(d);
+		return true;
+	}
 	if (id == dlg_alpha_mode_id) {
 		m_data.alphaModeType = (GLTFConverter::alpha_mode_type)item.get_selection();
+		load_dialog_data(d);
 		return true;
 	}
 	if (id == dlg_alpha_cutoff_id) {
@@ -62,7 +68,7 @@ bool CAlphaModeMappingLayerInterface::respond (sxsdk::dialog_interface &d, sxsdk
 /**
  * ダイアログのデータを設定する.
  */
-void CAlphaModeMappingLayerInterface::load_dialog_data (sxsdk::dialog_interface &d, void *)
+void CAlphaModeMaterialInterface::load_dialog_data (sxsdk::dialog_interface &d, void *)
 {
 	{
 		sxsdk::dialog_item_class* item;
@@ -73,6 +79,7 @@ void CAlphaModeMappingLayerInterface::load_dialog_data (sxsdk::dialog_interface 
 		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_alpha_cutoff_id));
 		item->set_float(m_data.alphaCutoff);
+		item->set_enabled(m_data.alphaModeType == GLTFConverter::alpha_mode_mask);
 	}
 }
 

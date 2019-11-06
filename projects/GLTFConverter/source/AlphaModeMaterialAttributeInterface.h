@@ -1,17 +1,17 @@
 ﻿/**
- * マッピングレイヤでAlphaModeを指定するインターフェース派生クラス.
+ * 表面材質でAlphaModeを指定するインターフェース派生クラス.
  */
 
-#ifndef _ALPHAMODEMAPPINGLAYERINTERFACE_H
-#define _ALPHAMODEMAPPINGLAYERINTERFACE_H
+#ifndef _ALPHAMODEMATERIALINTERFACE_H
+#define _ALPHAMODEMATERIALINTERFACE_H
 
 #include "GlobalHeader.h"
 
-class CAlphaModeMappingLayerInterface : public sxsdk::attribute_interface
+class CAlphaModeMaterialInterface : public sxsdk::attribute_interface
 {
 private:
 	sxsdk::shade_interface& shade;
-	CAlphaModeMappingLayerData m_data;		// AlphaMode情報.
+	CAlphaModeMaterialData m_data;		// AlphaMode情報.
 
 private:
 	/**
@@ -27,11 +27,11 @@ private:
 	virtual sx::uuid_class get_uuid (void * = 0) { return ALPHA_MODE_INTERFACE_ID; }
 
 	/**
-	 * マッピング属性から呼ばれる.
+	 * 表面材質属性から呼ばれる.
 	 */
-	virtual void accepts_mapping (bool &accept, void *aux=0) { accept = true; }
+	virtual void accepts_surface (bool &accept, void *aux=0) { accept = true; }
 
-	virtual bool ask_mapping (sxsdk::mapping_layer_class &mapping, void *aux=0);
+	virtual bool ask_surface (sxsdk::surface_interface *surface, void *aux=0);
 
 	//--------------------------------------------------.
 	//  ダイアログのイベント処理用.
@@ -52,8 +52,8 @@ private:
 	virtual void load_dialog_data (sxsdk::dialog_interface &d, void * = 0);
 
 public:
-	CAlphaModeMappingLayerInterface (sxsdk::shade_interface& shade);
-	virtual ~CAlphaModeMappingLayerInterface ();
+	CAlphaModeMaterialInterface (sxsdk::shade_interface& shade);
+	virtual ~CAlphaModeMaterialInterface ();
 
 	/**
 	 * プラグイン名をSXUL(text.sxul)より取得.

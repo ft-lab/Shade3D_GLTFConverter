@@ -38,7 +38,8 @@ void CImagesBlend::blendImages ()
 	m_hasGlowImage       = false;
 	m_hasOcclusionImage  = false;
 
-	m_alphaCutoff = 0.9f;
+	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
+	m_alphaCutoff = 0.5f;
 
 	// Shade3Dでの表面材質のマッピングレイヤで、加工無しの画像が参照されているかチェック.
 	m_checkSingleImage(sxsdk::enums::diffuse_mapping, &m_diffuseMasterImage, m_diffuseTexCoord, m_diffuseRepeat, m_hasDiffuseImage);
@@ -247,6 +248,8 @@ bool CImagesBlend::m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMa
  */
 bool CImagesBlend::m_checkDiffuseAlphaTrans ()
 {
+	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
+
 	bool alphaTrans = false;
 	const int layersCou = m_surface->get_number_of_mapping_layers();
 	for (int i = 0; i < layersCou; ++i) {
@@ -257,7 +260,16 @@ bool CImagesBlend::m_checkDiffuseAlphaTrans ()
 
 		if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
 			alphaTrans = true;
-			m_alphaCutoff = std::min(m_alphaCutoff, mappingLayer.get_weight());
+
+			// AlphaModeの情報を取得.
+			CAlphaModeMaterialData alphaModeData;
+			if (StreamCtrl::loadAlphaModeMaterialParam(m_surface, alphaModeData)) {
+				m_alphaModeType = alphaModeData.alphaModeType;
+				m_alphaCutoff   = alphaModeData.alphaCutoff;
+			} else {
+				m_alphaModeType = GLTFConverter::alpha_mode_mask;
+			}
+
 			break;
 		}
 	}
