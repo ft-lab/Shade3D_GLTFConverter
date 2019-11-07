@@ -57,6 +57,7 @@ private:
 
 	GLTFConverter::alpha_mode_type m_alphaModeType;				// AlphaModeの種類.
 	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャの属性より取得.
+	bool m_diffuseRtoA;											// 拡散反射テクスチャのRed値をAlpha値に反映.
 
 private:
 	/**
@@ -67,8 +68,9 @@ private:
 
 	/**
 	 * Diffuseのアルファ透明を使用しているかチェック.
+	 * BlendModeの取得.
 	 */
-	bool m_checkDiffuseAlphaTrans ();
+	bool m_checkDiffuseAlphaTransAndBlendMode ();
 
 	/**
 	 * 指定のテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.

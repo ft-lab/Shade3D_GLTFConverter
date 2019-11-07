@@ -3,5 +3,6 @@
 	<vbox>
 		<selection id="101" label="AlphaMode : |OPAQUE|MASK|BLEND" />
 		<float id="102" label="AlphaCutoff : " />
+		<bool id="103" label="Set (1.0-Red) of diffuse texture to Alpha" />
 	</vbox>
 </dialog>

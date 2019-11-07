@@ -5,8 +5,9 @@
 #include "StreamCtrl.h"
 
 enum {
-	dlg_alpha_mode_id = 101,		// AlphaMode.
-	dlg_alpha_cutoff_id = 102,		// AlphaCutoff.
+	dlg_alpha_mode_id = 101,			// AlphaMode.
+	dlg_alpha_cutoff_id = 102,			// AlphaCutoff.
+	dlg_set_diffuse_RtoA_id = 103,		// 拡散反射テクスチャの(1.0-Red)値をAlpha値に反映.
 };
 
 CAlphaModeMaterialInterface::CAlphaModeMaterialInterface (sxsdk::shade_interface& shade) : shade(shade)
@@ -61,6 +62,10 @@ bool CAlphaModeMaterialInterface::respond (sxsdk::dialog_interface &d, sxsdk::di
 		m_data.alphaCutoff = item.get_float();
 		return true;
 	}
+	if (id == dlg_set_diffuse_RtoA_id) {
+		m_data.setDiffuseRtoA = item.get_bool();
+		return true;
+	}
 
 	return false;
 }
@@ -81,5 +86,9 @@ void CAlphaModeMaterialInterface::load_dialog_data (sxsdk::dialog_interface &d, 
 		item->set_float(m_data.alphaCutoff);
 		item->set_enabled(m_data.alphaModeType == GLTFConverter::alpha_mode_mask);
 	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_set_diffuse_RtoA_id));
+		item->set_bool(m_data.setDiffuseRtoA);
+	}
 }
-

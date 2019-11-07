@@ -467,6 +467,9 @@ void StreamCtrl::saveAlphaModeMaterialParam (sxsdk::stream_interface* stream, co
 
 		stream->write_float(data.alphaCutoff);
 
+		iDat = data.setDiffuseRtoA ? 1 : 0;
+		stream->write_int(iDat);
+
 	} catch (...) { }
 }
 
@@ -498,6 +501,9 @@ bool StreamCtrl::loadAlphaModeMaterialParam (sxsdk::stream_interface* stream, CA
 		data.alphaModeType = (GLTFConverter::alpha_mode_type)iDat;
 
 		stream->read_float(data.alphaCutoff);
+
+		stream->read_int(iDat);
+		data.setDiffuseRtoA = iDat ? true : false;
 
 		return true;
 	} catch (...) { }

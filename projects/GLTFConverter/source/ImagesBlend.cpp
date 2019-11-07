@@ -39,7 +39,12 @@ void CImagesBlend::blendImages ()
 	m_hasOcclusionImage  = false;
 
 	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
-	m_alphaCutoff = 0.5f;
+	m_alphaCutoff   = 0.5f;
+	m_diffuseRtoA   = false;
+
+	// Diffuseのアルファ透明を使用しているかチェック.
+	// BlendModeの取得.
+	m_diffuseAlphaTrans = m_checkDiffuseAlphaTransAndBlendMode();
 
 	// Shade3Dでの表面材質のマッピングレイヤで、加工無しの画像が参照されているかチェック.
 	m_checkSingleImage(sxsdk::enums::diffuse_mapping, &m_diffuseMasterImage, m_diffuseTexCoord, m_diffuseRepeat, m_hasDiffuseImage);
@@ -51,9 +56,6 @@ void CImagesBlend::blendImages ()
 	// マッピングレイヤのOcclusion情報を取得.
 	m_occlusionWeight = 1.0f;
 	m_checkOcclusionSingleImage(&m_occlusionMasterImage, m_occlusionTexCoord, m_occlusionRepeat, m_hasOcclusionImage);
-
-	// Diffuseのアルファ透明を使用しているかチェック.
-	m_diffuseAlphaTrans = m_checkDiffuseAlphaTrans();
 
 	// 法線マップの強さを取得.
 	m_normalWeight = m_getNormalWeight();
@@ -128,6 +130,12 @@ bool CImagesBlend::m_checkSingleImage (const sxsdk::enums::mapping_type mappingT
 		if (counter >= 2) break;
 	}
 	if (counter >= 1) hasImage = true;
+
+	// DiffuseテクスチャのRed値をAlphaに反映する場合.
+	if (mappingType == sxsdk::enums::diffuse_mapping && m_diffuseRtoA) {
+		return false;
+	}
+
 	if (singleImage && counter == 1) {
 		*ppMasterImage = pRetMasterImage;
 		return true;
@@ -245,10 +253,22 @@ bool CImagesBlend::m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMa
 
 /**
  * Diffuseのアルファ透明を使用しているかチェック.
+ * BlendModeの情報をStreamから取得.
  */
-bool CImagesBlend::m_checkDiffuseAlphaTrans ()
+bool CImagesBlend::m_checkDiffuseAlphaTransAndBlendMode ()
 {
 	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
+	m_diffuseRtoA   = false;
+
+	// AlphaModeの情報を取得.
+	CAlphaModeMaterialData alphaModeData;
+	bool hasAlphaModeData = false;
+	if (StreamCtrl::loadAlphaModeMaterialParam(m_surface, alphaModeData)) {
+		m_alphaModeType = alphaModeData.alphaModeType;
+		m_alphaCutoff   = alphaModeData.alphaCutoff;
+		m_diffuseRtoA   = alphaModeData.setDiffuseRtoA;
+		hasAlphaModeData = true;
+	}
 
 	bool alphaTrans = false;
 	const int layersCou = m_surface->get_number_of_mapping_layers();
@@ -261,15 +281,9 @@ bool CImagesBlend::m_checkDiffuseAlphaTrans ()
 		if (mappingLayer.get_channel_mix() == sxsdk::enums::mapping_transparent_alpha_mode) {
 			alphaTrans = true;
 
-			// AlphaModeの情報を取得.
-			CAlphaModeMaterialData alphaModeData;
-			if (StreamCtrl::loadAlphaModeMaterialParam(m_surface, alphaModeData)) {
-				m_alphaModeType = alphaModeData.alphaModeType;
-				m_alphaCutoff   = alphaModeData.alphaCutoff;
-			} else {
+			if (!hasAlphaModeData) {
 				m_alphaModeType = GLTFConverter::alpha_mode_mask;
 			}
-
 			break;
 		}
 	}
@@ -504,6 +518,17 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 			newImage->get_pixels_rgba_float(0, y, newWidth, 1, &(rgbaLine[0]));
 			for (int x = 0; x < newWidth; ++x) {
 				rgbaLine[x].alpha = (float)alphaBuff[x + iPos] / 255.0f;
+			}
+			newImage->set_pixels_rgba_float(0, y, newWidth, 1, &(rgbaLine[0]));
+		}
+	}
+
+	// DiffuseテクスチャのRed値を1.0-Alphaに反映.
+	if (mappingType == sxsdk::enums::diffuse_mapping && m_diffuseRtoA) {
+		for (int y = 0, iPos = 0; y < newHeight; ++y, iPos += newWidth) {
+			newImage->get_pixels_rgba_float(0, y, newWidth, 1, &(rgbaLine[0]));
+			for (int x = 0; x < newWidth; ++x) {
+				rgbaLine[x].alpha = 1.0f - rgbaLine[x].red;
 			}
 			newImage->set_pixels_rgba_float(0, y, newWidth, 1, &(rgbaLine[0]));
 		}

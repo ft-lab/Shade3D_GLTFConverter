@@ -528,8 +528,9 @@ namespace {
 					acceDesc.normalized    = true;
 
 					size_t byteLength = (sizeof(unsigned char) * 4) * primitiveD.color0.size();
-
 					bufferBuilder->AddBufferView(gltfDoc.bufferViews.Get(accessorID).target);
+
+					// AddAccessorではalignmentの詰め物を意識する必要なし.
 					const std::vector<unsigned char> buff = Shade3DArray::convert_vec4_to_uchar(primitiveD.color0, true);
 					bufferBuilder->AddAccessor(buff, acceDesc); 
 
@@ -993,7 +994,6 @@ namespace {
 						std::vector<unsigned char> buff = Shade3DArray::convert_vec4_to_uchar(primitiveD.color0, true);
 						binWriter->Write(gltfDoc.bufferViews[accessorID], &(buff[0]), gltfDoc.accessors[accessorID]);
 					}
-
 					byteOffset += buffV.byteLength;
 					accessorID++;
 				}
