@@ -939,6 +939,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		materialData.transparency    = 0.0f;
 		materialData.unlit           = false;
 
+		// 透明度.
+		materialData.transparency = 1.0f - imageBlend.getBaseColorAlpha();
+
 		if (surface->get_has_diffuse()) {
 			// 反射が大きい場合にbaseColorを黒にするとglTFとして見たときは黒くなるため、reflectionも考慮.
 			const sxsdk::rgb_class col0 = surface->get_diffuse_color();
@@ -966,9 +969,6 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			if (materialData.metallicFactor > 0.0f) {
 				materialData.roughnessFactor = std::max(0.0f, std::min(surface->get_roughness(), 1.0f));
 			}
-		}
-		if (surface->get_has_transparency()) {
-			materialData.transparency = surface->get_transparency();
 		}
 
 		if (surface->get_no_shading()) {
@@ -1088,20 +1088,28 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				}
 			}
 		}
-		if (materialData.transparency > 0.005f) {
-			materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
-		} else if (imageBlend.getDiffuseAlphaTrans()) {			// アルファ透過する場合.
-			switch (imageBlend.getAlphaModeType()) {
-			case GLTFConverter::alpha_mode_opaque:
-				materialData.alphaMode = 1;
-				break;
-			case GLTFConverter::alpha_mode_mask:
-				materialData.alphaMode = 3;
-				break;
-			case GLTFConverter::alpha_mode_blend:
-				materialData.alphaMode = 2;
-				break;
+
+		switch (imageBlend.getAlphaModeType()) {
+		case GLTFConverter::alpha_mode_opaque:
+			materialData.alphaMode = 1;
+			break;
+		case GLTFConverter::alpha_mode_mask:
+			materialData.alphaMode = 3;
+			break;
+		case GLTFConverter::alpha_mode_blend:
+			materialData.alphaMode = 2;
+			break;
+		}
+
+		if (materialData.alphaMode == 1) {
+			if (materialData.transparency > 0.005f) {
+				materialData.alphaMode = 2;			// ALPHA_BLEND : アルファを考慮 (Transparent).
+			} else if (imageBlend.getDiffuseAlphaTrans()) {			// アルファ透過する場合.
+				materialData.alphaMode = 3;			// AlphaMode Mask.
 			}
+		}
+
+		if (materialData.alphaMode == 3) {		// AlphaMode Mask.
 			materialData.alphaCutOff = imageBlend.getAlphaCutoff();
 		}
 
@@ -1130,22 +1138,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 					materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 					materialData.baseColorTexCoord   = imageBlend.getTexCoord(sxsdk::enums::diffuse_mapping);
 
-					// アルファ透過する場合.
-					if (imageBlend.getDiffuseAlphaTrans()) {
-						switch (imageBlend.getAlphaModeType()) {
-						case GLTFConverter::alpha_mode_opaque:
-							materialData.alphaMode = 1;
-							break;
-						case GLTFConverter::alpha_mode_mask:
-							materialData.alphaMode = 3;
-							break;
-						case GLTFConverter::alpha_mode_blend:
-							materialData.alphaMode = 2;
-							break;
-						}
-
-						materialData.alphaCutOff = imageBlend.getAlphaCutoff();
-
+					if (materialData.alphaMode != 1) {
 						CImageData& imageData = m_sceneData->images[imageIndex];
 						imageData.useBaseColorAlpha = true;
 					}

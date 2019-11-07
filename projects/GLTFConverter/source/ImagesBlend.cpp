@@ -16,6 +16,8 @@ CImagesBlend::CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class*
  */
 void CImagesBlend::blendImages ()
 {
+	m_baseColorAlpha   = 1.0f;
+
 	m_diffuseRepeat    = sx::vec<int,2>(1, 1);
 	m_normalRepeat     = sx::vec<int,2>(1, 1);
 	m_reflectionRepeat = sx::vec<int,2>(1, 1);
@@ -45,6 +47,12 @@ void CImagesBlend::blendImages ()
 
 	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
 	m_alphaCutoff   = 0.5f;
+
+	// テクスチャがない場合の不透明度(Opacity相当)は「1.0 - 透明度」.
+	m_baseColorAlpha = 1.0f;
+	if (m_surface->get_has_transparency()) {
+		m_baseColorAlpha = 1.0f - (m_surface->get_transparency());
+	}
 
 	// Diffuseのアルファ透明を使用しているかチェック.
 	// BlendModeの取得.
@@ -571,22 +579,45 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
  */
 void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 {
-	if (!m_hasTransparencyImage) return;
-	if (!m_surface->get_has_transparency() && m_alphaModeType != GLTFConverter::alpha_mode_blend) return;
-	if (m_alphaModeType != GLTFConverter::alpha_mode_blend) {
-		if (m_surface->get_has_transparency() && MathUtil::isZero(m_surface->get_transparency())) return;
+	// 基本設定の透明値.
+	float baseTransparency = 0.0f;
+	if (m_surface && m_surface->get_has_transparency()) {
+		baseTransparency = m_surface->get_transparency();
 	}
+
+	// 透明度テクスチャを持たない場合はスキップ.
+	if (!m_hasTransparencyImage) return;
+	if (MathUtil::isZero(baseTransparency)) return;
+
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+
 	std::vector<sxsdk::rgba_class> rgbaLine;
+
+	// Diffuseのimage_interfaceを取得 (複製).
+	compointer<sxsdk::image_interface> diffuseImage;
+	if (m_diffuseMasterImage) {
+		diffuseImage = m_diffuseMasterImage->get_image()->duplicate_image();
+	} else if (m_diffuseImage) {
+		diffuseImage = m_diffuseImage->duplicate_image();
+	}
 
 	// Transparencyのimage_interfaceを取得.
 	compointer<sxsdk::image_interface> transImage;
 	if (m_transparencyMasterImage) {
 		transImage = m_transparencyMasterImage->get_image();
-
 	} else if (m_transparencyImage) {
 		transImage = m_transparencyImage;
 	}
 	if (!transImage) return;
+
+	// テクスチャサイズは、diffuseTextureのサイズに合わせる.
+	if (diffuseImage && diffuseImage->has_image()) {
+		const sx::vec<int,2> size1 = diffuseImage->get_size();
+		const sx::vec<int,2> size2 = transImage->get_size();
+		if (size1.x != size2.x || size1.y != size2.y) {
+			transImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, transImage, diffuseImage->get_size());
+		}
+	}
 
 	if (m_alphaModeType == GLTFConverter::alpha_mode_opaque) {
 		m_alphaModeType = GLTFConverter::alpha_mode_blend;
@@ -596,6 +627,7 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 	const int tWid = tSize.x;
 	const int tHei = tSize.y;
 	if (tWid == 0 || tHei == 0) return;
+
 	rgbaLine.resize(tWid);
 
 	// (1.0 - Red)値を取得.
@@ -603,14 +635,30 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 	alphaBuff.resize(tWid * tHei, 255);
 	try {
 		int iPos = 0;
+		float alphaV;
 		for (int y = 0; y < tHei; ++y) {
 			transImage->get_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
 			for (int x = 0; x < tWid; ++x) {
-				alphaBuff[iPos] = (unsigned char)(std::min((int)((1.0f - rgbaLine[x].red) * 255.0f), 255));
+				alphaV = rgbaLine[x].red * baseTransparency;
+				alphaBuff[iPos] = (unsigned char)(std::min((int)((1.0f - alphaV) * 255.0f), 255));
 				iPos++;
 			}
 		}
 	} catch (...) { }
+
+	// m_baseColorAlphaは、透明度テクスチャの「適用率」を採用.
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+		if (mappingLayer.get_type() != sxsdk::enums::transparency_mapping) continue;
+		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
+		const float weight  = mappingLayer.get_weight();
+		if (MathUtil::isZero(weight)) continue;
+
+		m_baseColorAlpha = weight;
+		break;
+	}
 
 	// Diffuse Textureを持たない場合.
 	if (!m_hasDiffuseImage) {
@@ -629,7 +677,19 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 			m_diffuseImage->set_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
 		}
 
-		return;
+	} else {		// Diffuse Textureを持つ場合.
+		m_diffuseImage       = m_pScene->create_image_interface(sx::vec<int,2>(tWid, tHei));
+		m_diffuseMasterImage = NULL;
+
+		int iPos = 0;
+		for (int y = 0; y < tHei; ++y) {
+			diffuseImage->get_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
+			for (int x = 0; x < tWid; ++x) {
+				rgbaLine[x].alpha = (float)alphaBuff[iPos] / 255.0f;
+				iPos++;
+			}
+			m_diffuseImage->set_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
+		}
 	}
 }
 

@@ -63,6 +63,8 @@ private:
 	GLTFConverter::alpha_mode_type m_alphaModeType;				// AlphaModeの種類.
 	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャの属性より取得.
 
+	float m_baseColorAlpha;										// 最終的なbaseColorのAlpha値（Opacity）.
+
 private:
 	/**
 	 * 指定のテクスチャの合成処理.
@@ -130,6 +132,11 @@ public:
 	 * 各種イメージを持つか (単一または複数).
 	 */
 	bool hasImage (const sxsdk::enums::mapping_type mappingType) const;
+
+	/**
+	 * 最終的なbaseColorのAlpha値.
+	 */
+	float getBaseColorAlpha () const { return m_baseColorAlpha; }
 
 	/**
 	 * 単一テクスチャを参照する場合のマスターイメージクラスを取得.
