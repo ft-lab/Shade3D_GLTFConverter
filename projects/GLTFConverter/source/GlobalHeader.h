@@ -217,7 +217,6 @@ class CAlphaModeMaterialData
 public:
 	GLTFConverter::alpha_mode_type alphaModeType;		// AlphaModeの種類.
 	float alphaCutoff;
-	bool setDiffuseRtoA;								// 拡散反射テクスチャの(1.0-Red)値をAlpha値に反映.
 
 	CAlphaModeMaterialData () {
 		clear();
@@ -226,7 +225,6 @@ public:
 	void clear () {
 		alphaModeType = GLTFConverter::alpha_mode_opaque;
 		alphaCutoff   = 0.5f;
-		setDiffuseRtoA = false;
 	}
 };
 

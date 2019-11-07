@@ -18,6 +18,7 @@ private:
 	compointer<sxsdk::image_interface> m_roughnessImage;		// Roughnessの画像.
 	compointer<sxsdk::image_interface> m_glowImage;				// Glowの画像.
 	compointer<sxsdk::image_interface> m_occlusionImage;		// Occlusionの画像.
+	compointer<sxsdk::image_interface> m_transparencyImage;		// Transparencyの画像.
 
 	compointer<sxsdk::image_interface> m_gltfBaseColorImage;			// glTFとしてエクスポートするBaseColorの画像.
 	compointer<sxsdk::image_interface> m_gltfMetallicRoughnessImage;	// glTFとしてエクスポートするMetallic/Roughnessの画像.
@@ -28,6 +29,7 @@ private:
 	bool m_hasNormalImage;										// normalのイメージを持つか.
 	bool m_hasGlowImage;										// glowのイメージを持つか.
 	bool m_hasOcclusionImage;									// Occlusionのイメージを持つか.
+	bool m_hasTransparencyImage;								// Transparencyのイメージを持つか.
 
 	// 以下、マッピングレイヤで1枚のみの加工不要のテクスチャである場合のマスターサーフェスクラスの参照.
 	sxsdk::master_image_class* m_diffuseMasterImage;			// Diffuseのマスターイメージクラス.
@@ -36,6 +38,7 @@ private:
 	sxsdk::master_image_class* m_normalMasterImage;				// Normalのマスターイメージクラス.
 	sxsdk::master_image_class* m_glowMasterImage;				// Glowのマスターイメージクラス.
 	sxsdk::master_image_class* m_occlusionMasterImage;			// Occlusionのマスターイメージクラス.
+	sxsdk::master_image_class* m_transparencyMasterImage;		// Transparencyのマスターイメージクラス.
 
 	sx::vec<int,2> m_diffuseRepeat;								// Diffuseの反復回数.
 	sx::vec<int,2> m_normalRepeat;								// Normalの反復回数.
@@ -43,6 +46,7 @@ private:
 	sx::vec<int,2> m_roughnessRepeat;							// Roughnessの反復回数.
 	sx::vec<int,2> m_glowRepeat;								// Glowの反復回数.
 	sx::vec<int,2> m_occlusionRepeat;							// Occlusionの反復回数.
+	sx::vec<int,2> m_transparencyRepeat;						// Transparencyの反復回数.
 
 	int m_diffuseTexCoord;										// DiffuseのUVレイヤ番号.
 	int m_normalTexCoord;										// NormalのUVレイヤ番号.
@@ -50,6 +54,7 @@ private:
 	int m_roughnessTexCoord;									// RoughnessのUVレイヤ番号.
 	int m_glowTexCoord;											// GlowのUVレイヤ番号.
 	int m_occlusionTexCoord;									// OcclusionのUVレイヤ番号.
+	int m_transparencyTexCoord;									// TransparencyのUVレイヤ番号.
 
 	bool m_diffuseAlphaTrans;									// Diffuseのアルファ透明を使用しているか.
 	float m_normalWeight;										// Normalのウエイト値.
@@ -57,7 +62,6 @@ private:
 
 	GLTFConverter::alpha_mode_type m_alphaModeType;				// AlphaModeの種類.
 	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャの属性より取得.
-	bool m_diffuseRtoA;											// 拡散反射テクスチャのRed値をAlpha値に反映.
 
 private:
 	/**
@@ -103,6 +107,11 @@ private:
 	 * 法線マップの強さを取得.
 	 */
 	float m_getNormalWeight ();
+
+	/**
+	 * Transparencyテクスチャがある場合は、DiffuseTextureのAlpha要素に合成する.
+	 */
+	void m_blendDiffuseTransparencyTexture ();
 
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
