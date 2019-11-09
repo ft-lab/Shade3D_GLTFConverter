@@ -1,5 +1,6 @@
 ﻿/**
  * Export用にShade3Dの表面材質のマッピングレイヤのテクスチャを合成.
+ * 半透明表現は、「不透明マスク」をOpacityとして使用.
  */
 #ifndef _IMAGESBLEND_H
 #define _IMAGESBLEND_H
@@ -18,7 +19,7 @@ private:
 	compointer<sxsdk::image_interface> m_roughnessImage;		// Roughnessの画像.
 	compointer<sxsdk::image_interface> m_glowImage;				// Glowの画像.
 	compointer<sxsdk::image_interface> m_occlusionImage;		// Occlusionの画像.
-	compointer<sxsdk::image_interface> m_transparencyImage;		// Transparencyの画像.
+	compointer<sxsdk::image_interface> m_opacityImage;			// Opacity(不透明マスク)の画像.
 
 	compointer<sxsdk::image_interface> m_gltfBaseColorImage;			// glTFとしてエクスポートするBaseColorの画像.
 	compointer<sxsdk::image_interface> m_gltfMetallicRoughnessImage;	// glTFとしてエクスポートするMetallic/Roughnessの画像.
@@ -29,7 +30,7 @@ private:
 	bool m_hasNormalImage;										// normalのイメージを持つか.
 	bool m_hasGlowImage;										// glowのイメージを持つか.
 	bool m_hasOcclusionImage;									// Occlusionのイメージを持つか.
-	bool m_hasTransparencyImage;								// Transparencyのイメージを持つか.
+	bool m_hasOpacityImage;										// Opacity(不透明マスク)のイメージを持つか.
 
 	// 以下、マッピングレイヤで1枚のみの加工不要のテクスチャである場合のマスターサーフェスクラスの参照.
 	sxsdk::master_image_class* m_diffuseMasterImage;			// Diffuseのマスターイメージクラス.
@@ -38,7 +39,7 @@ private:
 	sxsdk::master_image_class* m_normalMasterImage;				// Normalのマスターイメージクラス.
 	sxsdk::master_image_class* m_glowMasterImage;				// Glowのマスターイメージクラス.
 	sxsdk::master_image_class* m_occlusionMasterImage;			// Occlusionのマスターイメージクラス.
-	sxsdk::master_image_class* m_transparencyMasterImage;		// Transparencyのマスターイメージクラス.
+	sxsdk::master_image_class* m_opacityMasterImage;			// Opacity(不透明マスク)のマスターイメージクラス.
 
 	sx::vec<int,2> m_diffuseRepeat;								// Diffuseの反復回数.
 	sx::vec<int,2> m_normalRepeat;								// Normalの反復回数.
@@ -46,7 +47,7 @@ private:
 	sx::vec<int,2> m_roughnessRepeat;							// Roughnessの反復回数.
 	sx::vec<int,2> m_glowRepeat;								// Glowの反復回数.
 	sx::vec<int,2> m_occlusionRepeat;							// Occlusionの反復回数.
-	sx::vec<int,2> m_transparencyRepeat;						// Transparencyの反復回数.
+	sx::vec<int,2> m_opacityRepeat;								// Opacity(不透明マスク)の反復回数.
 
 	int m_diffuseTexCoord;										// DiffuseのUVレイヤ番号.
 	int m_normalTexCoord;										// NormalのUVレイヤ番号.
@@ -54,7 +55,7 @@ private:
 	int m_roughnessTexCoord;									// RoughnessのUVレイヤ番号.
 	int m_glowTexCoord;											// GlowのUVレイヤ番号.
 	int m_occlusionTexCoord;									// OcclusionのUVレイヤ番号.
-	int m_transparencyTexCoord;									// TransparencyのUVレイヤ番号.
+	int m_opacityTexCoord;										// Opacity(不透明マスク)のUVレイヤ番号.
 
 	bool m_diffuseAlphaTrans;									// Diffuseのアルファ透明を使用しているか.
 	float m_normalWeight;										// Normalのウエイト値.

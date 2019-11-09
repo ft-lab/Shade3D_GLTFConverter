@@ -479,6 +479,14 @@ void StreamCtrl::saveAlphaModeMaterialParam (sxsdk::surface_interface* surface, 
 	} catch (...) { }
 }
 
+void StreamCtrl::saveAlphaModeMaterialParam (sxsdk::surface_class* surface, const CAlphaModeMaterialData& data)
+{
+	try {
+		compointer<sxsdk::stream_interface> stream(surface->create_attribute_stream_interface_with_uuid(ALPHA_MODE_INTERFACE_ID));
+		if (!stream) return;
+		saveAlphaModeMaterialParam(stream, data);
+	} catch (...) { }
+}
 
 /**
  * AlphaModeのマテリアル情報を取得.

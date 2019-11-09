@@ -1064,7 +1064,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 							materialData.baseColorTexScale   = sxsdk::vec2(repeat.x, repeat.y);
 							materialData.baseColorTexCoord   = imageBlend.getTexCoord(mType);
 
-							if (imageBlend.getDiffuseAlphaTrans() || imageBlend.getAlphaModeType() == GLTFConverter::alpha_mode_blend) {
+							if (imageBlend.getDiffuseAlphaTrans() || imageBlend.getAlphaModeType() != GLTFConverter::alpha_mode_opaque) {
 								CImageData& imageData = m_sceneData->images[imageIndex];
 								imageData.useBaseColorAlpha = true;
 							}

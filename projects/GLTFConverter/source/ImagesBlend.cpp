@@ -1,11 +1,16 @@
 ﻿/**
  * Export用にShade3Dの表面材質のマッピングレイヤのテクスチャを合成.
+ * 半透明表現は、「不透明マスク」をOpacityとして使用.
  * 透明度（Transparency）は、DiffuseTextureのAlphaに格納する.
  */
 #include "ImagesBlend.h"
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
 #include "StreamCtrl.h"
+
+// 「不透明マスク」の対応番号は24。これはShade3D SDK (ver.15.1)にはない。.
+// 「不透明マスク」は、Shade3D ver.16で追加された.
+#define OPACITY_MAPPING_TYPE  ((sxsdk::enums::mapping_type)(24))
 
 CImagesBlend::CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface) : m_pScene(scene), m_surface(surface)
 {
@@ -23,7 +28,7 @@ void CImagesBlend::blendImages ()
 	m_reflectionRepeat = sx::vec<int,2>(1, 1);
 	m_roughnessRepeat  = sx::vec<int,2>(1, 1);
 	m_glowRepeat       = sx::vec<int,2>(1, 1);
-	m_transparencyRepeat = sx::vec<int,2>(1, 1);
+	m_opacityRepeat    = sx::vec<int,2>(1, 1);
 
 	m_diffuseTexCoord     = 0;
 	m_normalTexCoord      = 0;
@@ -31,7 +36,7 @@ void CImagesBlend::blendImages ()
 	m_roughnessTexCoord   = 0;
 	m_glowTexCoord        = 0;
 	m_occlusionTexCoord   = 0;
-	m_transparencyTexCoord = 0;
+	m_opacityTexCoord     = 0;
 
 	m_diffuseAlphaTrans = false;
 	m_normalWeight    = 1.0f;
@@ -43,7 +48,7 @@ void CImagesBlend::blendImages ()
 	m_hasNormalImage     = false;
 	m_hasGlowImage       = false;
 	m_hasOcclusionImage  = false;
-	m_hasTransparencyImage = false;
+	m_hasOpacityImage    = false;
 
 	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
 	m_alphaCutoff   = 0.5f;
@@ -64,10 +69,7 @@ void CImagesBlend::blendImages ()
 	m_checkSingleImage(sxsdk::enums::reflection_mapping, &m_reflectionMasterImage, m_reflectionTexCoord, m_reflectionRepeat, m_hasReflectionImage);
 	m_checkSingleImage(sxsdk::enums::roughness_mapping, &m_roughnessMasterImage, m_roughnessTexCoord, m_roughnessRepeat, m_hasRoughnessImage);
 	m_checkSingleImage(sxsdk::enums::glow_mapping, &m_glowMasterImage, m_glowTexCoord, m_glowRepeat, m_hasGlowImage);
-
-	if (m_surface->get_has_transparency() && m_surface->get_transparency() > 0.0f) {
-		m_checkSingleImage(sxsdk::enums::transparency_mapping, &m_transparencyMasterImage, m_transparencyTexCoord, m_transparencyRepeat, m_hasTransparencyImage);
-	}
+	m_checkSingleImage(OPACITY_MAPPING_TYPE, &m_opacityMasterImage, m_opacityTexCoord, m_opacityRepeat, m_hasOpacityImage);
 
 	// マッピングレイヤのOcclusion情報を取得.
 	m_occlusionWeight = 1.0f;
@@ -82,12 +84,9 @@ void CImagesBlend::blendImages ()
 	if (!m_reflectionMasterImage && m_hasReflectionImage) m_blendImages(sxsdk::enums::reflection_mapping);
 	if (!m_roughnessMasterImage && m_hasRoughnessImage) m_blendImages(sxsdk::enums::roughness_mapping);
 	if (!m_glowMasterImage && m_hasGlowImage) m_blendImages(sxsdk::enums::glow_mapping);
+	if (!m_opacityMasterImage && m_hasOpacityImage) m_blendImages(OPACITY_MAPPING_TYPE);
 
-	if (m_surface->get_has_transparency() && m_surface->get_transparency() > 0.0f) {
-		if (!m_transparencyMasterImage && m_hasTransparencyImage) m_blendImages(sxsdk::enums::transparency_mapping);
-	}
-
-	// Transparencyテクスチャがある場合は、DiffuseTextureのAlpha要素に合成.
+	// 不透明マスクテクスチャがある場合は、DiffuseTextureのAlpha要素に合成.
 	m_blendDiffuseTransparencyTexture();
 }
 
@@ -304,6 +303,20 @@ bool CImagesBlend::m_checkDiffuseAlphaTransAndBlendMode ()
 			break;
 		}
 	}
+
+	// 不透明マスクを使用しているか.
+	if (m_alphaModeType == GLTFConverter::alpha_mode_opaque) {
+		for (int i = 0; i < layersCou; ++i) {
+			sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+			if (mappingLayer.get_type() != OPACITY_MAPPING_TYPE) continue;
+			if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+
+			m_alphaModeType = GLTFConverter::alpha_mode_blend;
+			break;
+		}
+	}
+
 	return alphaTrans;
 }
 
@@ -565,10 +578,10 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 		m_glowRepeat   = sx::vec<int,2>(newRepeatX, newRepeatY);
 		m_glowTexCoord = newTexCoord;
 	}
-	if (mappingType == sxsdk::enums::transparency_mapping) {
-		m_transparencyImage    = newImage;
-		m_transparencyRepeat   = sx::vec<int,2>(newRepeatX, newRepeatY);
-		m_transparencyTexCoord = newTexCoord;
+	if (mappingType == OPACITY_MAPPING_TYPE) {
+		m_opacityImage    = newImage;
+		m_opacityRepeat   = sx::vec<int,2>(newRepeatX, newRepeatY);
+		m_opacityTexCoord = newTexCoord;
 	}
 
 	return true;
@@ -585,9 +598,8 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 		baseTransparency = m_surface->get_transparency();
 	}
 
-	// 透明度テクスチャを持たない場合はスキップ.
-	if (!m_hasTransparencyImage) return;
-	if (MathUtil::isZero(baseTransparency)) return;
+	// 不透明度マスクテクスチャを持たない場合はスキップ.
+	if (!m_hasOpacityImage) return;
 
 	const int layersCou = m_surface->get_number_of_mapping_layers();
 
@@ -601,21 +613,21 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 		diffuseImage = m_diffuseImage->duplicate_image();
 	}
 
-	// Transparencyのimage_interfaceを取得.
-	compointer<sxsdk::image_interface> transImage;
-	if (m_transparencyMasterImage) {
-		transImage = m_transparencyMasterImage->get_image();
-	} else if (m_transparencyImage) {
-		transImage = m_transparencyImage;
+	// 不透明マスクのimage_interfaceを取得.
+	compointer<sxsdk::image_interface> opacityImage;
+	if (m_opacityMasterImage) {
+		opacityImage = m_opacityMasterImage->get_image();
+	} else if (m_opacityImage) {
+		opacityImage = m_opacityImage;
 	}
-	if (!transImage) return;
+	if (!opacityImage) return;
 
 	// テクスチャサイズは、diffuseTextureのサイズに合わせる.
 	if (diffuseImage && diffuseImage->has_image()) {
 		const sx::vec<int,2> size1 = diffuseImage->get_size();
-		const sx::vec<int,2> size2 = transImage->get_size();
+		const sx::vec<int,2> size2 = opacityImage->get_size();
 		if (size1.x != size2.x || size1.y != size2.y) {
-			transImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, transImage, diffuseImage->get_size());
+			opacityImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, opacityImage, diffuseImage->get_size());
 		}
 	}
 
@@ -623,34 +635,34 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 		m_alphaModeType = GLTFConverter::alpha_mode_blend;
 	}
 
-	const sx::vec<int,2> tSize = transImage->get_size();
+	const sx::vec<int,2> tSize = opacityImage->get_size();
 	const int tWid = tSize.x;
 	const int tHei = tSize.y;
 	if (tWid == 0 || tHei == 0) return;
 
 	rgbaLine.resize(tWid);
 
-	// (1.0 - Red)値を取得.
+	// Red値を取得.
 	std::vector<unsigned char> alphaBuff;
 	alphaBuff.resize(tWid * tHei, 255);
 	try {
 		int iPos = 0;
 		float alphaV;
 		for (int y = 0; y < tHei; ++y) {
-			transImage->get_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
+			opacityImage->get_pixels_rgba_float(0, y, tWid, 1, &(rgbaLine[0]));
 			for (int x = 0; x < tWid; ++x) {
-				alphaV = rgbaLine[x].red * baseTransparency;
-				alphaBuff[iPos] = (unsigned char)(std::min((int)((1.0f - alphaV) * 255.0f), 255));
+				alphaV = rgbaLine[x].red;
+				alphaBuff[iPos] = (unsigned char)(std::min((int)(alphaV * 255.0f), 255));
 				iPos++;
 			}
 		}
 	} catch (...) { }
 
-	// m_baseColorAlphaは、透明度テクスチャの「適用率」を採用.
+	// m_baseColorAlphaは、不透明マスクテクスチャの「適用率」を採用.
 	for (int i = 0; i < layersCou; ++i) {
 		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
 		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
-		if (mappingLayer.get_type() != sxsdk::enums::transparency_mapping) continue;
+		if (mappingLayer.get_type() != OPACITY_MAPPING_TYPE) continue;
 		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
 
 		const float weight  = mappingLayer.get_weight();
@@ -663,10 +675,10 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 	// Diffuse Textureを持たない場合.
 	if (!m_hasDiffuseImage) {
 		m_diffuseImage       = m_pScene->create_image_interface(sx::vec<int,2>(tWid, tHei));
-		m_hasDiffuseImage    = m_hasTransparencyImage;
+		m_hasDiffuseImage    = m_hasOpacityImage;
 		m_diffuseMasterImage = NULL;
-		m_diffuseRepeat      = m_transparencyRepeat;
-		m_diffuseTexCoord    = m_transparencyTexCoord;
+		m_diffuseRepeat      = m_opacityRepeat;
+		m_diffuseTexCoord    = m_opacityTexCoord;
 
 		int iPos = 0;
 		for (int y = 0; y < tHei; ++y) {

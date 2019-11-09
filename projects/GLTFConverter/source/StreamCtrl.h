@@ -56,6 +56,7 @@ namespace StreamCtrl
 	 */
 	void saveAlphaModeMaterialParam (sxsdk::stream_interface* stream, const CAlphaModeMaterialData& data);
 	void saveAlphaModeMaterialParam (sxsdk::surface_interface* surface, const CAlphaModeMaterialData& data);
+	void saveAlphaModeMaterialParam (sxsdk::surface_class* surface, const CAlphaModeMaterialData& data);
 
 	/**
 	 * AlphaModeのマテリアル情報を取得.

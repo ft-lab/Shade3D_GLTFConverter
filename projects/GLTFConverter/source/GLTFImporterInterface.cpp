@@ -687,6 +687,15 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			// ALPHA_BLEND : 透明度を考慮.
 			const bool alphaBlend = (materialD.alphaMode == 2);
 
+			// AlphaMask情報をStreamに保持.
+			{
+				CAlphaModeMaterialData aData;
+				aData.alphaCutoff   = materialD.alphaCutOff;
+				if (alphaMask) aData.alphaModeType = GLTFConverter::alpha_mode_mask;
+				if (alphaBlend) aData.alphaModeType = GLTFConverter::alpha_mode_blend;
+				StreamCtrl::saveAlphaModeMaterialParam(surface, aData);
+			}
+
 			bool needAlpha = false;
 			const float transparency = alphaBlend ? materialD.transparency : 0.0f;
 			surface->set_transparency(transparency);
