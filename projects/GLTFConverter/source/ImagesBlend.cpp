@@ -132,7 +132,7 @@ bool CImagesBlend::m_checkSingleImage (const sxsdk::enums::mapping_type mappingT
 									channelMix == sxsdk::enums::mapping_grayscale_blue_mode ||
 									channelMix == sxsdk::enums::mapping_grayscale_average_mode);
 
-		if (flipColor || flipH || flipV || useChannelMix) {
+		if (flipColor || flipH || flipV || useChannelMix || !MathUtil::isZero(1.0f - weight)) {
 			counter++;
 			continue;
 		}
@@ -478,8 +478,14 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType)
 				}
 
 				if (counter == 0) {
-					for (int x = 0; x < newWidth; ++x) {
-						rgbaLine[x] = rgbaLine[x] * weight + whiteCol * weight2;
+					if (blendMode == sxsdk::enums::mapping_mul_mode) {	// 「乗算 (レガシー)」合成.
+						for (int x = 0; x < newWidth; ++x) {
+							rgbaLine[x] = rgbaLine[x] * weight;
+						}
+					} else {
+						for (int x = 0; x < newWidth; ++x) {
+							rgbaLine[x] = rgbaLine[x] * weight + whiteCol * weight2;
+						}
 					}
 				} else {
 					newImage->get_pixels_rgba_float(0, y, newWidth, 1, &(rgbaLine0[0]));
@@ -657,20 +663,6 @@ void CImagesBlend::m_blendDiffuseTransparencyTexture ()
 			}
 		}
 	} catch (...) { }
-
-	// m_baseColorAlphaは、不透明マスクテクスチャの「適用率」を採用.
-	for (int i = 0; i < layersCou; ++i) {
-		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
-		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
-		if (mappingLayer.get_type() != OPACITY_MAPPING_TYPE) continue;
-		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
-
-		const float weight  = mappingLayer.get_weight();
-		if (MathUtil::isZero(weight)) continue;
-
-		m_baseColorAlpha = weight;
-		break;
-	}
 
 	// Diffuse Textureを持たない場合.
 	if (!m_hasDiffuseImage) {
