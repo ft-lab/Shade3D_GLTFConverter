@@ -65,6 +65,9 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 * ジオメトリのDraco圧縮。ver.0.2.0.2で追加。    
 Draco圧縮はAnimation/Morph Targets/Texture Imageの圧縮には対応していません。
 * マテリアルのunlit対応（Shade3Dの表面材質の「陰影付けしない」のチェックボックス）。ver.0.2.0.4で追加。
+* Export : テクスチャマッピングの「不透明マスク」の出力。ver.0.1.2.0で追加。    
+* Export : AlphaModeの指定(Opaque/Blend/Mask)。ver.0.1.2.0で追加。    
+* Export : AlphaCutoffの指定。ver.0.1.2.0で追加。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -84,7 +87,7 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 
 表面材質のマッピングレイヤとして、「イメージ/拡散反射」の「アルファ透明」を選択した場合、    
 元のイメージがpngのAlpha要素を持つ場合に、透過処理(glTFのalphaMode:MASK)が行われます。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_alpha_blend.png"/>     
+<img src="./wiki_images/gltfConverter_alpha_blend.png"/>     
 
 この場合、エクスポート時のオプションで「テクスチャ出力」を「jpegに置き換え」としたときも、png形式で出力されます。
 
@@ -93,6 +96,17 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 表面材質の「透明」が0.0よりも大きい場合、    
 「1.0 - 透明」の値がglTFのpbrMetallicRoughnessのbaseColorFactorのAlphaに格納されます。    
 このとき、glTFのalphaMode:BLENDが使用されます。    
+
+### エクスポート時のAlphaModeの指定について (ver.0.1.2.0 - )
+
+表面材質の「情報」ポップアップメニューより「AlphaMode (glTF)」を選択することで、    
+glTFのalphaModeを指定できます。
+<img src="./wiki_images/gltfConverter_alphamode_01.png"/>     
+
+「AlphaMode」で「OPAQUE」は透過無しの指定になります。    
+「BLEND」は表面材質の「不透明マスク」のテクスチャをマッピングすることにより、diffuseColorのAlphaチャンネルに任意のAlpha値を与えることができます。    
+「MASK」は、アルファ値によるマスクキングを行います。AlphaCutoffでマスクの敷居値を指定します。
+デフォルトは0.5になります。    
 
 ### エクスポート時のボーンとスキンについて
 
@@ -110,14 +124,17 @@ GLTF/GLBエクスポート時に、ボーンとスキンを持つ形状の場合
 
 ボーンで、変換行列に回転/せん断/スケール要素を与えると正しくインポート/エクスポートされません。    
 変換行列では移動要素のみ使用するようにしてください。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_bone_matrix.png"/>     
+<img src="./wiki_images/gltfConverter_bone_matrix.png"/>     
 Shade3Dでボーンを扱う際は、「軸の整列」の「自動で軸合わせ」をオフにして使用するようにしてください。   
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_bone_matrix_2.png"/>     
+<img src="./wiki_images/gltfConverter_bone_matrix_2.png"/>     
 
 ### エクスポートオプション
 
 エクスポート時にダイアログボックスが表示され、オプション指定できます。   
 自由曲面や掃引体/回転体などの分割は「曲面の分割」で精度を指定できます。    
+
+「出力形式」はglb/gltfを選択できます (ver.0.2.1.0 追加)。    
+バイナリで1ファイルにする場合はglb、テキスト形式とテクスチャファイルに分離して出力する場合はgltfを選択します。    
 「テクスチャ出力」で「イメージから拡張子を参照」を選択すると、   
 マスターイメージ名で「.png」の拡張子が指定されていればpngとして、   
 「.jpg」の拡張子が指定されていればjpegとしてテクスチャイメージが出力されます。   
@@ -132,10 +149,11 @@ glTFの1つのMeshに複数のPrimitiveを持つ構造の場合(フェイスグ�
 「頂点カラーを出力」チェックボックスをオンにすると、ポリゴンメッシュに割り当てられた頂点カラー情報も出力します。    
 「アニメーションを出力」チェックボックスをオンにすると、ボーン＋スキンのモーションを割り当てている場合にそのときのキーフレーム情報を出力します。    
 「Draco圧縮」チェックボックスをオンにすると、ジオメトリデータを圧縮して出力します (ver.0.2.0.2 追加)。    
-ただし、Draco圧縮はジオメトリのみの圧縮となり、Morph Targets/アニメーション/テクスチャイメージは圧縮されません。
+ただし、Draco圧縮はジオメトリのみの圧縮となり、Morph Targets/アニメーション/テクスチャイメージは圧縮されません。    
+「色をリニアに変換」チェックボックスをオンにすると、拡散反射色/発光色/頂点カラーが逆ガンマ補正されてリニアな状態で出力されます (ver.0.2.1.0 追加)。    
 
 「Asset情報」で主にOculus Homeにglbファイルを持っていくときの情報を指定できます(ver.0.1.0.8 追加)。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_dlg_asset.png"/>     
+<img src="./wiki_images/gltfConverter_export_dlg_asset.png"/>     
 ※ Oculus Homeでは全角の指定は文字化けしますので、半角英数字で指定する必要があります。    
 「タイトル」で3Dモデルの名前を指定します。    
 「作成者」で3Dモデルの作成者を指定します。    
@@ -210,7 +228,7 @@ Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算と
 glTFでRoughness MetallicのOcclusion(R)要素を使用せず、単体のOcclusionテクスチャイメージを持つ場合、    
 インポート時はglTF Converterプラグインで用意している「Occlusion (glTF)」のレイヤが使用されます。    
 これは、「Occlusion (glTF)/拡散反射」として「乗算」合成を割り当てて使用します。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_occlusion_01.png"/>     
+<img src="./wiki_images/gltfConverter_mapping_layer_occlusion_01.png"/>     
 レンダリングした場合、「イメージ/拡散反射」のマッピングレイヤと同じ挙動になります。    
 
 Occlusionテクスチャイメージがマッピングレイヤで指定されている場合は、    
@@ -221,7 +239,7 @@ UV1/UV2のいずれかを指定できます(ver.0.1.0.13-)。投影は「ラッ�
 「適用率」の指定が、glTFのocclusionTexture.strengthになります。    
 
 UV1/UV2の選択は、「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_occlusion_uv.png"/>     
+<img src="./wiki_images/gltfConverter_mapping_layer_occlusion_uv.png"/>     
 
 ### Occlusionのマッピングレイヤをインポートした場合の注意事項 (ver.0.1.0.13 - )
 
@@ -263,12 +281,12 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 
 鏡のような鏡面反射をする場合は、「拡散反射」の色を白に近づけるようにし拡散反射のスライダを0.0に近づけるようにします。    
 この場合「反射」値は1.0に近づく指定をしています。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_diffuse_reflection_02.png"/>     
+<img src="./wiki_images/gltfConverter_mapping_layer_diffuse_reflection_02.png"/>     
 こうすることで、glTF出力後もShade3Dと似た表現になります（あくまでも近似です）。    
 
 黒く光るような反射をする場合は、「拡散反射」の色を反射後の色（ここでは黒）に近づけるようにし拡散反射のスライダを0.0に近づけるようにします。    
 この場合「反射」値は0.0より大きな小さめの値を指定しています。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_mapping_layer_diffuse_reflection_01.png"/>     
+<img src="./wiki_images/gltfConverter_mapping_layer_diffuse_reflection_01.png"/>     
 
 ### エクスポート時の表面材質のマッピングレイヤについて (ver.0.1.0.9 対応)
 
@@ -279,9 +297,9 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 この場合、以下の指定が使用できます。    
 
 「合成」は、「通常」「加算」「減算」「乗算」「比較（明）」「比較（暗）」を指定できます。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_blend_mode.png"/>     
+<img src="./wiki_images/gltfConverter_export_blend_mode.png"/>     
 「色反転」、イメージタブの「左右反転」「上下反転」のチェックボックスを指定できます。    
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_export_mapping_layer_01.png"/>     
+<img src="./wiki_images/gltfConverter_export_mapping_layer_01.png"/>     
 「チャンネル合成」の指定は、「イメージ/拡散反射」の場合は「アルファ乗算済み」「アルファ透明」を指定できます。    
 「グレイスケール（平均）」「グレイスケール(R)」「グレイスケール(G)」「グレイスケール(B)」「グレイスケール(A)」を指定できます。    
 
@@ -335,7 +353,7 @@ Morph Targetsとは、ポリゴンメッシュの頂点移動による変形を�
 glTF Converter 0.2.0.0では、Morph Targetsの登録とウエイト値の割り当てのみに対応しています。    
 アニメーションでのキーフレーム登録はまだ未実装です。    
 
-<img src="https://github.com/ft-lab/Shade3D_GLTFConverter/blob/master/wiki_images/gltfConverter_MorphTargets_01.png"/>   
+<img src="./wiki_images/gltfConverter_MorphTargets_01.png"/>   
 メインメニューの「表示」-「Morph Targets」でMorph Targetsウィンドウを表示します。    
 
 ※ Morph Targets情報はUNDO/REDOに対応していません。    
@@ -403,7 +421,8 @@ VRM出力に対応したときに、このあたりは対処予定です。
 * エクスポートされたポリゴンメッシュはすべて三角形分割されます。   
 * レンダリングブーリアンには対応していません。  
 * 表面材質のマッピングレイヤは、イメージマッピングのみ対応しています。ソリッドテクスチャの出力には対応していません。また、マッピングはUVのみ使用できます。 
-* BaseColorのAlpha要素（Opacity）のインポート/エクスポートは、表面材質のマッピングレイヤの「アルファ透明」を参照します (ver.0.1.0.4 追加)。
+* BaseColorのAlpha要素（Opacity）のインポート/エクスポートは、表面材質のマッピングレイヤの「アルファ透明」を参照します (ver.0.1.0.4 追加)。    
+* エクスポート時に半透明にするかトリミングするかは、表面材質属性の「AlphaMode」で変更します(ver.0.1.2.0 追加)。    
 * スキンは「頂点ブレンド」の割り当てのみに対応しています。
 * ジョイントは、ボールジョイント/ボーンジョイントのみに対応しています。
 * 表面材質のマッピングレイヤでの反復指定は仕様外にしました(ver.0.1.0.9 仕様変更)。    
@@ -585,6 +604,13 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2019/11/10] ver.0.2.1.0   
+* Export : エクスポートオプションに「出力形式」を追加。glb/gltfのどちらで出力できるか選択。
+* Export : エクスポートオプションに「色をリニアに変換」を追加
+* Export : 表面材質属性に、AlphaModeの指定を追加 (Blend/Mask、AlphaCutoffの指定)
+* Export : AlphaModeでMASKを指定した場合のalphaCutoffのデフォルト値を0.5に変更
+* Export : 表面材質の「不透明マスク」テクスチャを反映
 
 [2018/12/26] ver.0.2.0.6   
 * Export : 英語でShade3Dを使用している場合に、glTF Export処理を行うとダイアログボックスが出る前にフリーズする問題を修正
