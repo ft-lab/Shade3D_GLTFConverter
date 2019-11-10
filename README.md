@@ -297,7 +297,7 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 「イメージ/法線」は1枚のみ参照します。    
 この場合、以下の指定が使用できます。    
 
-「合成」は、「通常」「加算」「減算」「乗算」「比較（明）」「比較（暗）」を指定できます。    
+「合成」は、「通常」「加算」「減算」「乗算」「比較（明）」「比較（暗）」「乗算 (レガシー)」を指定できます。    
 <img src="./wiki_images/gltfConverter_export_blend_mode.png"/>     
 「色反転」、イメージタブの「左右反転」「上下反転」のチェックボックスを指定できます。    
 <img src="./wiki_images/gltfConverter_export_mapping_layer_01.png"/>     
@@ -607,9 +607,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 ## 更新履歴
 
 [2019/11/10] ver.0.2.1.0   
-* Export : エクスポートオプションに「出力形式」を追加。glb/gltfのどちらで出力できるか選択。
+* Export : エクスポートオプションに「出力形式」を追加。glb/gltfのどちらで出力するか選択。
 * Export : エクスポートオプションに「色をリニアに変換」を追加
-* Export : 表面材質属性に、AlphaModeの指定を追加 (Blend/Mask、AlphaCutoffの指定)
+* Export : 表面材質属性に、AlphaModeの指定を追加 (Opaque/Blend/Mask、AlphaCutoffの指定)
 * Export : AlphaModeでMASKを指定した場合のalphaCutoffのデフォルト値を0.5に変更
 * Export : 表面材質の「不透明マスク」テクスチャを反映
 
