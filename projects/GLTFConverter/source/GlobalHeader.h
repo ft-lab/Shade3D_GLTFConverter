@@ -123,6 +123,7 @@ public:
 	bool outputAnimation;									// アニメーションを出力.
 	bool dracoCompression;									// Draco圧縮.
 	bool shareVerticesMesh;									// Mesh内のPrimitiveの頂点情報を共有.
+	bool convertColorToLinear;								// 色をリニアに変換.
 
 	std::string assetExtrasTitle;							// タイトル.
 	std::string assetExtrasAuthor;							// 作成者.
@@ -144,6 +145,7 @@ public:
 		outputAnimation     = true;
 		dracoCompression    = false;
 		shareVerticesMesh   = true;
+		convertColorToLinear = false;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";

@@ -88,3 +88,21 @@ void MathUtil::calcBoundingBox (const std::vector<sxsdk::vec3>& vers, sxsdk::vec
 		bbMax.z = std::max(bbMax.z, v.z);
 	}
 }
+
+/**
+ * 色情報を逆ガンマ2.2し、リニア化.
+ */
+void MathUtil::convColorLinear (float& vRed, float& vGreen, float& vBlue)
+{
+	const float gamma = 2.2f;
+	if (vRed < 1.0f) {
+		vRed   = powf(vRed, gamma);
+	}
+	if (vGreen < 1.0f) {
+		vGreen = powf(vGreen, gamma);
+	}
+	if (vBlue < 1.0f) {
+		vBlue  = powf(vBlue, gamma);
+	}
+}
+

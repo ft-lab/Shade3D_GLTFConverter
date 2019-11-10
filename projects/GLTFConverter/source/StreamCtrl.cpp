@@ -146,9 +146,13 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 			stream->write_int(iDat);
 		}
 
-		// ver.0.2.0.7 - 
+		// ver.0.2.1.0 - 
 		{
 			stream->write_int(data.exportFileFormat);
+		}
+		{
+			iDat = data.convertColorToLinear ? 1 : 0;
+			stream->write_int(iDat);
 		}
 
 	} catch (...) { }
@@ -226,9 +230,13 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 			}
 		}
 
-		// ver.0.2.0.7 - 
+		// ver.0.2.1.0 - 
 		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_103) {
 			stream->read_int(data.exportFileFormat);
+		}
+		{
+			stream->read_int(iDat);
+			data.convertColorToLinear = iDat ? true : false;
 		}
 
 	} catch (...) { }

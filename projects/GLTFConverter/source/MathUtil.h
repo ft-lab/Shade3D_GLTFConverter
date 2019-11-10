@@ -31,6 +31,12 @@ namespace MathUtil {
 	 * バウンディングボックスの最小最大を計算.
 	 */
 	void calcBoundingBox (const std::vector<sxsdk::vec3>& vers, sxsdk::vec3& bbMin, sxsdk::vec3& bbMax);
+
+	/**
+	 * 色情報を逆ガンマ2.2し、リニア化.
+	 */
+	void convColorLinear (float& vRed, float& vGreen, float& vBlue);
+
 }
 
 #endif

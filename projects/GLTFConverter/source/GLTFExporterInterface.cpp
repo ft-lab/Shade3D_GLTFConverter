@@ -22,6 +22,7 @@ enum
 	dlg_output_draco_compression_id = 105,	// Draco圧縮.
 	dlg_output_max_texture_size_id = 106,	// 最大テクスチャサイズ.
 	dlg_output_share_vertices_mesh_id = 107,	// Mesh内のPrimitiveの頂点情報を共有.
+	dlg_output_convert_color_to_linear_id = 108,	// 色をリニアに変換.
 
 	dlg_asset_title_id = 201,				// タイトル.
 	dlg_asset_author_id = 202,				// 制作者.
@@ -517,7 +518,13 @@ void CGLTFExporterInterface::polymesh_face_vertex_colors (int n_list, const int 
 
 	if (n_list == 3 && layer_index == 0) {
 		for (int i = 0; i < n_list; ++i) {
-			const sxsdk::rgba_class col = vertex_colors[i];
+			sxsdk::rgba_class col = vertex_colors[i];
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(col.red, col.green, col.blue);
+			}
+
 			m_meshData.triangleColor0.push_back(sxsdk::vec4(col.red, col.green, col.blue, col.alpha));
 		}
 	}
@@ -788,6 +795,12 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 	}
 	{
 		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_convert_color_to_linear_id));
+		item->set_bool(m_exportParam.convertColorToLinear);
+	}
+
+	{
+		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_asset_title_id));
 		item->set_string(m_exportParam.assetExtrasTitle.c_str());
 	}
@@ -883,6 +896,10 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 		m_exportParam.shareVerticesMesh = item.get_bool();
 		return true;
 	}
+	if (id == dlg_output_convert_color_to_linear_id) {
+		m_exportParam.convertColorToLinear = item.get_bool();
+		return true;
+	}
 
 	if (id == dlg_asset_title_id) {
 		m_exportParam.assetExtrasTitle = item.get_string();
@@ -955,10 +972,20 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			col.blue  = std::min(col0.blue, col.blue);
 
 			materialData.baseColorFactor = col;
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(materialData.baseColorFactor.red, materialData.baseColorFactor.green, materialData.baseColorFactor.blue);
+			}
 		}
 
 		if (surface->get_has_glow()) {
 			materialData.emissiveFactor = (surface->get_glow_color()) * (surface->get_glow());
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(materialData.emissiveFactor.red, materialData.emissiveFactor.green, materialData.emissiveFactor.blue);
+			}
 		}
 
 		if (surface->get_has_reflection()) {
