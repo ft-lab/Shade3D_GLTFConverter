@@ -100,7 +100,7 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 ### エクスポート時のAlphaModeの指定について (ver.0.1.2.0 - )
 
 表面材質の「情報」ポップアップメニューより「AlphaMode (glTF)」を選択することで、    
-glTFのalphaModeを指定できます。
+glTFのalphaModeを指定できます。     
 <img src="./wiki_images/gltfConverter_alphamode_01.png"/>     
 
 「AlphaMode」で「OPAQUE」は透過無しの指定になります。    
