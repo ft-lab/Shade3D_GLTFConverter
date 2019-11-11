@@ -1034,7 +1034,7 @@ namespace {
 				int iPos = 0;
 				for (int y = 0; y < 4; ++y) {
 					for (int x = 0; x < 4; ++x) {
-						m[x][y] = node.matrix.values[iPos++];		// 転置して入れている. 
+						m[y][x] = node.matrix.values[iPos++];
 					}
 				}
 				sxsdk::vec3 trans, scale, rotate, shear;
