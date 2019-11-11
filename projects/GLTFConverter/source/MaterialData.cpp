@@ -45,6 +45,13 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 	this->occlusionTexScale         = v.occlusionTexScale;
 
 	this->transparency = v.transparency;
+
+	this->pbrSpecularGlossiness_use                = v.pbrSpecularGlossiness_use;
+	this->pbrSpecularGlossiness_diffuseFactor      = v.pbrSpecularGlossiness_diffuseFactor;
+	this->pbrSpecularGlossiness_specularFactor     = v.pbrSpecularGlossiness_specularFactor;
+	this->pbrSpecularGlossiness_diffuseImageIndex  = v.pbrSpecularGlossiness_diffuseImageIndex;
+	this->pbrSpecularGlossiness_specularGlossinessImageIndex = v.pbrSpecularGlossiness_specularGlossinessImageIndex;
+	this->pbrSpecularGlossiness_glossinessFactor   = v.pbrSpecularGlossiness_glossinessFactor;
 }
 
 CMaterialData::~CMaterialData ()
@@ -86,6 +93,13 @@ void CMaterialData::clear ()
 	occlusionTexScale         = sxsdk::vec2(1, 1);
 
 	transparency = 0.0f;
+
+	pbrSpecularGlossiness_use = false;
+	pbrSpecularGlossiness_diffuseFactor  = sxsdk::rgba_class(1, 1, 1 ,1);
+	pbrSpecularGlossiness_specularFactor = sxsdk::rgb_class(1, 1, 1);
+	pbrSpecularGlossiness_diffuseImageIndex  = -1;
+	pbrSpecularGlossiness_specularGlossinessImageIndex = -1;
+	pbrSpecularGlossiness_glossinessFactor   = 1.0f;
 }
 
 /**

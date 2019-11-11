@@ -56,6 +56,14 @@ public:
 
 	float transparency;					// Shade3Dでの透明度.
 
+	// KHR_materials_pbrSpecularGlossiness使用時の情報.
+	bool pbrSpecularGlossiness_use;								// KHR_materials_pbrSpecularGlossinessを使用しているか.
+	sxsdk::rgba_class pbrSpecularGlossiness_diffuseFactor;		// diffuse値.
+	sxsdk::rgb_class pbrSpecularGlossiness_specularFactor;		// specular値.
+	int pbrSpecularGlossiness_diffuseImageIndex;				// diffuseの画像番号.
+	int pbrSpecularGlossiness_specularGlossinessImageIndex;		// specularの画像番号.
+	float pbrSpecularGlossiness_glossinessFactor;				// glossiness.
+
 public:
 	CMaterialData ();
 	CMaterialData (const CMaterialData& v);
@@ -95,6 +103,13 @@ public:
 		this->occlusionTexScale         = v.occlusionTexScale;
 
 		this->transparency = v.transparency;
+
+		this->pbrSpecularGlossiness_use                = v.pbrSpecularGlossiness_use;
+		this->pbrSpecularGlossiness_diffuseFactor      = v.pbrSpecularGlossiness_diffuseFactor;
+		this->pbrSpecularGlossiness_specularFactor     = v.pbrSpecularGlossiness_specularFactor;
+		this->pbrSpecularGlossiness_diffuseImageIndex  = v.pbrSpecularGlossiness_diffuseImageIndex;
+		this->pbrSpecularGlossiness_specularGlossinessImageIndex = v.pbrSpecularGlossiness_specularGlossinessImageIndex;
+		this->pbrSpecularGlossiness_glossinessFactor   = v.pbrSpecularGlossiness_glossinessFactor;
 
 		return (*this);
     }

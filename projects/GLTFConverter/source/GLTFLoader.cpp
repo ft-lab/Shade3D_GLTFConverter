@@ -633,6 +633,67 @@ namespace {
 	}
 
 	/**
+	 * json文字列より、KHR_materials_pbrSpecularGlossinessの指定を取得.
+	 */
+	void getPBRSpecularGlossiness (const std::string& jsonStr, CMaterialData& materialData) {
+		rapidjson::Document doc;
+		doc.Parse(jsonStr.c_str());		// jsonとしてパース.
+		if (doc.HasParseError()) return;
+
+		bool chkF = false;
+
+		if (doc.HasMember("diffuseFactor")) {
+			rapidjson::Value& rV = doc["diffuseFactor"];
+			rapidjson::SizeType num = rV.Size();
+			if (num == 4) {
+				if (rV[0].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_diffuseFactor.red   = rV[0].GetFloat();
+				if (rV[1].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_diffuseFactor.green = rV[1].GetFloat();
+				if (rV[2].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_diffuseFactor.blue  = rV[2].GetFloat();
+				if (rV[3].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_diffuseFactor.alpha = rV[3].GetFloat();
+				chkF = true;
+			}
+		}
+		if (doc.HasMember("specularFactor")) {
+			rapidjson::Value& rV = doc["specularFactor"];
+			rapidjson::SizeType num = rV.Size();
+			if (num == 3) {
+				if (rV[0].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_specularFactor.red   = rV[0].GetFloat();
+				if (rV[1].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_specularFactor.green = rV[1].GetFloat();
+				if (rV[2].GetType() == rapidjson::kNumberType) materialData.pbrSpecularGlossiness_specularFactor.blue  = rV[2].GetFloat();
+				chkF = true;
+			}
+		}
+		if (doc.HasMember("glossinessFactor")) {
+			rapidjson::Value& rV = doc["glossinessFactor"];
+			if (rV.GetType() == rapidjson::kNumberType) {
+				materialData.pbrSpecularGlossiness_glossinessFactor = rV.GetFloat();
+				chkF = true;
+			}
+		}
+
+		if (doc.HasMember("diffuseTexture")) {
+			rapidjson::Value& rV = doc["diffuseTexture"];
+			rapidjson::Value::MemberIterator itr = rV.FindMember("index");
+			if (itr->value.GetType() == rapidjson::kNumberType) {
+				materialData.pbrSpecularGlossiness_diffuseImageIndex = itr->value.GetInt();
+				chkF = true;
+			}
+		}
+		if (doc.HasMember("specularGlossinessTexture")) {
+			rapidjson::Value& rV = doc["specularGlossinessTexture"];
+			rapidjson::Value::MemberIterator itr = rV.FindMember("index");
+			if (itr->value.GetType() == rapidjson::kNumberType) {
+				materialData.pbrSpecularGlossiness_specularGlossinessImageIndex = itr->value.GetInt();
+				chkF = true;
+			}
+		}
+
+		if (chkF) {
+			materialData.pbrSpecularGlossiness_use = true;
+		}
+	}
+
+	/**
 	 * json文字列より、asset-extrasの指定を取得.
 	 */
 	void storeAssetExtrasData (Document& gltfDoc, CSceneData* sceneData) {
@@ -719,6 +780,14 @@ namespace {
 						getTextureTransform(textureTransformStr, offset, scale);
 						dstMaterialData.baseColorTexScale = scale;
 					}
+				}
+			}
+
+			// KHR_materials_pbrSpecularGlossinessの拡張を取得.
+			if (material.extensions.size() > 0) {
+				const std::string pbrSpecularGlossinessStr = material.extensions.at("KHR_materials_pbrSpecularGlossiness");
+				if (pbrSpecularGlossinessStr != "") {
+					getPBRSpecularGlossiness(pbrSpecularGlossinessStr, dstMaterialData);
 				}
 			}
 

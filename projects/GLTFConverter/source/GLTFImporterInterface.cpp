@@ -705,6 +705,53 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				surface->set_no_shading(true);
 			}
 
+			// KHR_materials_pbrSpecularGlossinessの読み込み.
+			if (materialD.pbrSpecularGlossiness_use) {
+				{
+					sxsdk::rgb_class col;
+					col.red   = materialD.pbrSpecularGlossiness_diffuseFactor.red;
+					col.green = materialD.pbrSpecularGlossiness_diffuseFactor.green;
+					col.blue  = materialD.pbrSpecularGlossiness_diffuseFactor.blue;
+					surface->set_diffuse_color(col);
+				}
+
+				{
+					surface->set_roughness(1.0f - materialD.pbrSpecularGlossiness_glossinessFactor);
+				}
+
+				if (materialD.pbrSpecularGlossiness_diffuseImageIndex >= 0) {
+					surface->append_mapping_layer();
+					const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+					sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+					mLayer.set_pattern(sxsdk::enums::image_pattern);
+					mLayer.set_type(sxsdk::enums::diffuse_mapping);
+
+					// テクスチャ画像を割り当て.
+					if (sceneData->images[materialD.pbrSpecularGlossiness_diffuseImageIndex].shadeMasterImage) {
+						compointer<sxsdk::image_interface> image(sceneData->images[materialD.pbrSpecularGlossiness_diffuseImageIndex].shadeMasterImage->get_image());
+						mLayer.set_image_interface(image);
+
+						// ALPHA_BLENDのときに、イメージのAlpha要素で透過がある場合.
+						if (alphaBlend) {
+							if (Shade3DUtil::hasImageAlpha(sceneData->images[materialD.pbrSpecularGlossiness_diffuseImageIndex].shadeMasterImage)) {
+								needAlpha = true;
+							}
+						}
+					}
+
+					mLayer.set_blend_mode(7);		// 乗算合成.
+					mLayer.set_blur(true);
+
+					// DiffuseのマッピングをAlpha透過にする.
+					if (alphaMask || needAlpha) {
+						mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
+					}
+				}
+
+				masterSurface.update();
+				continue;
+			}
+
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
 			if (materialD.baseColorImageIndex >= 0) {
 				surface->append_mapping_layer();
@@ -737,7 +784,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
 				}
 			}
-
+			
 			// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
 			{
 				const sxsdk::rgb_class whiteCol(1, 1, 1);
