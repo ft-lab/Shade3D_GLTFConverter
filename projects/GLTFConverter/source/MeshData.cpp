@@ -26,6 +26,7 @@ CTempMeshData::CTempMeshData (const CTempMeshData& v)
 	this->triangleUV0     = v.triangleUV0;
 	this->triangleUV1     = v.triangleUV1;
 	this->triangleColor0  = v.triangleColor0;
+	this->triangleColor1  = v.triangleColor1;
 
 	this->materialIndex   = v.materialIndex;
 	this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;
@@ -49,6 +50,7 @@ void CTempMeshData::clear ()
 	triangleUV0.clear();
 	triangleUV1.clear();
 	triangleColor0.clear();
+	triangleColor1.clear();
 	triangleFaceGroupIndex.clear();
 
 	materialIndex = 0;

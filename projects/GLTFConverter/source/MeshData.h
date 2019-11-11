@@ -30,6 +30,7 @@ public:
 	std::vector<sxsdk::vec2> triangleUV0;			// 三角形ごとのUV0.
 	std::vector<sxsdk::vec2> triangleUV1;			// 三角形ごとのUV1.
 	std::vector<sxsdk::vec4> triangleColor0;		// 三角形ごとの頂点カラー0.
+	std::vector<sxsdk::vec4> triangleColor1;		// 三角形ごとの頂点カラー1.
 
 	int materialIndex;							// 対応するマテリアル番号.
 	std::vector<int> faceGroupMaterialIndex;	// フェイスグループごとのマテリアル番号リスト.
@@ -53,6 +54,7 @@ public:
 		this->triangleUV0     = v.triangleUV0;
 		this->triangleUV1     = v.triangleUV1;
 		this->triangleColor0  = v.triangleColor0;
+		this->triangleColor1  = v.triangleColor1;
 
 		this->materialIndex   = v.materialIndex;
 		this->faceGroupMaterialIndex = v.faceGroupMaterialIndex;

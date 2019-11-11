@@ -515,8 +515,9 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 void CGLTFExporterInterface::polymesh_face_vertex_colors (int n_list, const int list[], const sxsdk::rgba_class* vertex_colors, int layer_index, int number_of_layers, void*)
 {
 	if (!m_exportParam.outputVertexColor) return;
+	if (n_list != 3) return;
 
-	if (n_list == 3 && layer_index == 0) {
+	if (layer_index == 0) {
 		for (int i = 0; i < n_list; ++i) {
 			sxsdk::rgba_class col = vertex_colors[i];
 
@@ -528,6 +529,19 @@ void CGLTFExporterInterface::polymesh_face_vertex_colors (int n_list, const int 
 			m_meshData.triangleColor0.push_back(sxsdk::vec4(col.red, col.green, col.blue, col.alpha));
 		}
 	}
+
+	if (layer_index == 1) {
+		for (int i = 0; i < n_list; ++i) {
+			sxsdk::rgba_class col = vertex_colors[i];
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(col.red, col.green, col.blue);
+			}
+
+			m_meshData.triangleColor1.push_back(sxsdk::vec4(col.red, col.green, col.blue, col.alpha));
+		}
+	}
 }
 
 /**
@@ -536,6 +550,24 @@ void CGLTFExporterInterface::polymesh_face_vertex_colors (int n_list, const int 
 void CGLTFExporterInterface::end_polymesh (void *)
 {
 	if (m_skip) return;
+
+	// 頂点カラーを2つ使っている場合は乗算する.
+	if (!m_meshData.triangleColor0.empty()) {
+		if (!m_meshData.triangleColor1.empty()) {
+			if (m_meshData.triangleColor0.size() == m_meshData.triangleColor1.size()) {
+				const size_t vCou = m_meshData.triangleColor0.size();
+				for (size_t i = 0; i < vCou; ++i) {
+					m_meshData.triangleColor0[i] = (m_meshData.triangleColor0[i] + m_meshData.triangleColor1[i]) * 0.5f;
+				}
+				m_meshData.triangleColor1.clear();
+			}
+		}
+	} else {
+		if (!m_meshData.triangleColor1.empty()) {
+			m_meshData.triangleColor0 = m_meshData.triangleColor1;
+			m_meshData.triangleColor1.clear();
+		}
+	}
 
 	m_meshData.optimize();
 
