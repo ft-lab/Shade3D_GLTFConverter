@@ -66,8 +66,8 @@ gltf/glbの拡張子の3DモデルデータをShade3Dのシーンにインポー
 Draco圧縮はAnimation/Morph Targets/Texture Imageの圧縮には対応していません。
 * マテリアルのunlit対応（Shade3Dの表面材質の「陰影付けしない」のチェックボックス）。ver.0.2.0.4で追加。
 * Export : テクスチャマッピングの「不透明マスク」の出力。ver.0.2.1.0で追加。    
-* Export : AlphaModeの指定(Opaque/Blend/Mask)。ver.0.2.1.0で追加。    
-* Export : AlphaCutoffの指定。ver.0.2.1.0で追加。    
+* AlphaMode(Opaque/Blend/Mask)の入出力。ver.0.2.1.1で追加。    
+* AlphaCutoffの入出力。ver.0.2.1.1で追加。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -605,6 +605,12 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2019/11/13] ver.0.2.1.1   
+* Import : AlphaModeの読み込み。表面材質属性に格納される。
+* Import : AlphaCutoffの読み込み。表面材質属性に格納される。
+* Import : KHR_materials_pbrSpecularGlossinessのマテリアル情報の読み込み。
+* Import : ノードでmatrixを指定している場合、転置して読み込んでいたのを修正
 
 [2019/11/10] ver.0.2.1.0   
 * Export : エクスポートオプションに「出力形式」を追加。glb/gltfのどちらで出力するか選択。
