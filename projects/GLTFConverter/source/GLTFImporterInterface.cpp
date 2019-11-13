@@ -747,56 +747,55 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
 					}
 				}
-
-				masterSurface.update();
-				continue;
 			}
 
 			// BaseColorを拡散反射のマッピングレイヤとして追加.
-			if (materialD.baseColorImageIndex >= 0) {
-				surface->append_mapping_layer();
-				const int layerIndex = surface->get_number_of_mapping_layers() - 1;
-				sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
-				mLayer.set_pattern(sxsdk::enums::image_pattern);
-				mLayer.set_type(sxsdk::enums::diffuse_mapping);
+			if (!materialD.pbrSpecularGlossiness_use) {
+				if (materialD.baseColorImageIndex >= 0) {
+					surface->append_mapping_layer();
+					const int layerIndex = surface->get_number_of_mapping_layers() - 1;
+					sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
+					mLayer.set_pattern(sxsdk::enums::image_pattern);
+					mLayer.set_type(sxsdk::enums::diffuse_mapping);
 
-				// テクスチャ画像を割り当て.
-				if (sceneData->images[materialD.baseColorImageIndex].shadeMasterImage) {
-					compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
-					mLayer.set_image_interface(image);
+					// テクスチャ画像を割り当て.
+					if (sceneData->images[materialD.baseColorImageIndex].shadeMasterImage) {
+						compointer<sxsdk::image_interface> image(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage->get_image());
+						mLayer.set_image_interface(image);
 
-					// ALPHA_BLENDのときに、イメージのAlpha要素で透過がある場合.
-					if (alphaBlend) {
-						if (Shade3DUtil::hasImageAlpha(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage)) {
-							needAlpha = true;
+						// ALPHA_BLENDのときに、イメージのAlpha要素で透過がある場合.
+						if (alphaBlend) {
+							if (Shade3DUtil::hasImageAlpha(sceneData->images[materialD.baseColorImageIndex].shadeMasterImage)) {
+								needAlpha = true;
+							}
 						}
 					}
-				}
 
-				mLayer.set_blend_mode(7);		// 乗算合成.
-				mLayer.set_blur(true);
-				mLayer.set_uv_mapping(materialD.baseColorTexCoord);
-				mLayer.set_repetition_x(std::max(1, (int)materialD.baseColorTexScale.x));
-				mLayer.set_repetition_y(std::max(1, (int)materialD.baseColorTexScale.y));
+					mLayer.set_blend_mode(7);		// 乗算合成.
+					mLayer.set_blur(true);
+					mLayer.set_uv_mapping(materialD.baseColorTexCoord);
+					mLayer.set_repetition_x(std::max(1, (int)materialD.baseColorTexScale.x));
+					mLayer.set_repetition_y(std::max(1, (int)materialD.baseColorTexScale.y));
 
-				// DiffuseのマッピングをAlpha透過にする.
-				if (alphaMask || needAlpha) {
-					mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
+					// DiffuseのマッピングをAlpha透過にする.
+					if (alphaMask || needAlpha) {
+						mLayer.set_channel_mix(sxsdk::enums::mapping_transparent_alpha_mode);
+					}
 				}
-			}
 			
-			// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
-			{
-				const sxsdk::rgb_class whiteCol(1, 1, 1);
-				const sxsdk::rgb_class col = materialD.baseColorFactor;
-				const float metallicV  = materialD.metallicFactor;
-				const float metallicV2 = 1.0f - metallicV;
-				const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
+				// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
+				{
+					const sxsdk::rgb_class whiteCol(1, 1, 1);
+					const sxsdk::rgb_class col = materialD.baseColorFactor;
+					const float metallicV  = materialD.metallicFactor;
+					const float metallicV2 = 1.0f - metallicV;
+					const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
 
-				surface->set_diffuse_color(materialD.baseColorFactor);
-				if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
-					surface->set_diffuse(metallicV2);
-					surface->set_reflection_color(reflectionCol);
+					surface->set_diffuse_color(materialD.baseColorFactor);
+					if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
+						surface->set_diffuse(metallicV2);
+						surface->set_reflection_color(reflectionCol);
+					}
 				}
 			}
 
@@ -852,7 +851,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				}
 			}
 
-			{
+			if (!materialD.pbrSpecularGlossiness_use) {
 				surface->set_reflection(materialD.metallicFactor);
 				surface->set_roughness(materialD.roughnessFactor);
 
