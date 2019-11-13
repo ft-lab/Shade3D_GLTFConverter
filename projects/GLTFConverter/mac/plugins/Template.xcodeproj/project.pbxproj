@@ -21,6 +21,8 @@
 		9224B50121647E0D00A38EEA /* libdracoenc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B4FE21647E0D00A38EEA /* libdracoenc.a */; };
 		9224B50221647E0D00A38EEA /* libdraco.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B4FF21647E0D00A38EEA /* libdraco.a */; };
 		9224B50321647E0D00A38EEA /* libdracodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9224B50021647E0D00A38EEA /* libdracodec.a */; };
+		922E4B3D2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 922E4B3C2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp */; };
+		922E4B3F2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 922E4B3E2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h */; };
 		92F6FC0A213E409F005655E6 /* glTFConverter.info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 92F6FC09213E409F005655E6 /* glTFConverter.info.plist */; };
 		92F6FC0C213E4209005655E6 /* libGLTFSDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F6FC0B213E4209005655E6 /* libGLTFSDK.a */; };
 		92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC0D213E4238005655E6 /* GLTFSaver.h */; };
@@ -114,6 +116,8 @@
 		9224B4FE21647E0D00A38EEA /* libdracoenc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdracoenc.a; path = ../../draco/lib/release/libdracoenc.a; sourceTree = "<group>"; };
 		9224B4FF21647E0D00A38EEA /* libdraco.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdraco.a; path = ../../draco/lib/release/libdraco.a; sourceTree = "<group>"; };
 		9224B50021647E0D00A38EEA /* libdracodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libdracodec.a; path = ../../draco/lib/release/libdracodec.a; sourceTree = "<group>"; };
+		922E4B3C2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AlphaModeMaterialAttributeInterface.cpp; path = ../../source/AlphaModeMaterialAttributeInterface.cpp; sourceTree = "<group>"; };
+		922E4B3E2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AlphaModeMaterialAttributeInterface.h; path = ../../source/AlphaModeMaterialAttributeInterface.h; sourceTree = "<group>"; };
 		92F6FC09213E409F005655E6 /* glTFConverter.info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = glTFConverter.info.plist; path = plists/glTFConverter.info.plist; sourceTree = "<group>"; };
 		92F6FC0B213E4209005655E6 /* libGLTFSDK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLTFSDK.a; path = ../GLTFSDK/lib/release/libGLTFSDK.a; sourceTree = "<group>"; };
 		92F6FC0D213E4238005655E6 /* GLTFSaver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFSaver.h; path = ../../source/GLTFSaver.h; sourceTree = "<group>"; };
@@ -249,6 +253,7 @@
 		32C88E010371C26100C91783 /* include */ = {
 			isa = PBXGroup;
 			children = (
+				922E4B3E2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h */,
 				92F6FC2D213E423D005655E6 /* AnimationData.h */,
 				92F6FC1F213E423B005655E6 /* GLTFExporterInterface.h */,
 				92F6FC25213E423C005655E6 /* GLTFImporterInterface.h */,
@@ -278,6 +283,7 @@
 		4A3E5BC70B0029410006A4FF /* sources */ = {
 			isa = PBXGroup;
 			children = (
+				922E4B3C2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp */,
 				9224B4F121647D4100A38EEA /* glTFToolKit */,
 				9224B4EC21647D3100A38EEA /* BinStreamReaderWriter.h */,
 				9224B4EB21647D3100A38EEA /* Shade3DArray.cpp */,
@@ -338,6 +344,7 @@
 			files = (
 				92F6FC48213E423F005655E6 /* ImagesBlend.h in Headers */,
 				9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */,
+				922E4B3F2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h in Headers */,
 				9224B4F021647D3100A38EEA /* Shade3DArray.h in Headers */,
 				92F6FC40213E423F005655E6 /* ImageData.h in Headers */,
 				92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */,
@@ -455,6 +462,7 @@
 				9224B4FB21647D4100A38EEA /* GLTFMeshDecompression.cpp in Sources */,
 				92F6FC51213E423F005655E6 /* MaterialData.cpp in Sources */,
 				92F6FC58213E423F005655E6 /* SkinData.cpp in Sources */,
+				922E4B3D2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp in Sources */,
 				92F6FC37213E423F005655E6 /* GLTFExporterInterface.cpp in Sources */,
 				92F6FC5C213E423F005655E6 /* MorphTargetsData.cpp in Sources */,
 				92F6FC3E213E423F005655E6 /* StreamCtrl.cpp in Sources */,
