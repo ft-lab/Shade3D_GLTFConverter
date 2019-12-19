@@ -606,6 +606,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2019/12/19] ver.0.2.1.2   
+* Import : extensionsの読み込みで例外が発生してインポートできない場合があった問題を修正
+
 [2019/11/13] ver.0.2.1.1   
 * Import : AlphaModeの読み込み。表面材質属性に格納される。
 * Import : AlphaCutoffの読み込み。表面材質属性に格納される。
