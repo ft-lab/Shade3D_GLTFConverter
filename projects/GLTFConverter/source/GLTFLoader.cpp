@@ -774,21 +774,25 @@ namespace {
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.metallicRoughness.baseColorTexture.extensions.size() > 0) {
-					const std::string textureTransformStr = material.metallicRoughness.baseColorTexture.extensions.at("KHR_texture_transform");
-					if (textureTransformStr != "") {
-						sxsdk::vec2 offset, scale;
-						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.baseColorTexScale = scale;
-					}
+					try {
+						const std::string textureTransformStr = material.metallicRoughness.baseColorTexture.extensions.at("KHR_texture_transform");
+						if (textureTransformStr != "") {
+							sxsdk::vec2 offset, scale;
+							getTextureTransform(textureTransformStr, offset, scale);
+							dstMaterialData.baseColorTexScale = scale;
+						}
+					} catch (...) { }
 				}
 			}
 
 			// KHR_materials_pbrSpecularGlossinessの拡張を取得.
 			if (material.extensions.size() > 0) {
-				const std::string pbrSpecularGlossinessStr = material.extensions.at("KHR_materials_pbrSpecularGlossiness");
-				if (pbrSpecularGlossinessStr != "") {
-					getPBRSpecularGlossiness(pbrSpecularGlossinessStr, dstMaterialData);
-				}
+				try {
+					const std::string pbrSpecularGlossinessStr = material.extensions.at("KHR_materials_pbrSpecularGlossiness");
+					if (pbrSpecularGlossinessStr != "") {
+						getPBRSpecularGlossiness(pbrSpecularGlossinessStr, dstMaterialData);
+					}
+				} catch (...) { }
 			}
 
 			// 法線のテクスチャIDを取得.
@@ -806,12 +810,14 @@ namespace {
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.normalTexture.extensions.size() > 0) {
-					const std::string textureTransformStr = material.normalTexture.extensions.at("KHR_texture_transform");
-					if (textureTransformStr != "") {
-						sxsdk::vec2 offset, scale;
-						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.normalTexScale = scale;
-					}
+					try {
+						const std::string textureTransformStr = material.normalTexture.extensions.at("KHR_texture_transform");
+						if (textureTransformStr != "") {
+							sxsdk::vec2 offset, scale;
+							getTextureTransform(textureTransformStr, offset, scale);
+							dstMaterialData.normalTexScale = scale;
+						}
+					} catch (...) { }
 				}
 			}
 
@@ -829,12 +835,14 @@ namespace {
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.emissiveTexture.extensions.size() > 0) {
-					const std::string textureTransformStr = material.emissiveTexture.extensions.at("KHR_texture_transform");
-					if (textureTransformStr != "") {
-						sxsdk::vec2 offset, scale;
-						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.emissiveTexScale = scale;
-					}
+					try {
+						const std::string textureTransformStr = material.emissiveTexture.extensions.at("KHR_texture_transform");
+						if (textureTransformStr != "") {
+							sxsdk::vec2 offset, scale;
+							getTextureTransform(textureTransformStr, offset, scale);
+							dstMaterialData.emissiveTexScale = scale;
+						}
+					} catch (...) { }
 				}
 			}
 
@@ -852,12 +860,14 @@ namespace {
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.metallicRoughness.metallicRoughnessTexture.extensions.size() > 0) {
-					const std::string textureTransformStr = material.metallicRoughness.metallicRoughnessTexture.extensions.at("KHR_texture_transform");
-					if (textureTransformStr != "") {
-						sxsdk::vec2 offset, scale;
-						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.metallicRoughnessTexScale = scale;
-					}
+					try {
+						const std::string textureTransformStr = material.metallicRoughness.metallicRoughnessTexture.extensions.at("KHR_texture_transform");
+						if (textureTransformStr != "") {
+							sxsdk::vec2 offset, scale;
+							getTextureTransform(textureTransformStr, offset, scale);
+							dstMaterialData.metallicRoughnessTexScale = scale;
+						}
+					} catch (...) { }
 				}
 			}
 
@@ -875,12 +885,14 @@ namespace {
 
 				// テクスチャの繰り返し回数を取得.
 				if (material.occlusionTexture.extensions.size() > 0) {
-					const std::string textureTransformStr = material.occlusionTexture.extensions.at("KHR_texture_transform");
-					if (textureTransformStr != "") {
-						sxsdk::vec2 offset, scale;
-						getTextureTransform(textureTransformStr, offset, scale);
-						dstMaterialData.occlusionTexScale = scale;
-					}
+					try {
+						const std::string textureTransformStr = material.occlusionTexture.extensions.at("KHR_texture_transform");
+						if (textureTransformStr != "") {
+							sxsdk::vec2 offset, scale;
+							getTextureTransform(textureTransformStr, offset, scale);
+							dstMaterialData.occlusionTexScale = scale;
+						}
+					} catch (...) { }
 				}
 			}
 
