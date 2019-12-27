@@ -486,6 +486,7 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 		std::reverse(normalsList.begin(), normalsList.end());
 		std::reverse(uvs0List.begin(), uvs0List.end());
 		std::reverse(uvs1List.begin(), uvs1List.end());
+		for (size_t i = 0; i < normalsList.size(); ++i) normalsList[i] = -normalsList[i];
 	}
 
 	if (n_list == 3) {
