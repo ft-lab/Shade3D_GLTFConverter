@@ -606,6 +606,9 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2019/12/27] ver.0.2.1.3   
+* Export : ブラウザで「面反転」を使用している場合に、面の向きが正しく出力されていなかった問題を修正
+
 [2019/12/19] ver.0.2.1.2   
 * Import : extensionsの読み込みで例外が発生してインポートできない場合があった問題を修正
 
