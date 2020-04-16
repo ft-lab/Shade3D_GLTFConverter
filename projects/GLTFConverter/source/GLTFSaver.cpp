@@ -1326,7 +1326,7 @@ namespace {
 
 		for (size_t i = 0; i < imagesCou; ++i) {
 			const CImageData& imageD = sceneData->images[i];
-			if (!imageD.shadeMasterImage && !imageD.shadeImage) continue;
+			if (!imageD.shadeMasterImage && imageD.imageRGBAData.empty()) continue;
 			std::string fileName = StringUtil::getFileName(imageD.name);
 			if (fileName == "") fileName = std::string("image_") + std::to_string(i);
 
@@ -1350,7 +1350,7 @@ namespace {
 
 			try {
 				// 画像ファイルを指定の拡張子(jpg/png)で保存.
-				sxsdk::image_interface *image = (imageD.shadeMasterImage) ? (imageD.shadeMasterImage->get_image()) : imageD.shadeImage;
+				compointer<sxsdk::image_interface> image(imageD.getImage(scene));
 				if (!image) continue;
 
 				// テクスチャをリサイズする場合 (ver.0.2.0.2 - ).

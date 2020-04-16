@@ -35,7 +35,7 @@ public:
 	int width, height;							// 画像サイズ.
 
 	sxsdk::master_image_class* shadeMasterImage;	// Shade3Dでのマスターイメージクラス.
-	compointer<sxsdk::image_interface> shadeImage;	// Shade3Dでのイメージ (合成したもの)。エクスポータで使用.
+	std::vector<unsigned char> imageRGBAData;		// Shade3Dでのイメージを1ピクセルRGBAで保持 (合成したもの)。エクスポータで使用.
 
 	int imageMask;						// テクスチャとして使用している情報.
 	bool useBaseColorAlpha;				// BaseColorとしてAlphaを使用するか.
@@ -54,7 +54,7 @@ public:
 		this->imageMask  = v.imageMask;
 		this->useBaseColorAlpha = v.useBaseColorAlpha;
 		this->shadeMasterImage  = v.shadeMasterImage;
-		this->shadeImage = v.shadeImage;
+		this->imageRGBAData = v.imageRGBAData;
 
 		return (*this);
     }
@@ -62,9 +62,19 @@ public:
 	void clear ();
 
 	/**
+	 * カスタムイメージの格納(RGBAを格納).
+	 */
+	void setCustomImage (sxsdk::image_interface* image);
+
+	/**
 	 * イメージが同じかチェック (Shade3DからのGLTFエクスポートで使用).
 	 */
 	bool isSame (const CImageData &v) const;
+
+	/**
+	 * 画像を取得.
+	 */
+	compointer<sxsdk::image_interface> getImage (sxsdk::scene_interface* scene) const;
 };
 
 #endif

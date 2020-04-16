@@ -23,5 +23,9 @@
 	<string id="license_other" value="その他のライセンス。" />
 
 	<string id="message_input_author" value="作成者名を指定してください。" />
+
+	<string id="bake_msg_error_mixed_uv_layer" value="テクスチャベイクで、異なるUV層が混在しています。" />
+	<string id="bake_msg_mixed_repeat" value="テクスチャベイクで、異なる反復をベイクしました。" />
+
 </strings>
 

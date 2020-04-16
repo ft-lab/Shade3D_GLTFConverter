@@ -37,6 +37,30 @@ namespace MathUtil {
 	 */
 	void convColorLinear (float& vRed, float& vGreen, float& vBlue);
 
+	/**
+	 * RGBをHSVに変換.
+	 */
+	sxsdk::vec3 rgb_to_hsv (const sxsdk::rgb_class& col);
+
+	/**
+	 * HSVをRGBに変換.
+	 */
+	sxsdk::rgb_class hsv_to_rgb (const sxsdk::vec3& hsv);
+
+	/**
+	 * RGBをグレイスケールに変換.
+	 */
+	float rgb_to_grayscale (const sxsdk::rgb_class& col);
+
+	/**
+	 * 法線マップのRGB( (0.5f, 0.5f, 1.0f)が中立 )を+Z向きの法線に変換.
+	 */
+	sxsdk::vec3 convRGBToNormal (const sxsdk::rgb_class& col);
+
+	/**
+	 * +Z向きの法線を法線マップのRGBに変換.
+	 */
+	sxsdk::rgb_class convNormalToRGB (const sxsdk::vec3& n, const bool normalizeF = true);
 }
 
 #endif

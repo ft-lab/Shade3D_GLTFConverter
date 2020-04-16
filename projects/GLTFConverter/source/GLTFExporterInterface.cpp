@@ -7,6 +7,7 @@
 #include "MathUtil.h"
 #include "Shade3DUtil.h"
 #include "StreamCtrl.h"
+#include "StringUtil.h"
 #include "ImagesBlend.h"
 #include "MotionExternalAccess.h"
 
@@ -973,14 +974,219 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 /**
  * Shade3Dのsurface情報をマテリアルとして格納.
  */
-bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData)
+bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData, const std::string& smName)
 {
 	materialData.clear();
 
 	// diffuse/reflection/roughness/glow/normalのイメージをあらかじめ合成する.
-	CImagesBlend imageBlend(m_pScene, surface);
-	imageBlend.blendImages();	// 複数のマッピングレイヤのイメージを合成.
+	CImagesBlend imagesBlend(m_pScene, surface);
+	CImagesBlend::IMAGE_BAKE_RESULT blendResult = imagesBlend.blendImages();		// 複数のマッピングレイヤのイメージを合成.
 
+	if (blendResult == CImagesBlend::bake_error_mixed_uv_layer) {
+		const std::string str = std::string("[") + smName + std::string("] ") + std::string(m_pScene->gettext("bake_msg_error_mixed_uv_layer"));
+		m_pScene->message(str);
+	}
+	if (blendResult == CImagesBlend::bake_mixed_repeat) {
+		const std::string str = std::string("[") + smName + std::string("] ") + std::string(m_pScene->gettext("bake_msg_mixed_repeat"));
+		m_pScene->message(str);
+	}
+
+	materialData.baseColorFactor = sxsdk::rgb_class(0.8f, 0.8f, 0.8f);
+	materialData.emissiveFactor  = sxsdk::rgb_class(0, 0, 0);
+	materialData.metallicFactor  = 0.0f;
+	materialData.roughnessFactor = 1.0f;
+	materialData.transparency    = 0.0f;
+	materialData.unlit           = false;
+
+	switch (imagesBlend.getAlphaModeType()) {
+	case GLTFConverter::alpha_mode_opaque:
+		materialData.alphaMode = 1;
+		break;
+	case GLTFConverter::alpha_mode_mask:
+		materialData.alphaMode = 3;
+		break;
+	case GLTFConverter::alpha_mode_blend:
+		materialData.alphaMode = 2;
+		break;
+	}
+
+	//----------------------------------------------------.
+	// baseColorを格納.
+	//----------------------------------------------------.
+	{
+		const sxsdk::enums::mapping_type iType = sxsdk::enums::diffuse_mapping;
+		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
+		if (imagesBlend.hasImage(iType)) {
+			const bool useAlphaTrans = imagesBlend.getDiffuseAlphaTrans();
+
+			materialData.baseColorFactor = factor;
+
+			const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(iType);
+			materialData.baseColorTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
+			materialData.baseColorTexCoord = imagesBlend.getTexCoord(iType);
+
+			sxsdk::image_interface* image = imagesBlend.getImage(iType);
+			CImageData imageData;
+			imageData.setCustomImage(image);
+			imageData.name = imagesBlend.getImageName(iType);
+			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+
+			if (imageIndex >= 0) {
+				materialData.baseColorImageIndex = imageIndex;
+
+				if (useAlphaTrans || (materialData.alphaMode == 2 || materialData.alphaMode == 3)) {
+					CImageData& imageData = m_sceneData->images[imageIndex];
+					imageData.useBaseColorAlpha = true;
+				}
+			}
+		} else {
+			materialData.baseColorFactor = factor;
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(materialData.baseColorFactor.red, materialData.baseColorFactor.green, materialData.baseColorFactor.blue);
+			}
+		}
+	}
+
+	//----------------------------------------------------.
+	// 法線マップを格納.
+	//----------------------------------------------------.
+	{
+		const sxsdk::enums::mapping_type iType = sxsdk::enums::normal_mapping;
+		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
+		materialData.normalStrength = imagesBlend.getNormalStrength();
+		if (imagesBlend.hasImage(iType)) {
+			const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(iType);
+			materialData.normalTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
+			materialData.normalTexCoord = imagesBlend.getTexCoord(iType);
+
+			sxsdk::image_interface* image = imagesBlend.getImage(iType);
+			CImageData imageData;
+			imageData.setCustomImage(image);
+			imageData.name = imagesBlend.getImageName(iType);
+			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+
+			if (imageIndex >= 0) {
+				materialData.normalImageIndex = imageIndex;
+			}
+		}
+	}
+
+	//----------------------------------------------------.
+	// 発光を格納.
+	//----------------------------------------------------.
+	{
+		const sxsdk::enums::mapping_type iType = sxsdk::enums::glow_mapping;
+		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
+		materialData.emissiveFactor = factor;
+		if (imagesBlend.hasImage(iType)) {
+			const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(iType);
+			materialData.emissiveTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
+			materialData.emissiveTexCoord = imagesBlend.getTexCoord(iType);
+
+			sxsdk::image_interface* image = imagesBlend.getImage(iType);
+			CImageData imageData;
+			imageData.setCustomImage(image);
+			imageData.name = imagesBlend.getImageName(iType);
+			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+
+			if (imageIndex >= 0) {
+				materialData.emissiveImageIndex = imageIndex;
+			}
+		}
+	}
+	//----------------------------------------------------.
+	// メタリックとラフネス(オクルージョン)を格納.
+	//----------------------------------------------------.
+	{
+		const sxsdk::rgb_class metallicFactor  = imagesBlend.getImageFactor(sxsdk::enums::reflection_mapping);
+		const sxsdk::rgb_class roughnessFactor = imagesBlend.getImageFactor(sxsdk::enums::roughness_mapping);
+		materialData.metallicFactor  = metallicFactor.red;
+		materialData.roughnessFactor = roughnessFactor.red;
+
+		const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(sxsdk::enums::reflection_mapping);
+		materialData.metallicRoughnessTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
+		materialData.metallicRoughnessTexCoord = imagesBlend.getTexCoord(sxsdk::enums::reflection_mapping);
+
+		sxsdk::image_interface* metallicRoughnessImg = imagesBlend.getMetallicRoughnessImage();
+		if (metallicRoughnessImg) {
+			CImageData imageData;
+			imageData.setCustomImage(metallicRoughnessImg);
+			imageData.name = smName + std::string("_metallicRoughness");
+			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+
+			if (imageIndex >= 0) {
+				materialData.metallicRoughnessImageIndex = imageIndex;
+			}
+
+			// OcclusionがmetalliRoughnessテクスチャの[R]に格納される場合.
+			if (imagesBlend.getUseOcclusionInMetallicRoughnessTexture()) {
+				materialData.occlusionImageIndex = imageIndex;
+				materialData.occlusionTexCoord = materialData.metallicRoughnessTexCoord;
+				materialData.occlusionTexScale = materialData.metallicRoughnessTexScale;
+				materialData.occlusionStrength = imagesBlend.getImageFactor(MAPPING_TYPE_GLTF_OCCLUSION).red;
+			}
+		}
+	}
+
+	//----------------------------------------------------.
+	// オクルージョンを格納.
+	//----------------------------------------------------.
+	if (!imagesBlend.getUseOcclusionInMetallicRoughnessTexture()) {
+		const sxsdk::enums::mapping_type iType = MAPPING_TYPE_GLTF_OCCLUSION;
+		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
+
+		sxsdk::image_interface* image = imagesBlend.getImage(iType);
+		if (image) {
+			materialData.occlusionStrength = factor.red;
+			const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(iType);
+			materialData.occlusionTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
+			materialData.occlusionTexCoord = imagesBlend.getTexCoord(iType);
+
+			CImageData imageData;
+			imageData.setCustomImage(image);
+			imageData.name = imagesBlend.getImageName(iType);
+			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+
+			int imageIndex = m_sceneData->findSameImage(imageData);
+			if (imageIndex < 0) {
+				imageIndex = (int)m_sceneData->images.size();
+				m_sceneData->images.push_back(imageData);
+			}
+
+			if (imageIndex >= 0) {
+				materialData.occlusionImageIndex = imageIndex;
+			}
+		}
+	}
+
+	return true;
+
+#if 0
 	try {
 		materialData.baseColorFactor = sxsdk::rgb_class(0.8f, 0.8f, 0.8f);
 		materialData.emissiveFactor  = sxsdk::rgb_class(0, 0, 0);
@@ -1251,17 +1457,19 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	} catch (...) { }
 
+#endif
+
 	return false;
 }
 
-bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData)
+bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData, const std::string& smName)
 {
 	materialData.clear();
 	try {
 		if (!master_surface->has_surface()) return false;
 
 		sxsdk::surface_class* surface = master_surface->get_surface();
-		bool ret = m_setMaterialData(surface, materialData);
+		bool ret = m_setMaterialData(surface, materialData, smName);
 		if (!ret) return false;
 		materialData.name = std::string(master_surface->get_name());
 
@@ -1312,10 +1520,10 @@ int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape
 		CMaterialData materialData;
 		bool ret = false;
 		if (masterSurface) {
-			ret = m_setMaterialData(masterSurface, materialData);
+			ret = m_setMaterialData(masterSurface, materialData, masterSurface->get_name());
 		} else {
 			if (shape2->get_has_surface_attributes()) {
-				ret = m_setMaterialData(shape2->get_surface(), materialData);
+				ret = m_setMaterialData(shape2->get_surface(), materialData, shape->get_name());
 			}
 		}
 		if (!ret) {

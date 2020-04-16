@@ -26,12 +26,18 @@
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_101	0x101
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_100	0x100
 
-#define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x100
+#define OCCLUSION_PARAM_DLG_STREAM_VERSION		0x101
+#define OCCLUSION_PARAM_DLG_STREAM_VERSION_101	0x101
+#define OCCLUSION_PARAM_DLG_STREAM_VERSION_100	0x100
+
 #define ALPHA_MODE_DLG_STREAM_VERSION			0x100
 #define GLTF_LICENSE_STREAM_VERSION				0x100
 
 // 作業ディレクトリ名.
 #define GLTF_TEMP_DIR "shade3d_temp_gltf"
+
+#define MAPPING_TYPE_OPACITY  ((sxsdk::enums::mapping_type)24)				// sxsdk::enums::mapping_typeでの「不透明マスク」.
+#define MAPPING_TYPE_GLTF_OCCLUSION  ((sxsdk::enums::mapping_type)1001)		// 「オクルージョン」これはglTFで割り当てたカスタムの種類.
 
 namespace GLTFConverter {
 	/**
@@ -199,6 +205,7 @@ class COcclusionShaderData
 {
 public:
 	int uvIndex;			// UV層番号 (0 or 1).
+	int channelMix;			// チャンネル合成（0:Red、1:Green、2:Blue、3:Alpha）.
 
 public:
 	COcclusionShaderData () {
@@ -207,6 +214,7 @@ public:
 
 	void clear () {
 		uvIndex = 0;
+		channelMix = 0;
 	}
 };
 

@@ -241,8 +241,8 @@ private:
 	/**
 	 * Shade3Dのsurface情報をマテリアルとして格納.
 	 */
-	bool m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData);
-	bool m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData);
+	bool m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData, const std::string& smName);
+	bool m_setMaterialData (sxsdk::master_surface_class* master_surface, CMaterialData& materialData, const std::string& smName);
 
 	/**
 	 * 指定の形状に割り当てられているマテリアル/イメージを格納.

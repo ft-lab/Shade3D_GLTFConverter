@@ -23,5 +23,8 @@
 	<string id="license_other" value="Other licenses." />
 
 	<string id="message_input_author" value="Please specify the author's name." />
+
+	<string id="bake_msg_error_mixed_uv_layer" value="In texture baking, different UV layers are mixed." />
+	<string id="bake_msg_mixed_repeat" value="In texture baking, this baked different repeats." />
 </strings>
 

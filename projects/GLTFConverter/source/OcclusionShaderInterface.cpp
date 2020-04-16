@@ -9,6 +9,7 @@
 enum
 {
 	dlg_uvIndex_id = 101,			// UV.
+	dlg_channel_mix_id = 102,		// チャンネル合成.
 };
 
 COcclusionTextureShaderInterface::COcclusionTextureShaderInterface (sxsdk::shade_interface& _shade) : sxsdk::shader_interface(_shade), m_shade(&_shade)
@@ -154,6 +155,10 @@ bool COcclusionTextureShaderInterface::respond (sxsdk::dialog_interface &d, sxsd
 		m_data.uvIndex = item.get_selection();
 		return true;
 	}
+	if (id == dlg_channel_mix_id) {
+		m_data.channelMix = item.get_selection();
+		return true;
+	}
 
 	return false;
 }
@@ -167,6 +172,11 @@ void COcclusionTextureShaderInterface::load_dialog_data (sxsdk::dialog_interface
 		sxsdk::dialog_item_class* item;
 		item = &(d.get_dialog_item(dlg_uvIndex_id));
 		item->set_selection(m_data.uvIndex);
+	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_channel_mix_id));
+		item->set_selection(m_data.channelMix);
 	}
 }
 

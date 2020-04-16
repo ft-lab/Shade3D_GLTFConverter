@@ -1,28 +1,46 @@
 ﻿/**
  * Export用にShade3Dの表面材質のマッピングレイヤのテクスチャを合成.
- * 半透明表現は、「不透明マスク」をOpacityとして使用.
  */
 #ifndef _IMAGESBLEND_H
 #define _IMAGESBLEND_H
 
 #include "GlobalHeader.h"
 
+
 class CImagesBlend
 {
+public:
+	// ベイク時のエラー.
+	enum IMAGE_BAKE_RESULT {
+		bake_success = 0,				// ベイク成功.
+		bake_error_mixed_uv_layer,		// UVレイヤが混在.
+		bake_mixed_repeat,				// 繰り返し回数が混在しているのでまとめた.
+	};
+
 private:
 	sxsdk::scene_interface* m_pScene;
 	sxsdk::surface_class* m_surface;
 
-	compointer<sxsdk::image_interface> m_diffuseImage;			// Diffuseの画像.
-	compointer<sxsdk::image_interface> m_normalImage;			// Normalの画像.
-	compointer<sxsdk::image_interface> m_reflectionImage;		// Reflectionの画像.
-	compointer<sxsdk::image_interface> m_roughnessImage;		// Roughnessの画像.
-	compointer<sxsdk::image_interface> m_glowImage;				// Glowの画像.
-	compointer<sxsdk::image_interface> m_occlusionImage;		// Occlusionの画像.
-	compointer<sxsdk::image_interface> m_opacityImage;			// Opacity(不透明マスク)の画像.
+	// sxsdk::image_interfaceで確保した一時イメージは、明示的にReleaseで解放する必要がある.
+	sxsdk::image_interface* m_diffuseImage;				// Diffuseの画像.
+	sxsdk::image_interface* m_normalImage;				// Normalの画像.
+	sxsdk::image_interface* m_reflectionImage;			// Reflectionの画像.
+	sxsdk::image_interface* m_roughnessImage;			// Roughnessの画像.
+	sxsdk::image_interface* m_glowImage;				// Glowの画像.
+	sxsdk::image_interface* m_occlusionImage;			// Occlusionの画像.
+	sxsdk::image_interface* m_transparencyImage;		// Transparencyの画像.
+	sxsdk::image_interface* m_opacityMaskImage;			// 不透明マスク相当の画像.
 
-	compointer<sxsdk::image_interface> m_gltfBaseColorImage;			// glTFとしてエクスポートするBaseColorの画像.
-	compointer<sxsdk::image_interface> m_gltfMetallicRoughnessImage;	// glTFとしてエクスポートするMetallic/Roughnessの画像.
+	sxsdk::image_interface* m_glTFMetallicRoughnessImage;		// glTFでのMetallicRoughness画像.
+
+	std::string m_diffuseImageName;								// Diffuseの画像名.
+	std::string m_normalImageName;								// Normalの画像名.
+	std::string m_reflectionImageName;							// Reflectionの画像名.
+	std::string m_roughnessImageName;							// Roughnessの画像名.
+	std::string m_glowImageName;								// Glowの画像名.
+	std::string m_occlusionImageName;							// Occlusionの画像名.
+	std::string m_transparencyImageName;						// Transparencyの画像名.
+	std::string m_opacityMaskImageName;							// 不透明マスク相当の画像名.
 
 	bool m_hasDiffuseImage;										// diffuseのイメージを持つか.
 	bool m_hasReflectionImage;									// reflectionのイメージを持つか.
@@ -30,16 +48,8 @@ private:
 	bool m_hasNormalImage;										// normalのイメージを持つか.
 	bool m_hasGlowImage;										// glowのイメージを持つか.
 	bool m_hasOcclusionImage;									// Occlusionのイメージを持つか.
-	bool m_hasOpacityImage;										// Opacity(不透明マスク)のイメージを持つか.
-
-	// 以下、マッピングレイヤで1枚のみの加工不要のテクスチャである場合のマスターサーフェスクラスの参照.
-	sxsdk::master_image_class* m_diffuseMasterImage;			// Diffuseのマスターイメージクラス.
-	sxsdk::master_image_class* m_reflectionMasterImage;			// Reflectionのマスターイメージクラス.
-	sxsdk::master_image_class* m_roughnessMasterImage;			// Roughnessのマスターイメージクラス.
-	sxsdk::master_image_class* m_normalMasterImage;				// Normalのマスターイメージクラス.
-	sxsdk::master_image_class* m_glowMasterImage;				// Glowのマスターイメージクラス.
-	sxsdk::master_image_class* m_occlusionMasterImage;			// Occlusionのマスターイメージクラス.
-	sxsdk::master_image_class* m_opacityMasterImage;			// Opacity(不透明マスク)のマスターイメージクラス.
+	bool m_hasTransparencyImage;								// transparencyのイメージを持つか.
+	bool m_hasOpacityMaskImage;									// 不透明マスクのイメージを持つか.
 
 	sx::vec<int,2> m_diffuseRepeat;								// Diffuseの反復回数.
 	sx::vec<int,2> m_normalRepeat;								// Normalの反復回数.
@@ -47,7 +57,8 @@ private:
 	sx::vec<int,2> m_roughnessRepeat;							// Roughnessの反復回数.
 	sx::vec<int,2> m_glowRepeat;								// Glowの反復回数.
 	sx::vec<int,2> m_occlusionRepeat;							// Occlusionの反復回数.
-	sx::vec<int,2> m_opacityRepeat;								// Opacity(不透明マスク)の反復回数.
+	sx::vec<int,2> m_transparencyRepeat;						// Transparencyの反復回数.
+	sx::vec<int,2> m_opacityMaskRepeat;							// OpacityMaskの反復回数.
 
 	int m_diffuseTexCoord;										// DiffuseのUVレイヤ番号.
 	int m_normalTexCoord;										// NormalのUVレイヤ番号.
@@ -55,79 +66,97 @@ private:
 	int m_roughnessTexCoord;									// RoughnessのUVレイヤ番号.
 	int m_glowTexCoord;											// GlowのUVレイヤ番号.
 	int m_occlusionTexCoord;									// OcclusionのUVレイヤ番号.
-	int m_opacityTexCoord;										// Opacity(不透明マスク)のUVレイヤ番号.
+	int m_transparencyTexCoord;									// TransparencyのUVレイヤ番号.
+	int m_opacityMaskTexCoord;									// OpacityMaskのUVレイヤ番号.
 
 	bool m_diffuseAlphaTrans;									// Diffuseのアルファ透明を使用しているか.
-	float m_normalWeight;										// Normalのウエイト値.
-	float m_occlusionWeight;									// Occlusionのウエイト値.
+
+	int m_diffuseTexturesCount;									// Diffuseテクスチャ数.
+	int m_normalTexturesCount;									// 法線マップのテクスチャ数.
+
+	bool m_useDiffuseAlpha;										// Diffuseの「アルファ透明」を使用しているか.
 
 	GLTFConverter::alpha_mode_type m_alphaModeType;				// AlphaModeの種類.
 	float m_alphaCutoff;										// AlphaCutoff値は、Diffuseテクスチャの属性より取得.
 
-	float m_baseColorAlpha;										// 最終的なbaseColorのAlpha値（Opacity）.
+	bool m_useOcclusionInMetallicRoughnessTexture;				// OcclusionテクスチャをMetallic-Roughnessテクスチャにまとめている場合.
+
+	// テクスチャを使用しない場合のパラメータ.
+	sxsdk::rgb_class m_diffuseColor;							// Diffuse色.
+	sxsdk::rgb_class m_emissiveColor;							// Emmisive色.
+	float m_metallic;											// Metallic値.
+	float m_roughness;											// Roughness値.
+	float m_normalStrength;										// 法線の強さ.
 
 private:
 	/**
 	 * 指定のテクスチャの合成処理.
 	 * @param[in] mappingType  マッピングの種類.
+	 * @param[in] repeatTex    繰り返し回数.
 	 */
-	bool m_blendImages (const sxsdk::enums::mapping_type mappingType);
-
-	/**
-	 * Diffuseのアルファ透明を使用しているかチェック.
-	 * BlendModeの取得.
-	 */
-	bool m_checkDiffuseAlphaTransAndBlendMode ();
+	bool m_blendImages (const sxsdk::enums::mapping_type mappingType, const sx::vec<int,2>& repeatTex);
 
 	/**
 	 * 指定のテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.
 	 * @param[in]  mappingType   マッピングの種類.
-	 * @param[out] ppMasterImage master imageの参照を返す.
 	 * @param[out] uvTexCoord    UV用の使用テクスチャ層番号を返す.
 	 * @param[out] texRepeat     繰り返し回数.
 	 * @param[out] hasImage      イメージを持つか (単数または複数).
 	 */
-	bool m_checkSingleImage (const sxsdk::enums::mapping_type mappingType,
-		sxsdk::master_image_class** ppMasterImage,
+	bool m_checkImage (const sxsdk::enums::mapping_type mappingType,
 		int& uvTexCoord,
 		sx::vec<int,2>& texRepeat,
 		bool& hasImage);
 
 	/**
-	 * Occlusionのテクスチャの種類がベイク不要の1枚のテクスチャであるかチェック.
-	 * ※ OcclusionレイヤはShade3D ver.17/18段階では存在しないため COcclusionTextureShaderInterface クラスで与えている.
-	 * @param[out] ppMasterImage master imageの参照を返す.
-	 * @param[out] uvTexCoord    UV用の使用テクスチャ層番号を返す.
-	 * @param[out] texRepeat     繰り返し回数.
-	 * @param[out] hasImage      イメージを持つか (単数または複数).
+	 * 指定のマッピングの種類でのテクスチャサイズの最大を取得.
+	 * 異なるサイズのテクスチャが混在する場合、一番大きいサイズのテクスチャに合わせる.
+	 * @param[in]  mappingType   マッピングの種類.
 	 */
-	bool m_checkOcclusionSingleImage (sxsdk::master_image_class** ppMasterImage,
-		int& uvTexCoord,
-		sx::vec<int,2>& texRepeat,
-		bool& hasImage);
+	sx::vec<int,2> m_getMaxMappingImageSize (const sxsdk::enums::mapping_type mappingType);
 
 	/**
-	 * 法線マップの強さを取得.
+	 * マッピングレイヤで「マット」を持つか.
+	 * @param[in]  mappingType   マッピングの種類.
 	 */
-	float m_getNormalWeight ();
+	 bool m_hasWeightTexture (const sxsdk::enums::mapping_type mappingType);
+
+	 /**
+	  * テクスチャを複製する場合に、反転や繰り返し回数を考慮.
+	  * @param[in] image       イメージクラス.
+	  * @param[in] dstSize     複製後のサイズ.
+	  * @param[in] flipColor   色反転.
+	  * @param[in] flipH       左右反転.
+	  * @param[in] flipV       上下反転.
+	  * @param[in] rotate90    90度反転.
+	  * @param[in] repeatU     繰り返し回数U.
+	  * @param[in] repeatV     繰り返し回数V.
+	  */
+	 compointer<sxsdk::image_interface> m_duplicateImage (sxsdk::image_interface* image, const sx::vec<int,2>& dstSize,
+		 const bool flipColor = false, const bool flipH = false, const bool flipV = false, const bool rotate90 = false,
+		 const int repeatU = 1, const int repeatV = 1);
 
 	/**
-	 * Transparencyテクスチャがある場合は、DiffuseTextureのAlpha要素に合成する.
+	 * diffuse/roughness/metallicのテクスチャを、Shade3Dの状態からPBRマテリアルに変換.
 	 */
-	void m_blendDiffuseTransparencyTexture ();
+	void m_convShade3DToPBRMaterial ();
+
+	/**
+	 * glTFのMetallic-Roughnessのパック処理 (Occlusion(R)/Roughness(G)/Metallic(B)).
+	 */
+	void m_packOcclusionRoughnessMetallicImage ();
 
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
+	~CImagesBlend ();
+
+	void clear ();
 
 	/**
 	 * 個々のイメージを合成.
+	 * @return ベイクの結果.
 	 */
-	void blendImages ();
-
-	/**
-	 * 各種イメージより、glTFにエクスポートするBaseColor/Roughness/Metallicを復元.
-	 */
-	bool calcGLTFImages ();
+	IMAGE_BAKE_RESULT blendImages ();
 
 	/**
 	 * 各種イメージを持つか (単一または複数).
@@ -135,19 +164,14 @@ public:
 	bool hasImage (const sxsdk::enums::mapping_type mappingType) const;
 
 	/**
-	 * 最終的なbaseColorのAlpha値.
-	 */
-	float getBaseColorAlpha () const { return m_baseColorAlpha; }
-
-	/**
-	 * 単一テクスチャを参照する場合のマスターイメージクラスを取得.
-	 */
-	sxsdk::master_image_class* getSingleMasterImage (const sxsdk::enums::mapping_type mappingType);
-
-	/**
 	 * イメージを取得.
 	 */
-	compointer<sxsdk::image_interface> getImage (const sxsdk::enums::mapping_type mappingType);
+	sxsdk::image_interface* getImage (const sxsdk::enums::mapping_type mappingType);
+
+	/**
+	 * イメージ名を取得.
+	 */
+	std::string getImageName (const sxsdk::enums::mapping_type mappingType);
 
 	/**
 	 * イメージのUV層番号を取得.
@@ -160,9 +184,24 @@ public:
 	sx::vec<int,2> getImageRepeat (const sxsdk::enums::mapping_type mappingType);
 
 	/**
+	 * イメージの強度を色として取得.
+	 */
+	sxsdk::rgb_class getImageFactor (const sxsdk::enums::mapping_type mappingType);
+
+	/**
 	 * アルファ透明を使用しているか.
 	 */
-	bool getDiffuseAlphaTrans () { return m_diffuseAlphaTrans; }
+	bool getDiffuseAlphaTrans () const { return m_diffuseAlphaTrans; }
+
+	/**
+	 * 法線マップの強さを取得.
+	 */
+	float getNormalStrength () const { return m_normalStrength; }
+
+	/**
+	 * glTFのMetallic-Roughnessイメージを取得.
+	 */
+	sxsdk::image_interface* getMetallicRoughnessImage ();
 
 	/**
 	 * AlphaModeの種類を取得.
@@ -175,30 +214,10 @@ public:
 	float getAlphaCutoff () const { return m_alphaCutoff; }
 
 	/**
-	 * Normalのウエイト値を取得.
+	 * OcclusionテクスチャがMetallicRoughnessに内包されるか.
 	 */
-	float getNormalWeight () { return m_normalWeight; }
+	bool getUseOcclusionInMetallicRoughnessTexture () const { return m_useOcclusionInMetallicRoughnessTexture; }
 
-	/**
-	 * Occlusionのウエイト値を取得.
-	 */
-	float getOcclusionWeight () { return m_occlusionWeight; }
-
-	/**
-	 * Occlusionのマスターイメージを取得.
-	 */
-	sxsdk::master_image_class* getOcclusionMasterImage () { return m_occlusionMasterImage; }
-
-	/**
-	 * OcclusionのUV層番号を取得.
-	 */
-	int getOcclusionTexCoord () { return m_occlusionTexCoord; }
-
-	/**
-	 * glTFとしてのイメージを取得.
-	 */
-	compointer<sxsdk::image_interface> getGLTFBaseColorImage () { return m_gltfBaseColorImage; }
-	compointer<sxsdk::image_interface> getGLTFMetallicRoughnessImage () { return m_gltfMetallicRoughnessImage; }
 };
 
 #endif

@@ -412,6 +412,7 @@ void StreamCtrl::saveOcclusionParam (sxsdk::stream_interface* stream, const COcc
 		stream->write_int(iVersion);
 
 		stream->write_int(data.uvIndex);
+		stream->write_int(data.channelMix);
 
 	} catch (...) { }
 }
@@ -439,6 +440,10 @@ bool StreamCtrl::loadOcclusionParam (sxsdk::stream_interface* stream, COcclusion
 		stream->read_int(iVersion);
 
 		stream->read_int(data.uvIndex);
+
+		if (iVersion >= OCCLUSION_PARAM_DLG_STREAM_VERSION_101) {
+			stream->read_int(data.channelMix);
+		}
 
 		return true;
 	} catch (...) { }
