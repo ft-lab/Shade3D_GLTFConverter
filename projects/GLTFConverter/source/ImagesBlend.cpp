@@ -1208,7 +1208,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 			std::vector<sxsdk::rgba_class> col1A;
 			std::vector<sxsdk::rgba_class> col2A;
 			col1A.resize(width);
-			col2A.resize(height);
+			col2A.resize(width);
 			for (int y = 0; y < height; ++y) {
 				m_diffuseImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
 				optImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
