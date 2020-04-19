@@ -1169,6 +1169,7 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 			const sxsdk::vec3 boneWCenter = Shade3DUtil::getBoneCenter(*shape, NULL);
 			const sxsdk::mat4 lwMat = shape->get_local_to_world_matrix();
 			const sxsdk::vec3 boneLCenter = (boneWCenter * inv(lwMat));
+			if (!shape->has_motion()) continue;
 
 			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
 

@@ -406,6 +406,7 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 					m_meshData.skinJointsHandle[i][j] = skinBind.get_shape()->get_handle();
 					m_meshData.skinWeights[i][j]      = skinBind.get_weight();
 				}
+
 				if (bindsCou < 4) {
 					// ボーンの親をたどり、skinのweight 0(スキンの影響なし)として割り当てる.
 					// これは、gltf出力時にスキン対象とするボーン(node)を認識しやすくするため.
@@ -1655,7 +1656,9 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			// 形状のハンドルのmapを作成.
 			for (size_t i = 0; i < versCou; ++i) {
 				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
+				const sxsdk::vec4& weightD = primD.skinWeights[i];
 				for (int j = 0; j < 4; ++j) {
+					if (MathUtil::isZero(weightD[j])) continue;
 					if (hD[j] != NULL) {
 						if (shapeHandleMap.count(hD[j]) == 0) {
 							shapeHandleMap[hD[j]] = 0;
@@ -1761,8 +1764,9 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			primD.skinJoints.resize(versCou, sx::vec<int,4>(0, 0, 0, 0));
 			for (size_t i = 0; i < versCou; ++i) {
 				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
+				const sxsdk::vec4& weightV  = primD.skinWeights[i];
 				for (int j = 0; j < 4; ++j) {
-					if (hD[j] != NULL) {
+					if (hD[j] != NULL && !MathUtil::isZero(weightV[j])) {
 						primD.skinJoints[i][j] = shapeHandleMap[ hD[j] ];
 					}
 				}
