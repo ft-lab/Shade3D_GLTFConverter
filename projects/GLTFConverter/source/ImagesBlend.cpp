@@ -1134,6 +1134,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
 	sxsdk::image_interface* dstOpacityImage = NULL;
 	if (m_transparencyImage || m_opacityMaskImage) {
+		if (m_transparencyImage) m_transparency = 0.0f;
 		if (m_transparencyImage) {
 			const int width  = m_transparencyImage->get_size().x;
 			const int height = m_transparencyImage->get_size().y;

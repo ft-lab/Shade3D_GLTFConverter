@@ -1011,6 +1011,10 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		break;
 	}
 
+	if (surface->get_no_shading()) {
+		materialData.unlit = true;
+	}
+
 	//----------------------------------------------------.
 	// baseColorを格納.
 	// 不透明度テクスチャや透明度テクスチャが存在する場合は、baseColorTextureのAlpha要素に格納される.
@@ -1066,9 +1070,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 	{
 		const sxsdk::enums::mapping_type iType = MAPPING_TYPE_OPACITY;
 		const float transparencyV = imagesBlend.getTransparency();
-		if (transparencyV > 0.0f) {
-			if (materialData.alphaMode == 1 || materialData.alphaMode == 3) {		// OPAQUEまたはMASKの場合.
-				materialData.alphaMode = 2;											// BLENDモードにする.
+		if (transparencyV > 0.01f) {
+			if (materialData.alphaMode == 1) {			// OPAQUEの場合.
+				materialData.alphaMode = 2;				// BLENDモードにする.
 			}
 			materialData.transparency = transparencyV;
 		}
@@ -1656,9 +1660,7 @@ void CGLTFExporterInterface::m_setSkinsFromMeshes ()
 			// 形状のハンドルのmapを作成.
 			for (size_t i = 0; i < versCou; ++i) {
 				const sx::vec<void *,4>& hD = primD.skinJointsHandle[i];
-				const sxsdk::vec4& weightD = primD.skinWeights[i];
 				for (int j = 0; j < 4; ++j) {
-					if (MathUtil::isZero(weightD[j])) continue;
 					if (hD[j] != NULL) {
 						if (shapeHandleMap.count(hD[j]) == 0) {
 							shapeHandleMap[hD[j]] = 0;
