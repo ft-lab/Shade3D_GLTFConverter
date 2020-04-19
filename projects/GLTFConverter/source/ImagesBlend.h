@@ -87,6 +87,7 @@ private:
 	float m_metallic;											// Metallic値.
 	float m_roughness;											// Roughness値.
 	float m_normalStrength;										// 法線の強さ.
+	float m_transparency;										// 透明度.
 
 private:
 	/**
@@ -212,6 +213,11 @@ public:
 	 * AlphaModeのCutoff値を取得.
 	 */
 	float getAlphaCutoff () const { return m_alphaCutoff; }
+
+	/**
+	 * 透明度を取得.
+	 */
+	float getTransparency () const { return m_transparency; }
 
 	/**
 	 * OcclusionテクスチャがMetallicRoughnessに内包されるか.

@@ -1012,12 +1012,13 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	//----------------------------------------------------.
 	// baseColorを格納.
+	// 不透明度テクスチャや透明度テクスチャが存在する場合は、baseColorTextureのAlpha要素に格納される.
 	//----------------------------------------------------.
 	{
 		const sxsdk::enums::mapping_type iType = sxsdk::enums::diffuse_mapping;
 		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
 		if (imagesBlend.hasImage(iType)) {
-			const bool useAlphaTrans = imagesBlend.getDiffuseAlphaTrans();
+			const bool useAlphaTrans = imagesBlend.getDiffuseAlphaTrans();		// DiffuseでAlpha成分に不透明度を使用している場合.
 
 			materialData.baseColorFactor = factor;
 
@@ -1043,6 +1044,9 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 				if (useAlphaTrans || (materialData.alphaMode == 2 || materialData.alphaMode == 3)) {
 					CImageData& imageData = m_sceneData->images[imageIndex];
 					imageData.useBaseColorAlpha = true;
+					if (materialData.alphaMode == 1) {	// OPAQUEの場合.
+						materialData.alphaMode = 3;		// MASKモードに切り替え.
+					}
 				}
 			}
 		} else {
@@ -1052,6 +1056,20 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			if (m_exportParam.convertColorToLinear) {
 				MathUtil::convColorLinear(materialData.baseColorFactor.red, materialData.baseColorFactor.green, materialData.baseColorFactor.blue);
 			}
+		}
+	}
+
+	//----------------------------------------------------.
+	// 透明度を持つ場合.
+	//----------------------------------------------------.
+	{
+		const sxsdk::enums::mapping_type iType = MAPPING_TYPE_OPACITY;
+		const float transparencyV = imagesBlend.getTransparency();
+		if (transparencyV > 0.0f) {
+			if (materialData.alphaMode == 1 || materialData.alphaMode == 3) {		// OPAQUEまたはMASKの場合.
+				materialData.alphaMode = 2;											// BLENDモードにする.
+			}
+			materialData.transparency = transparencyV;
 		}
 	}
 

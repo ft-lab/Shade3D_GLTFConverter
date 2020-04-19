@@ -95,6 +95,7 @@ void CImagesBlend::clear ()
 
 	m_alphaModeType = GLTFConverter::alpha_mode_opaque;
 	m_alphaCutoff   = 0.5f;
+	m_transparency = 0.0f;
 
 	m_useOcclusionInMetallicRoughnessTexture = false;
 }
@@ -678,7 +679,6 @@ compointer<sxsdk::image_interface> CImagesBlend::m_duplicateImage (sxsdk::image_
 	return dstImage;
  }
 
-
 /**
  * 指定のテクスチャの合成処理.
  * @param[in] mappingType  マッピングの種類.
@@ -1104,7 +1104,6 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 
 /**
  * diffuse/roughness/metallicのテクスチャを、Shade3Dの状態からPBRマテリアルに変換.
- * glTFの場合は、以下のルールに従う.
  */
 void CImagesBlend::m_convShade3DToPBRMaterial ()
 {
@@ -1122,8 +1121,9 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	m_diffuseColor.green = std::min(col0.green, col.green);
 	m_diffuseColor.blue  = std::min(col0.blue, col.blue);
 
-	m_metallic  = reflectionV;
-	m_roughness = m_surface->get_roughness();
+	m_metallic     = reflectionV;
+	m_roughness    = m_surface->get_roughness();
+	m_transparency = m_surface->get_transparency();
 
 	const float emissiveV = std::min(1.0f, std::max(0.0f, m_surface->get_glow()));
 	const sxsdk::rgb_class emCol0 = m_glowImage ? sxsdk::rgb_class(1, 1, 1) : (m_surface->get_glow_color());
@@ -1131,6 +1131,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	m_emissiveColor = emCol;
 
 	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
+	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
 	sxsdk::image_interface* dstOpacityImage = NULL;
 	if (m_transparencyImage || m_opacityMaskImage) {
 		if (m_transparencyImage) {
@@ -1196,28 +1197,26 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 		}
 	}
 
-	// DiffuseとOpacityの両方が存在する場合、かつ、1つの「アルファ透明」を使用したテクスチャをベイクする場合、DiffuseのA要素としてOpacityを格納.
-	if (m_useDiffuseAlpha && m_diffuseTexturesCount == 1) {
-		if (m_diffuseImage && dstOpacityImage) {
-			if (m_diffuseTexCoord == m_opacityMaskTexCoord && m_diffuseRepeat == m_opacityMaskRepeat) {
-				const int width  = m_diffuseImage->get_size().x;
-				const int height = m_diffuseImage->get_size().y;
-				compointer<sxsdk::image_interface> optImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, dstOpacityImage, sx::vec<int,2>(width, height));
+	// DiffuseとOpacityの両方が存在する場合、DiffuseのA要素としてOpacityを格納.
+	if (m_diffuseImage && dstOpacityImage) {
+		if (m_diffuseTexCoord == m_opacityMaskTexCoord && m_diffuseRepeat == m_opacityMaskRepeat) {
+			const int width  = m_diffuseImage->get_size().x;
+			const int height = m_diffuseImage->get_size().y;
+			compointer<sxsdk::image_interface> optImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, dstOpacityImage, sx::vec<int,2>(width, height));
 			
-				std::vector<sxsdk::rgba_class> col1A;
-				std::vector<sxsdk::rgba_class> col2A;
-				col1A.resize(width);
-				col2A.resize(height);
-				for (int y = 0; y < height; ++y) {
-					m_diffuseImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-					optImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
-					for (int x = 0; x < width; ++x) {
-						col1A[x].alpha = col2A[x].red;
-					}
-					m_diffuseImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+			std::vector<sxsdk::rgba_class> col1A;
+			std::vector<sxsdk::rgba_class> col2A;
+			col1A.resize(width);
+			col2A.resize(height);
+			for (int y = 0; y < height; ++y) {
+				m_diffuseImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+				optImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
+				for (int x = 0; x < width; ++x) {
+					col1A[x].alpha = col2A[x].red;
 				}
-				m_diffuseAlphaTrans = true;
+				m_diffuseImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
 			}
+			m_diffuseAlphaTrans = true;
 		}
 	}
 
