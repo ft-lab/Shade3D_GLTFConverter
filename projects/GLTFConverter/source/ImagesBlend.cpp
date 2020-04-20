@@ -1132,18 +1132,20 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 
 	// 光沢(Specular)値により、Roughnessを調整.
 	if (!m_roughnessImage) {
-		if (m_surface->get_has_specular_1()) {
-			float specularV = (m_surface->get_highlight_color().red + m_surface->get_highlight_color().green + m_surface->get_highlight_color().blue) * 0.3333f;
-			specularV *= m_surface->get_highlight();
-			float specularPower = std::max(0.0001f, m_surface->get_highlight_size());
+		if (m_metallic < 0.3f) {
+			if (m_surface->get_has_specular_1()) {
+				float specularV = (m_surface->get_highlight_color().red + m_surface->get_highlight_color().green + m_surface->get_highlight_color().blue) * 0.3333f;
+				specularV *= m_surface->get_highlight();
+				float specularPower = std::max(0.0001f, m_surface->get_highlight_size());
 
-			const float sV = std::pow(specularV, 1.0f + specularPower * 2.0f);
+				const float sV = std::pow(specularV, 1.0f + specularPower * 2.0f);
 
-			m_roughness = std::max((1.0f - sV) * 0.5f, m_roughness);
-			if (MathUtil::isZero(sV)) m_roughness = 1.0f;
+				m_roughness = std::max((1.0f - sV) * 0.5f, m_roughness);
+				if (MathUtil::isZero(sV)) m_roughness = 1.0f;
 
-		} else {
-			m_roughness = std::max(0.5f, m_roughness);
+			} else {
+				m_roughness = std::max(0.5f, m_roughness);
+			}
 		}
 	}
 
@@ -1621,7 +1623,8 @@ void CImagesBlend::m_packOcclusionRoughnessMetallicImage ()
 			sxsdk::image_interface* image = NULL;
 			if (width == mrTexWidth && height == mrTexHeight) image = m_reflectionImage;
 			else {
-				image = m_reflectionImage->duplicate_image(&(sx::vec<int,2>(mrTexWidth, mrTexHeight)));
+				sx::vec<int,2> tSize(mrTexWidth, mrTexHeight);
+				image = m_reflectionImage->duplicate_image(&tSize);
 			}
 			std::vector<sxsdk::rgba_class> lineCols, lineCols2;
 			lineCols.resize(mrTexWidth);
@@ -1647,7 +1650,8 @@ void CImagesBlend::m_packOcclusionRoughnessMetallicImage ()
 			sxsdk::image_interface* image = NULL;
 			if (width == mrTexWidth && height == mrTexHeight) image = m_roughnessImage;
 			else {
-				image = m_roughnessImage->duplicate_image(&(sx::vec<int,2>(mrTexWidth, mrTexHeight)));
+				sx::vec<int,2> tSize(mrTexWidth, mrTexHeight);
+				image = m_roughnessImage->duplicate_image(&tSize);
 			}
 			std::vector<sxsdk::rgba_class> lineCols, lineCols2;
 			lineCols.resize(mrTexWidth);
