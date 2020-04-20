@@ -1130,6 +1130,23 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	sxsdk::rgb_class emCol = emCol0 * emissiveV;
 	m_emissiveColor = emCol;
 
+	// 光沢(Specular)値により、Roughnessを調整.
+	if (!m_roughnessImage) {
+		if (m_surface->get_has_specular_1()) {
+			float specularV = (m_surface->get_highlight_color().red + m_surface->get_highlight_color().green + m_surface->get_highlight_color().blue) * 0.3333f;
+			specularV *= m_surface->get_highlight();
+			float specularPower = std::max(0.0001f, m_surface->get_highlight_size());
+
+			const float sV = std::pow(specularV, 1.0f + specularPower * 2.0f);
+
+			m_roughness = std::max((1.0f - sV) * 0.5f, m_roughness);
+			if (MathUtil::isZero(sV)) m_roughness = 1.0f;
+
+		} else {
+			m_roughness = std::max(0.5f, m_roughness);
+		}
+	}
+
 	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
 	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
 	sxsdk::image_interface* dstOpacityImage = NULL;
@@ -1443,30 +1460,6 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 			}
 		}
 
-		// Diffuseテクスチャが存在せず、Opacityイメージが存在する場合.
-		if (!m_diffuseImage && m_opacityMaskImage) {
-			const int oWidth  = m_opacityMaskImage->get_size().x;
-			const int oHeight = m_opacityMaskImage->get_size().y;
-			m_diffuseImage = m_pScene->create_image_interface(sx::vec<int,2>(oWidth, oHeight));
-
-			std::vector<sxsdk::rgba_class> lineCols;
-			lineCols.resize(oWidth);
-
-			for (int y = 0; y < oHeight; ++y) {
-				m_opacityMaskImage->get_pixels_rgba_float(0, y, oWidth, 1, &(lineCols[0]));
-
-				for (int x = 0; x < oWidth; ++x) {
-					lineCols[x] = sxsdk::rgba_class(1.0f, 1.0f, 1.0f, lineCols[x].red);
-				}
-				m_diffuseImage->set_pixels_rgba_float(0, y, oWidth, 1, &(lineCols[0]));
-			}
-
-			m_hasDiffuseImage = true;
-			m_diffuseRepeat = m_opacityMaskRepeat;
-			m_diffuseTexCoord = m_opacityMaskTexCoord;
-			m_diffuseAlphaTrans = true;
-		}
-
 		if (m_roughness < 1.0f) {
 			if (!m_roughnessImage) {		// Roughnessテクスチャがない場合は作成.
 				m_roughnessImage = m_pScene->create_image_interface(sx::vec<int,2>(oWidth, oHeight));
@@ -1520,6 +1513,36 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 			}
 			m_roughness = 1.0f;
 		}
+	}
+
+	// Diffuseテクスチャが存在せず、Opacityイメージが存在する場合.
+	if (!m_diffuseImage && dstOpacityImage) {
+		const int oWidth  = dstOpacityImage->get_size().x;
+		const int oHeight = dstOpacityImage->get_size().y;
+		m_diffuseImage = m_pScene->create_image_interface(sx::vec<int,2>(oWidth, oHeight));
+
+		std::vector<sxsdk::rgba_class> lineCols;
+		lineCols.resize(oWidth);
+
+		for (int y = 0; y < oHeight; ++y) {
+			dstOpacityImage->get_pixels_rgba_float(0, y, oWidth, 1, &(lineCols[0]));
+
+			for (int x = 0; x < oWidth; ++x) {
+				lineCols[x] = sxsdk::rgba_class(1.0f, 1.0f, 1.0f, lineCols[x].red);
+			}
+			m_diffuseImage->set_pixels_rgba_float(0, y, oWidth, 1, &(lineCols[0]));
+		}
+
+		m_hasDiffuseImage = true;
+		if (m_opacityMaskImage) {
+			m_diffuseRepeat   = m_opacityMaskRepeat;
+			m_diffuseTexCoord = m_opacityMaskTexCoord;
+		} else if (m_transparencyImage) {
+			m_diffuseRepeat   = m_transparencyRepeat;
+			m_diffuseTexCoord = m_transparencyTexCoord;
+		}
+
+		m_diffuseAlphaTrans = true;
 	}
 
 	// OpacityMaskにdstOpacityImageの内容を入れる.
@@ -1616,7 +1639,7 @@ void CImagesBlend::m_packOcclusionRoughnessMetallicImage ()
 	}
 
 	// Roughnessを[G]に格納.
-	if (m_reflectionImage) {
+	if (m_roughnessImage) {
 		const int width  = m_roughnessImage->get_size().x;
 		const int height = m_roughnessImage->get_size().y;
 
@@ -1661,6 +1684,9 @@ void CImagesBlend::m_packOcclusionRoughnessMetallicImage ()
 
 			} catch (...) { }
 			m_useOcclusionInMetallicRoughnessTexture = true;
+
+			IMAGE_INTERFACE_RELEASE(m_occlusionImage);
+			m_hasOcclusionImage = false;
 		}
 	}
 }
