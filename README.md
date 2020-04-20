@@ -68,6 +68,7 @@ Draco圧縮はAnimation/Morph Targets/Texture Imageの圧縮には対応して�
 * Export : テクスチャマッピングの「不透明マスク」の出力。ver.0.2.1.0で追加。    
 * AlphaMode(Opaque/Blend/Mask)の入出力。ver.0.2.1.1で追加。    
 * AlphaCutoffの入出力。ver.0.2.1.1で追加。    
+* エクスポート時に表面材質のマッピングで複数テクスチャ使用時のベイク対応。ver.0.2.2.0で追加。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -241,6 +242,7 @@ UV1/UV2のいずれかを指定できます(ver.0.1.0.13-)。投影は「ラッ�
 
 UV1/UV2の選択は、「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
 <img src="./wiki_images/gltfConverter_mapping_layer_occlusion_uv.png"/>     
+「チャンネル」はイメージのR/G/B/AのどのチャンネルをOcclusionとして採用するか指定します(ver.0.2.2.0 -)。    
 
 ### Occlusionのマッピングレイヤをインポートした場合の注意事項 (ver.0.1.0.13 - )
 
@@ -265,20 +267,7 @@ Roughness Metallicテクスチャがない場合は「拡散反射値」は「1.
 Roughness Metallicテクスチャがある場合は「拡散反射値」は1.0、「反射色」は白を採用。    
 「反射値」はglTFのMetallic Factorを採用。     
 
-エクスポート時(Shade3DからglTFへの変換)は以下のように変換しています。    
-
-    const sxsdk::rgb_class col0 = surface->get_diffuse_color();    
-    sxsdk::rgb_class col = col0 * (surface->get_diffuse());    
-    sxsdk::rgb_class reflectionCol = surface->get_reflection_color();    
-    const float reflectionV  = std::max(std::min(1.0f, surface->get_reflection()), 0.0f);    
-    const float reflectionV2 = 1.0f - reflectionV;    
-    col = col * reflectionV2 + reflectionCol * reflectionV;    
-    col.red   = std::min(col0.red, col.red);    
-    col.green = std::min(col0.green, col.green);    
-    col.blue  = std::min(col0.blue, col.blue);     
-
-glTFのBaseColor Factorとして上記で計算したcolを採用。    
-glTFのMetallic FactorとしてShade3Dの反射値を採用。    
+エクスポート時(Shade3DからglTFへの変換)は計算を行い、できるだけShade3Dのレンダリング結果に近づくようにしています (ver.0.2.2.0で実装見直し)。    
 
 鏡のような鏡面反射をする場合は、「拡散反射」の色を白に近づけるようにし拡散反射のスライダを0.0に近づけるようにします。    
 この場合「反射」値は1.0に近づく指定をしています。    
@@ -289,13 +278,34 @@ glTFのMetallic FactorとしてShade3Dの反射値を採用。
 この場合「反射」値は0.0より大きな小さめの値を指定しています。    
 <img src="./wiki_images/gltfConverter_mapping_layer_diffuse_reflection_01.png"/>     
 
-### エクスポート時の表面材質のマッピングレイヤについて (ver.0.1.0.9 対応)
+### エクスポート時の表面材質で見るパラメータ (ver.0.2.2.0 -)
 
-拡散反射の乗算合成としてOcclusionを指定している場合、glTF出力時にはBaseColorにベイクされます。    
-別途、glTFのOcclusionテクスチャは出力していません。    
-マッピングレイヤの「イメージ/拡散反射」「イメージ/発光」「イメージ/反射」「イメージ/荒さ」を複数指定している場合、glTF出力用に1枚にベイクされます。    
-「イメージ/法線」は1枚のみ参照します。    
-この場合、以下の指定が使用できます。    
+表面材質の「基本設定」「効果設定」では、以下のパラメータを参照します。    
+<img src="./wiki_images/gltfConverter_export_material_set.png"/>     
+
+「拡散反射」は、BaseColorの色として使用されます。    
+「光沢1」「サイズ」の値と「荒さ」は、glTFのRoughnessの値として参照されます。    
+「荒さ」が0の場合でも、「光沢1」「サイズ」の調整でRoughness効果が追加されるようにしています。    
+「反射」は、glTFのMetallicの値として参照されます。    
+「透明」は、glTFのBaseColorのAlphaチャンネルの値として参照されます。    
+「発光」は、glTFのEmissiveの値として参照されます。    
+
+### エクスポート時の表面材質のマッピングレイヤについて (ver.0.2.2.0 実装見直し)
+
+マッピングレイヤは以下に対応しています。    
+
+* イメージ/拡散反射
+* イメージ/反射
+* イメージ/透明度
+* イメージ/発光
+* イメージ/マット
+* イメージ/荒さ
+* イメージ/不透明マスク
+* イメージ/法線
+
+複数テクスチャを使用している場合は1枚にベイクされます。    
+また、「透明度」と「不透明マスク」を使用している場合、glTF出力時は「不透明マスク」(Opacity)として合成され、
+BaseColorのAlphaチャンネルに不透明度が割り当てられます。    
 
 「合成」は、「通常」「加算」「減算」「乗算」「比較（明）」「比較（暗）」「乗算 (レガシー)」を指定できます。    
 <img src="./wiki_images/gltfConverter_export_blend_mode.png"/>     
@@ -605,6 +615,13 @@ rapidjsonは、Microsoft glTF SDK内で使用されています。
 This software is released under the MIT License, see [LICENSE](./LICENSE).  
 
 ## 更新履歴
+
+[2020/04/20] ver.0.2.2.0   
+* Export : 何回かエクスポートしているとクラッシュする場合があった問題を修正
+* Export : 表面材質の複数テクスチャ使用時のベイク対応を見直し（できるだけShade3Dの表面材質のレンダリングに近づけるようにしました）    
+* Export : 表面材質のマッピングで「マット」に対応
+* Export : 表面材質のマッピングでOcclusionを使用した際に、RGBAのチャンネルを選択するUIを追加
+* Export : メッシュのスキン使用時に、1頂点で同一ボーンを参照する場合の調整 (glTF構文でエラーになる問題を回避)。
 
 [2019/12/27] ver.0.2.1.3   
 * Export : ブラウザで「面反転」を使用している場合に、面の向きが正しく出力されていなかった問題を修正
