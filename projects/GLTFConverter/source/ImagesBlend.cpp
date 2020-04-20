@@ -702,7 +702,8 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 
 	sxsdk::rgba_class baseCol(1, 1, 1, 1);
 	if (mappingType == sxsdk::enums::diffuse_mapping) {
-		baseCol = sxsdk::rgba_class(m_surface->get_diffuse_color());
+		// baseColorは別途乗算するため、ここでは基本設定としての拡散反射色を指定しない (以下はコメントアウト).
+		//baseCol = sxsdk::rgba_class(m_surface->get_diffuse_color());
 	}
 	if (mappingType == sxsdk::enums::glow_mapping) {
 		baseCol = sxsdk::rgba_class(m_surface->get_glow_color());
