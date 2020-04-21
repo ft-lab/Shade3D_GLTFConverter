@@ -220,6 +220,12 @@ namespace {
 			if (materialD.metallicRoughnessImageIndex >= 0) {
 				material.metallicRoughness.metallicRoughnessTexture.textureId = std::to_string(materialD.metallicRoughnessImageIndex);
 				material.metallicRoughness.metallicRoughnessTexture.texCoord  = (size_t)materialD.metallicRoughnessTexCoord;
+
+				// テクスチャのTiling情報を指定.
+				{
+					const std::string str = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.metallicRoughnessTexScale);
+					if (str != "") material.metallicRoughness.metallicRoughnessTexture.extensions["KHR_texture_transform"] = str;
+				}
 			}
 
 			if (materialD.occlusionImageIndex >= 0) {

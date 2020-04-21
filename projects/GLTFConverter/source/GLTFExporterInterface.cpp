@@ -1150,6 +1150,12 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			if (imageIndex >= 0) {
 				materialData.emissiveImageIndex = imageIndex;
 			}
+		} else {
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(materialData.emissiveFactor.red, materialData.emissiveFactor.green, materialData.emissiveFactor.blue);
+			}
 		}
 	}
 	//----------------------------------------------------.
