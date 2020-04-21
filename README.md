@@ -616,6 +616,11 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2020/04/21] ver.0.2.2.2   
+* Export : 「色をリニアに変換」で、Emissiveの色をリニアにする処理を追加
+* Export : Metallic-Roughnessテクスチャの繰り返し回数が出力されていなかった問題を修正
+* Export : マテリアルのマッピングで法線 + 乗算合成時に不正なテクスチャが出力されていた問題を修正
+
 [2020/04/20] ver.0.2.2.1   
 * Export : 拡散反射色と拡散反射テクスチャがある場合に、色が二重にかかる問題を修正
 
