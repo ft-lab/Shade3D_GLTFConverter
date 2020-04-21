@@ -947,7 +947,7 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 
 				if (counter == 0) {
 					float aV;
-					if (blendMode == 7) {							// 「乗算」合成.
+					if (blendMode == 7 && mappingType != sxsdk::enums::normal_mapping) {				// 「乗算」合成.
 						for (int x = 0; x < newWidth; ++x) {
 							const float w  = alphaTrans ? 1.0f : ((weightWidth > 0) ? rgbaWeightLine[x].red * weight : weight);
 							const float w2 = 1.0f - w;
