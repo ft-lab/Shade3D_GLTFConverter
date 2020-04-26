@@ -616,6 +616,10 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2020/04/26] ver.0.2.2.3   
+* Export : 表面材質の拡散反射と反射のテクスチャのサイズが異なる場合に、クラッシュすることがあった問題を修正    
+* Export : 表面材質の拡散反射と反射のテクスチャがある場合に、拡散反射テクスチャが明るくなる問題を修正    
+
 [2020/04/21] ver.0.2.2.2   
 * Export : 「色をリニアに変換」で、Emissiveの色をリニアにする処理を追加
 * Export : Metallic-Roughnessテクスチャの繰り返し回数が出力されていなかった問題を修正
