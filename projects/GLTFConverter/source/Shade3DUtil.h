@@ -118,6 +118,12 @@ namespace Shade3DUtil
 	 * @param[in] size   変更するサイズ.
 	 */
 	compointer<sxsdk::image_interface> resizeImageWithAlpha (sxsdk::scene_interface* scene, sxsdk::image_interface* image, const sx::vec<int,2>& size);
+
+	/**
+	 * compointerを使用せずにイメージをリサイズ.
+	 */
+	sxsdk::image_interface* resizeImageWithAlphaNotCom (sxsdk::scene_interface* scene, sxsdk::image_interface* image, const sx::vec<int,2>& size);
+
 }
 
 #endif

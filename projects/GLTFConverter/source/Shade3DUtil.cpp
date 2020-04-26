@@ -565,3 +565,56 @@ compointer<sxsdk::image_interface> Shade3DUtil::resizeImageWithAlpha (sxsdk::sce
 
 	return retImage;
 }
+
+/**
+ * compointerを使用せずにイメージをリサイズ.
+ */
+sxsdk::image_interface* Shade3DUtil::resizeImageWithAlphaNotCom (sxsdk::scene_interface* scene, sxsdk::image_interface* image, const sx::vec<int,2>& size)
+{
+	// アルファを持たない場合はimage->duplicate_imageを使用.
+	if (!::m_hasImageAlpha(image)) {
+		return image->duplicate_image(&size);
+	}
+
+	sxsdk::image_interface* retImage = NULL;
+	try {
+		// Alpha要素をいったんRedに入れて、sizeの大きさにリサイズ.
+		const sx::vec<int,2> orgSize = image->get_size();
+		compointer<sxsdk::image_interface> alphaImage(scene->create_image_interface(orgSize));
+		{
+			const int wid = image->get_size().x;
+			const int hei = image->get_size().y;
+			std::vector<sxsdk::rgba_class> lineD, lineD2;
+			lineD.resize(wid);
+			lineD2.resize(wid, sxsdk::rgba_class(0, 0, 0, 1));
+			for (int y = 0; y < hei; ++y) {
+				image->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+				for (int x = 0; x < wid; ++x) lineD2[x].red = lineD[x].alpha;
+				alphaImage->set_pixels_rgba_float(0, y, wid, 1, &(lineD2[0]));
+			}
+		}
+		alphaImage->update();
+		compointer<sxsdk::image_interface> alphaImage2(alphaImage->duplicate_image(&size));
+
+		// imageをsizeの大きさにリサイズし、アルファも更新.
+		retImage = image->duplicate_image(&size);
+		{
+			const int wid = size.x;
+			const int hei = size.y;
+			std::vector<sxsdk::rgba_class> lineD, lineD2;
+			lineD.resize(wid);
+			lineD2.resize(wid);
+			for (int y = 0; y < hei; ++y) {
+				retImage->get_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+				alphaImage2->get_pixels_rgba_float(0, y, wid, 1, &(lineD2[0]));
+
+				for (int x = 0; x < wid; ++x) lineD[x].alpha = lineD2[x].red;
+				retImage->set_pixels_rgba_float(0, y, wid, 1, &(lineD[0]));
+			}
+		}
+		retImage->update();
+
+	} catch (...) { }
+
+	return retImage;
+}

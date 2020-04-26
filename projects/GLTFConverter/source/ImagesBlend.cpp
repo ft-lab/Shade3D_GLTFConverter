@@ -1199,7 +1199,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 					col1A.resize(width);
 					col2A.resize(width);
 					if (width != width2 || height != height2) {
-						sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_opacityMaskImage, sx::vec<int,2>(width, height));
+						sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_opacityMaskImage, sx::vec<int,2>(width, height));
 						IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
 						m_opacityMaskImage = image;
 					}
@@ -1256,12 +1256,12 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 			heightS = std::max(height, heightM);
 
 			if (width != widthS || height != heightS) {
-				sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_diffuseImage, sx::vec<int,2>(widthS, heightS));
+				sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_diffuseImage, sx::vec<int,2>(widthS, heightS));
 				IMAGE_INTERFACE_RELEASE(m_diffuseImage);
 				m_diffuseImage = image;
 			}
 			if (widthM != widthS || heightM != heightS) {
-				sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_reflectionImage, sx::vec<int,2>(widthS, heightS));
+				sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_reflectionImage, sx::vec<int,2>(widthS, heightS));
 				IMAGE_INTERFACE_RELEASE(m_reflectionImage);
 				m_reflectionImage = image;
 			}
@@ -1274,7 +1274,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 
 			sxsdk::rgba_class col;
 			sxsdk::rgb_class baseColorCol;
-			float rV, d1, d2;
+			float rV, d1, d2, prevRV;
 			sxsdk::vec3 hsv;
 
 			for (int y = 0; y < heightS; ++y) {
@@ -1283,7 +1283,8 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 				for (int x = 0; x < widthS; ++x) {
 					// Shade3Dのdiffuse/reflection値より、PBRマテリアルでのdiffuse/metallicに変換.
 					col = lineCols[x];
-					rV  = lineCols2[x].red;
+					prevRV = lineCols2[x].red;
+					rV  = prevRV * reflectionV;
 
 					baseColorCol.red   = std::max(std::min(col.red   + rV, 1.0f), 0.0f);
 					baseColorCol.green = std::max(std::min(col.green + rV, 1.0f), 0.0f);
@@ -1326,6 +1327,12 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 					lineCols[x].green = baseColorCol.green;
 					lineCols[x].blue  = baseColorCol.blue;
 
+					if (reflectionV > 0.0f) {
+						metallicV /= reflectionV;
+						metallicV = std::max(std::min(metallicV, 1.0f), 0.0f);
+					} else {
+						metallicV = prevRV;
+					}
 					lineCols2[x] = sxsdk::rgba_class(metallicV, metallicV, metallicV, 1.0f);
 				}
 				m_diffuseImage->set_pixels_rgba_float(0, y, widthS, 1, &(lineCols[0]));
@@ -1334,12 +1341,12 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 		}
 
 		if (widthS != width || heightS != height) {
-			sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_diffuseImage, sx::vec<int,2>(width, height));
+			sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_diffuseImage, sx::vec<int,2>(width, height));
 			IMAGE_INTERFACE_RELEASE(m_diffuseImage);
 			m_diffuseImage = image;
 		}
 		if (widthS != widthM || heightS != heightM) {
-			sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_reflectionImage, sx::vec<int,2>(widthM, heightM));
+			sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_reflectionImage, sx::vec<int,2>(widthM, heightM));
 			IMAGE_INTERFACE_RELEASE(m_reflectionImage);
 			m_reflectionImage = image;
 		}
