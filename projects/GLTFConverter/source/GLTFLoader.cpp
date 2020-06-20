@@ -1184,7 +1184,11 @@ namespace {
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			try {
-				const std::string fileDir = sceneData->getFileDir();
+				std::string fileDir = sceneData->getFileDir();
+#if _WINDOWS
+				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
+
+#endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
@@ -1248,7 +1252,10 @@ namespace {
 		std::shared_ptr<GLTFResourceReader> binReader;
 		if (!reader) {
 			try {
-				const std::string fileDir = sceneData->getFileDir();
+				std::string fileDir = sceneData->getFileDir();
+#if _WINDOWS
+				StringUtil::convUTF8ToSJIS(fileDir, fileDir);
+#endif
 				binStreamReader.reset(new BinStreamReader(fileDir));
 				binReader.reset(new GLTFResourceReader(binStreamReader));
 			} catch (...) {
