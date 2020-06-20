@@ -486,6 +486,35 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 		normalsList[i] = normalize(sxsdk::vec3(v4.x, v4.y, v4.z));
 	}
 
+	// 法線のゼロチェック.
+	if (n_list == 3) {
+		bool errorNormal = false;
+		for (int i = 0; i < n_list; ++i) {
+			sxsdk::vec3 n = normalsList[i];
+			if (sxsdk::absolute(n) < 0.9f) {
+				errorNormal = true;
+				break;
+			}
+		}
+
+		if (errorNormal) {
+			// 頂点座標をmからmmに変換.
+			sxsdk::vec3 vA[4];
+			for (int i = 0; i < n_list; ++i) {
+				vA[i] = m_meshData.vertices[list[i]] * 1000.0f;
+			}
+
+			// 面積を計算.
+			const double areaV = MathUtil::calcTriangleArea(vA[0], vA[1], vA[2]);
+			if (areaV <= 0.0) return;
+
+			// 法線を計算.
+			const sxsdk::vec3 n = MathUtil::calcTriangleNormal(vA[0], vA[1], vA[2]);
+
+			for (int i = 0; i < n_list; ++i) normalsList[i] = n;
+		}
+	}
+
 	if (n_uvs > 0 && uvs != NULL) {
 		for (int i = 0; i < n_uvs && i < 2; ++i) {
 			int iPos = i;
