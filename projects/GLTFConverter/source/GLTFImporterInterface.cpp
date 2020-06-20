@@ -565,10 +565,9 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 		if (newMeshData.skinJoints.empty() && newMeshData.skinWeights.empty()) {
 			// 重複頂点のマージ.
 			m_cleanupRedundantVertices(pMesh, &newMeshData);
-
-			// 稜線を生成.
-			pMesh.make_edges();
 		}
+		// 稜線を生成.
+		pMesh.make_edges();
 
 		// 限界角度の指定.
 		pMesh.set_threshold(g_importParam.meshAngleThreshold);
