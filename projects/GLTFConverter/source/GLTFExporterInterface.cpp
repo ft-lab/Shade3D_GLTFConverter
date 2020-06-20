@@ -207,6 +207,22 @@ bool CGLTFExporterInterface::m_checkSkipShape (sxsdk::shape_class* shape)
 	if (shape->get_render_flag() == 0) skipF = true;
 	if (name != "" && name[0] == '#') skipF = true;
 
+	if (!skipF && shape->get_render_flag() < 0) {		// 継承.
+		sxsdk::shape_class* pS = shape;
+		while (pS->has_dad()) {
+			pS = pS->get_dad();
+			if (pS->get_render_flag() == 0) {
+				skipF = true;
+				break;
+			}
+			if (pS->get_render_flag() == 1) {
+				skipF = false;
+				break;
+			}
+		}
+	}
+	if (skipF) return true;
+
 	// 形状により、スキップする形状を判断.
 	const int type = shape->get_type();
 	if (type == sxsdk::enums::part) {
