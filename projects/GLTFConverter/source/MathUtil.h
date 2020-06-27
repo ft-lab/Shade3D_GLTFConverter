@@ -38,6 +38,11 @@ namespace MathUtil {
 	void convColorLinear (float& vRed, float& vGreen, float& vBlue);
 
 	/**
+	 * 色情報をガンマ2.2し、リニアからノンリニア化.
+	 */
+	void convColorNonLinear (float& vRed, float& vGreen, float& vBlue);
+	
+	/**
 	 * RGBをHSVに変換.
 	 */
 	sxsdk::vec3 rgb_to_hsv (const sxsdk::rgb_class& col);

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <dialog default_button="true" title="glTF Import">
 	<selection id="101" label="イメージのガンマ補正:|1.0|1.0/2.2" />
+	<bool id="103" label="色をリニアから変換" />
 	<bool id="102" label="アニメーションを読み込み" />
 	<group label="ポリゴンメッシュ">
 		<bool id="201" label="法線を読み込み" />

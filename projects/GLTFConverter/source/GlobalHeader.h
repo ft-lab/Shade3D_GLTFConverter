@@ -18,7 +18,9 @@
 #define LICENSE_DIALOG_INTERFACE_ID sx::uuid_class("DC1B3583-05DE-4AA7-BE76-1B0B1FC599AD")
 
 // streamに保存するstreamのバージョン.
-#define GLTF_IMPORTER_DLG_STREAM_VERSION		0x100
+#define GLTF_IMPORTER_DLG_STREAM_VERSION		0x101
+#define GLTF_IMPORTER_DLG_STREAM_VERSION_101	0x101
+#define GLTF_IMPORTER_DLG_STREAM_VERSION_100	0x100
 
 #define GLTF_EXPORTER_DLG_STREAM_VERSION		0x103
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_103	0x103
@@ -151,7 +153,7 @@ public:
 		outputAnimation     = true;
 		dracoCompression    = false;
 		shareVerticesMesh   = true;
-		convertColorToLinear = false;
+		convertColorToLinear = true;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";
@@ -183,6 +185,7 @@ public:
 	float meshAngleThreshold;		// 限界角度.
 	bool meshImportVertexColor;		// 頂点カラーの読み込み.
 	bool importAnimation;			// アニメーションの読み込み.
+	bool convertColorFromLinear;	// 色をリニアから変換.
 
 public:
 	CImportDlgParam () {
@@ -195,6 +198,7 @@ public:
 		meshAngleThreshold    = 50.0f;
 		meshImportVertexColor = true;
 		importAnimation       = true;
+		convertColorFromLinear = true;
 	}
 };
 

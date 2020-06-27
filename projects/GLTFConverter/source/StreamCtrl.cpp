@@ -38,6 +38,13 @@ void StreamCtrl::saveImportDialogParam (sxsdk::shade_interface& shade, const CIm
 			iDat = data.importAnimation ? 1 : 0;
 			stream->write_int(iDat);
 		}
+
+		// v.0.2.3.0
+		{
+			iDat = data.convertColorFromLinear ? 1 : 0;
+			stream->write_int(iDat);
+		}
+
 	} catch (...) { }
 }
 
@@ -72,6 +79,14 @@ void StreamCtrl::loadImportDialogParam (sxsdk::shade_interface& shade, CImportDl
 			stream->read_int(iDat);
 			data.importAnimation = iDat ? true : false;
 		}
+
+		if (iVersion >= GLTF_IMPORTER_DLG_STREAM_VERSION_101) {
+			{
+				stream->read_int(iDat);
+				data.convertColorFromLinear = iDat ? true : false;
+			}
+		}
+
 	} catch (...) { }
 }
 

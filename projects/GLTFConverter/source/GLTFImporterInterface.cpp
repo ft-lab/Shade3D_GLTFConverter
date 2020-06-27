@@ -14,6 +14,7 @@ enum
 {
 	dlg_gamma_id = 101,							// ガンマ値.
 	dlg_import_animation_id = 102,				// アニメーションの読み込み.
+	dlg_convert_color_from_linear = 103,		// 色をリニアから変換.
 	dlg_mesh_import_normals_id = 201,			// 法線の読み込み.
 	dlg_mesh_angle_threshold_id = 202,			// 限界角度.
 	dlg_mesh_import_vertex_color_id = 203,		// 頂点カラーの読み込み.
@@ -224,6 +225,12 @@ void CGLTFImporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 			item->set_enabled(false);
 		}
 	}
+
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_convert_color_from_linear));
+		item->set_bool(g_importParam.convertColorFromLinear);
+	}
 }
 
 void CGLTFImporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -262,6 +269,11 @@ bool CGLTFImporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 
 	if (id == dlg_mesh_import_vertex_color_id) {
 		g_importParam.meshImportVertexColor = (int)item.get_bool();
+		return true;
+	}
+
+	if (id == dlg_convert_color_from_linear) {
+		g_importParam.convertColorFromLinear = item.get_bool();
 		return true;
 	}
 
@@ -486,6 +498,10 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 						sxsdk::face_class& f = pMesh.face(triIndexList[i]);
 						for (int j = 0; j < 3; ++j) {
 							col = newMeshData.triangleColor0[iPos + j];
+							// ノンリニアに変換.
+							if (g_importParam.convertColorFromLinear) {
+								MathUtil::convColorNonLinear(col.x, col.y, col.z);
+							}
 							f.set_vertex_color(vLayerIndex, j, sxsdk::rgba_class(col.x, col.y, col.z, col.w));
 						}
 					} catch (...) { }
@@ -713,6 +729,11 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					col.red   = materialD.pbrSpecularGlossiness_diffuseFactor.red;
 					col.green = materialD.pbrSpecularGlossiness_diffuseFactor.green;
 					col.blue  = materialD.pbrSpecularGlossiness_diffuseFactor.blue;
+
+					// ノンリニアに変換.
+					if (g_importParam.convertColorFromLinear) {
+						MathUtil::convColorNonLinear(col.red, col.green, col.blue);
+					}
 					surface->set_diffuse_color(col);
 				}
 
@@ -787,7 +808,13 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				// Shade3DでのDiffuseを黒にしないと反射に透明感が出ないので補正.
 				{
 					const sxsdk::rgb_class whiteCol(1, 1, 1);
-					const sxsdk::rgb_class col = materialD.baseColorFactor;
+					sxsdk::rgb_class col = materialD.baseColorFactor;
+
+					// ノンリニアに変換.
+					if (g_importParam.convertColorFromLinear) {
+						MathUtil::convColorNonLinear(col.red, col.green, col.blue);
+					}
+
 					const float metallicV  = materialD.metallicFactor;
 					const float metallicV2 = 1.0f - metallicV;
 					const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
@@ -823,7 +850,13 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 			// 発光をマッピングレイヤとして追加.
 			if (materialD.emissiveImageIndex >= 0) {
-				surface->set_glow_color(materialD.emissiveFactor);
+				// ノンリニアに変換.
+				sxsdk::rgb_class eCol = materialD.emissiveFactor;
+				if (g_importParam.convertColorFromLinear) {
+					MathUtil::convColorNonLinear(eCol.red, eCol.green, eCol.blue);
+				}
+
+				surface->set_glow_color(eCol);
 				surface->set_glow(1.0f);
 
 				surface->append_mapping_layer();
@@ -847,7 +880,13 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				if (MathUtil::isZero(materialD.emissiveFactor)) {
 					surface->set_glow(0.0f);
 				} else {
-					surface->set_glow_color(materialD.emissiveFactor);
+					// ノンリニアに変換.
+					sxsdk::rgb_class eCol = materialD.emissiveFactor;
+					if (g_importParam.convertColorFromLinear) {
+						MathUtil::convColorNonLinear(eCol.red, eCol.green, eCol.blue);
+					}
+
+					surface->set_glow_color(eCol);
 					surface->set_glow(1.0f);
 				}
 			}

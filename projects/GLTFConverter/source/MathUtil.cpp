@@ -107,6 +107,23 @@ void MathUtil::convColorLinear (float& vRed, float& vGreen, float& vBlue)
 }
 
 /**
+ * 色情報をガンマ2.2し、リニアからノンリニア化.
+ */
+void MathUtil::convColorNonLinear (float& vRed, float& vGreen, float& vBlue)
+{
+	const float gamma = 1.0f / 2.2f;
+	if (vRed < 1.0f) {
+		vRed   = powf(vRed, gamma);
+	}
+	if (vGreen < 1.0f) {
+		vGreen = powf(vGreen, gamma);
+	}
+	if (vBlue < 1.0f) {
+		vBlue  = powf(vBlue, gamma);
+	}
+}
+
+/**
  * RGBをHSVに変換.
  */
 sxsdk::vec3 MathUtil::rgb_to_hsv (const sxsdk::rgb_class& col)
