@@ -819,7 +819,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					const float metallicV2 = 1.0f - metallicV;
 					const sxsdk::rgb_class reflectionCol = col * metallicV + whiteCol * metallicV2;
 
-					surface->set_diffuse_color(materialD.baseColorFactor);
+					surface->set_diffuse_color(col);
 					if (materialD.metallicRoughnessImageIndex < 0) {		// MetallicRoughnessのイメージを持たない場合.
 						surface->set_diffuse(metallicV2);
 						surface->set_reflection_color(reflectionCol);
