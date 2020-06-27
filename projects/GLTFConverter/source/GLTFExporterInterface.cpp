@@ -299,7 +299,7 @@ void CGLTFExporterInterface::begin (void *)
 	if (!m_skip) {
 		const sxsdk::mat4 lwMat = m_pCurrentShape->get_local_to_world_matrix();
 
-		sxsdk::mat4 m = m_pCurrentShape->get_transformation();
+		sxsdk::mat4 m = lMat;
 		if (type == sxsdk::enums::polygon_mesh) m = sxsdk::mat4::identity;
 
 		const std::string name = std::string(m_pCurrentShape->get_name());

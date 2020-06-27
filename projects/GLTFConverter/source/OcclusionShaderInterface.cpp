@@ -66,8 +66,20 @@ void COcclusionTextureShaderInterface::shade (void *)
 	}
 
 	// テクスチャ上の色.
-	const sxsdk::rgba_class col = sample_image(uv.x, uv.y);
-	set_Ci(sx::rgb(col));
+	sxsdk::rgba_class col = sample_image(uv.x, uv.y);
+
+	float v = col.red;
+	if (data.channelMix == 0) {				// Red.
+		v = col.red;
+	} else if (data.channelMix == 1) {		// Green.
+		v = col.green;
+	} else if (data.channelMix == 2) {		// Blue.
+		v = col.blue;
+	} else {
+		v = col.alpha;
+	}
+
+	set_Ci(sx::rgb(v, v, v));
 }
 
 /**

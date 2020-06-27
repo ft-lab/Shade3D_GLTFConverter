@@ -995,6 +995,9 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 						mLayer.set_image_interface(image);
 
 						mLayer.set_blend_mode(7);		// 乗算合成.
+
+						// Occlusionは[R]の要素を参照.
+						mLayer.set_channel_mix(sxsdk::enums::mapping_grayscale_red_mode);
 					}
 
 					mLayer.set_blur(true);
@@ -1005,6 +1008,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 					{
 						COcclusionShaderData data;
 						data.uvIndex = materialD.occlusionTexCoord;
+						data.channelMix = 0;	// Red.
 						StreamCtrl::saveOcclusionParam(mLayer, data);
 					}
 
