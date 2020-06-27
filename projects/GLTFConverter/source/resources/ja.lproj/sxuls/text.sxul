@@ -27,5 +27,8 @@
 	<string id="bake_msg_error_mixed_uv_layer" value="テクスチャベイクで、異なるUV層が混在しています。" />
 	<string id="bake_msg_mixed_repeat" value="テクスチャベイクで、異なる反復をベイクしました。" />
 
+	<string id="export_msg_used_shear" value="[Warning] せん断が使われています。せん断はglTFでは使用できません。" />
+	<string id="export_msg_used_classic_skin" value="[Warning] クラシックスキンが使われています。スキンの割り当ては無効になります。" />
+	<string id="export_msg_used_unsupport_joint" value="[Warning] glTFエクスポートでサポートされていないジョイントが使われています。" />
 </strings>
 

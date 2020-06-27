@@ -26,5 +26,9 @@
 
 	<string id="bake_msg_error_mixed_uv_layer" value="In texture baking, different UV layers are mixed." />
 	<string id="bake_msg_mixed_repeat" value="In texture baking, this baked different repeats." />
+
+	<string id="export_msg_used_shear" value="[Warning] Shear is used.Shear is not available in glTF." />
+	<string id="export_msg_used_classic_skin" value="[Warning] Classic skin is used.Skin assignments are disabled." />
+	<string id="export_msg_used_unsupport_joint" value="[Warning] It uses joints that are not supported by glTF export." />
 </strings>
 

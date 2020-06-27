@@ -302,6 +302,7 @@
     <ClCompile Include="..\source\SkinData.cpp" />
     <ClCompile Include="..\source\StreamCtrl.cpp" />
     <ClCompile Include="..\source\StringUtil.cpp" />
+    <ClCompile Include="..\source\WarningCheck.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\AlphaModeMaterialAttributeInterface.h" />
@@ -332,6 +333,7 @@
     <ClInclude Include="..\source\SkinData.h" />
     <ClInclude Include="..\source\StreamCtrl.h" />
     <ClInclude Include="..\source\StringUtil.h" />
+    <ClInclude Include="..\source\WarningCheck.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

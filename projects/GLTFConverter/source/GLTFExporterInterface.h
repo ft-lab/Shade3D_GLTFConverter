@@ -10,6 +10,7 @@
 #include "MeshData.h"
 #include "MaterialData.h"
 #include "ImageData.h"
+#include "WarningCheck.h"
 
 #include <string>
 #include <vector>
@@ -53,6 +54,9 @@ private:
 	bool m_dlgOK;
 
 	std::vector<std::string> m_licenseTypeList;		// ライセンスの種類.
+
+	CWarningCheck m_warningCheck;					// 警告を出すための情報を蓄えるクラス.
+	int m_currentShapeSkinType;						// カレント形状でのスキンの種類.
 
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_EXPORTER_INTERFACE_ID; }
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }

@@ -226,6 +226,36 @@ int Shade3DUtil::findBoneRoot (sxsdk::shape_class* rootShape, std::vector<sxsdk:
 }
 
 /**
+ * 指定の変換行列でせん断要素を持つかチェック.
+ */
+bool Shade3DUtil::hasShearInMatrix (sxsdk::mat4& m)
+{
+	sxsdk::vec3 scale, shear, rotate, trans;
+	m.unmatrix(scale, shear, rotate, trans);
+	if (!MathUtil::isZero(shear, 1e-3)) return true;
+	return false;
+}
+
+/**
+ * glTFエクスポート時にサポートされていないジョイントかチェック.
+ */
+bool Shade3DUtil::usedUnsupportedJoint (sxsdk::shape_class& shape)
+{
+	const int type = shape.get_type();
+	if (type != sxsdk::enums::part) return false;
+
+	sxsdk::part_class& part = shape.get_part();
+	const int partType = part.get_part_type();
+	if (partType == sxsdk::enums::ball_joint || partType == sxsdk::enums::bone_joint) return false;
+
+	if (partType == sxsdk::enums::rotator_joint || partType == sxsdk::enums::slider_joint || partType == sxsdk::enums::scale_joint || partType == sxsdk::enums::uniscale_joint ||
+		partType == sxsdk::enums::light_joint || partType == sxsdk::enums::path_joint || partType == sxsdk::enums::morph_joint ||
+		partType == sxsdk::enums::custom_joint || partType == sxsdk::enums::switch_joint) return true;
+
+	return false;
+}
+
+/**
  * 指定の形状がボーンかどうか.
  */
 bool Shade3DUtil::isBone (sxsdk::shape_class& shape)

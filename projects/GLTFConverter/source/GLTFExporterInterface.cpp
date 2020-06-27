@@ -88,6 +88,7 @@ void CGLTFExporterInterface::do_export (sxsdk::plugin_exporter_interface *plugin
 	m_shapeStack.clear();
 	m_currentDepth = 0;
 	m_sceneData.reset(new CSceneData());
+	m_warningCheck.clear();
 
 	compointer<sxsdk::scene_interface> scene(shade.get_scene_interface());
 	try {
@@ -185,6 +186,9 @@ void CGLTFExporterInterface::clean_up (void *)
 		m_setAnimations();
 	}
 
+	// 警告のメッセージがある場合は表示.
+	m_warningCheck.outputWarningMessage(shade);
+
 	CGLTFSaver gltfSaver(&shade);
 	if (gltfSaver.saveGLTF(m_sceneData->filePath, &(*m_sceneData))) {
 		shade.message("Export success!");
@@ -254,17 +258,22 @@ void CGLTFExporterInterface::begin (void *)
 	m_pCurrentShape = NULL;
 	m_skip = false;
 	m_meshData.clear();
+	m_currentShapeSkinType = false;
 
 	// カレントの形状管理クラスのポインタを取得.
 	m_pCurrentShape        = m_pluginExporter->get_current_shape();
-	const sxsdk::mat4 gMat = m_pluginExporter->get_transformation();
+	const sxsdk::mat4 gMat = m_pluginExporter->get_transformation();	// local to worldの変換行列.
 	const std::string name(m_pCurrentShape->get_name());
 
 	// 形状により、スキップする形状を判断.
 	const int type = m_pCurrentShape->get_type();
 	m_skip = m_checkSkipShape(m_pCurrentShape);
 
-	m_shapeStack.push(m_currentDepth, m_pCurrentShape, gMat);
+	// ローカル変換行列.
+	sxsdk::mat4 tPreM = m_shapeStack.getLocalToWorldMatrix();
+	sxsdk::mat4 lMat  = gMat * inv(tPreM);
+
+	m_shapeStack.push(m_currentDepth, m_pCurrentShape, lMat);
 
 	// 面の反転フラグ.
 	m_flipFace = m_shapeStack.isFlipFace();
@@ -288,6 +297,8 @@ void CGLTFExporterInterface::begin (void *)
 	m_currentDepth++;
 
 	if (!m_skip) {
+		const sxsdk::mat4 lwMat = m_pCurrentShape->get_local_to_world_matrix();
+
 		sxsdk::mat4 m = m_pCurrentShape->get_transformation();
 		if (type == sxsdk::enums::polygon_mesh) m = sxsdk::mat4::identity;
 
@@ -296,6 +307,21 @@ void CGLTFExporterInterface::begin (void *)
 
 		// 形状に対応するハンドルを保持 (出力前に、スキンでのノード番号取得で使用).
 		m_sceneData->nodes[nodeIndex].pShapeHandle = m_pCurrentShape->get_handle();
+
+		// 未サポートのジョイントを使用している場合.
+		if (Shade3DUtil::usedUnsupportedJoint(*m_pCurrentShape)) {
+			m_warningCheck.appendUnsupportedJointUsedShape(m_pCurrentShape);
+		}
+
+		// 変換行列mがせん断を持つ場合.
+		if (Shade3DUtil::hasShearInMatrix(m)) {
+			m_warningCheck.appendShearUsedShape(m_pCurrentShape);
+		}
+
+		m_currentShapeSkinType = m_pCurrentShape->get_skin_type();
+		if (m_currentShapeSkinType == 0) {		// クラシックスキン.
+			m_warningCheck.appendClassicSkinUsedShape(m_pCurrentShape);
+		}
 	}
 }
 
