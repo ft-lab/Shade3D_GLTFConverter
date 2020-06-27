@@ -51,7 +51,7 @@ void CGLTFImporterInterface::cleanup (void *)
  */
 int CGLTFImporterInterface::get_number_of_file_extensions (void *)
 {
-	return 3;
+	return 4;
 }
 
 /**
@@ -59,9 +59,10 @@ int CGLTFImporterInterface::get_number_of_file_extensions (void *)
  */
 const char *CGLTFImporterInterface::get_file_extension (int index, void *)
 {
-	if (index == 0) return "glb";
-	if (index == 1) return "gltf";
-	if (index == 2) return "vrm";
+	if (index == 0) return "glb|gltf";
+	if (index == 1) return "glb";
+	if (index == 2) return "gltf";
+	if (index == 3) return "vrm";
 
 	return 0;
 }
@@ -73,7 +74,8 @@ const char *CGLTFImporterInterface::get_file_extension_description (int index, v
 {
 	if (index == 0) return "glTF";
 	if (index == 1) return "glTF";
-	if (index == 2) return "vrm";
+	if (index == 2) return "glTF";
+	if (index == 3) return "vrm";
 
 	return 0;
 }
