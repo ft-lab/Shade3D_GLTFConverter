@@ -26,7 +26,7 @@ private:
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }
 	
 	/**
-	 * 扱うファイル拡張子数3
+	 * 扱うファイル拡張子数.
 	 */
 	virtual int get_number_of_file_extensions (void * aux = 0);
 

@@ -52,6 +52,16 @@ const std::string StringUtil::convAsFileName (const std::string& fileName)
 	 name = replaceString(name, "*", "_");
 	 name = replaceString(name, "<", "_");
 	 name = replaceString(name, ">", "_");
+	 name = replaceString(name, ";", "_");
+	 name = replaceString(name, ":", "_");
+	 name = replaceString(name, "@", "_");
+	 name = replaceString(name, "|", "_");
+	 name = replaceString(name, "!", "_");
+	 name = replaceString(name, "$", "_");
+	 name = replaceString(name, "%", "_");
+	 name = replaceString(name, "&", "_");
+	 name = replaceString(name, "~", "_");
+
 	 return name;
 }
 

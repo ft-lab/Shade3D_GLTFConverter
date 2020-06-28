@@ -416,30 +416,33 @@ std::string CSceneData::getUniqueImageName (const std::string& name)
 {
 	const size_t imgCou = images.size();
 
+	// ファイル名にできない文字を置き換え.
+	const std::string name2 = StringUtil::convAsFileName(name);
+
 	bool findF = false;
 	for (size_t i = 0; i < imgCou; ++i) {
 		const CImageData& imgD = images[i];
-		if (imgD.name == name) {
+		if (imgD.name == name2) {
 			findF = true;
 			break;
 		}
 	}
-	if (!findF) return name;
+	if (!findF) return name2;
 
 	std::string newName = "";
 	int iCou = 1;
 	while (true) {
 		findF = false;
-		const std::string name2 = name + std::string("_") + std::to_string(iCou);
+		const std::string name3 = name2 + std::string("_") + std::to_string(iCou);
 		for (size_t i = 0; i < imgCou; ++i) {
 			const CImageData& imgD = images[i];
-			if (imgD.name == name2) {
+			if (imgD.name == name3) {
 				findF = true;
 				break;
 			}
 		}
 		if (!findF) {
-			newName = name2;
+			newName = name3;
 			break;
 		}
 		iCou++;
