@@ -135,6 +135,16 @@ private:
 	virtual bool must_divide_polymesh (void *aux=0) { return false; }
 
 	/**
+	 * trueでポリゴンメッシュの面はサブディビジョンされる.
+	 */
+	virtual bool must_round_polymesh (void *aux=0) { return true; }
+
+	/**
+	* スキン変形するか (falseでスキン変形する前の頂点座標が取得される).
+	*/
+	virtual bool must_transform_skin (void *) { return false; }
+
+	/**
 	 * 頂点カラー情報の受け取り許可.
 	 */
 	virtual bool can_accept_polymesh_face_vertex_colors (void* aux = 0) { return true; }

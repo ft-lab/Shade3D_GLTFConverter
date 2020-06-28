@@ -273,6 +273,14 @@ void CGLTFExporterInterface::begin (void *)
 	sxsdk::mat4 tPreM = m_shapeStack.getLocalToWorldMatrix();
 	sxsdk::mat4 lMat  = gMat * inv(tPreM);
 
+	// 掃除引体、回転体の場合.
+	if (m_pCurrentShape->get_type() == sxsdk::enums::line) {
+		sxsdk::line_class& lineC = m_pCurrentShape->get_line();
+		if (lineC.is_extruded() || lineC.is_revolved()) {
+			lMat = inv(m_pCurrentShape->get_transformation()) * lMat;
+		}
+	}
+
 	m_shapeStack.push(m_currentDepth, m_pCurrentShape, lMat);
 
 	// 面の反転フラグ.
@@ -300,7 +308,10 @@ void CGLTFExporterInterface::begin (void *)
 		const sxsdk::mat4 lwMat = m_pCurrentShape->get_local_to_world_matrix();
 
 		sxsdk::mat4 m = lMat;
-		if (type == sxsdk::enums::polygon_mesh) m = sxsdk::mat4::identity;
+
+		if (type == sxsdk::enums::polygon_mesh) {
+			m = sxsdk::mat4::identity;
+		}
 
 		const std::string name = std::string(m_pCurrentShape->get_name());
 		const int nodeIndex = m_sceneData->beginNode(name, m);
@@ -424,6 +435,16 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 	if (m_skip) return;
 
 	sxsdk::vec3 pos = v;
+
+	// must_transform_skinでfalseを返した場合、スキン変形前の頂点が取得される.
+	// そのため、独自変換は不要。.
+
+	pos = pos * m_spMat;
+	if (skin) {
+		pos = pos * m_currentLWMatrix;		// スキン使用時はワールド座標に変換する.
+	}
+
+#if 0
 	if (skin) {
 		// スキン変換前の座標値を計算.
 		if (m_exportParam.outputBonesAndSkins) {
@@ -433,8 +454,9 @@ void CGLTFExporterInterface::polymesh_vertex (int i, const sxsdk::vec3 &v, const
 			pos = sxsdk::vec3(v4.x, v4.y, v4.z);
 		}
 	}
+#endif
 
-	m_meshData.vertices[i] = (pos * m_spMat) * 0.001f;		// mm ==> m変換.
+	m_meshData.vertices[i] = pos * 0.001f;		// mm ==> m変換.
 
 	if (m_exportParam.outputBonesAndSkins) {
 		if (skin && m_pCurrentShape->get_skin_type() == 1) {		// スキンを持っており、頂点ブレンドで格納されている場合.
