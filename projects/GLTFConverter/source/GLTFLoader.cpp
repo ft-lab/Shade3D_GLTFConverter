@@ -1280,6 +1280,11 @@ namespace {
 				animC.samplerIndex    = std::stoi(animChannel.samplerId);
 				animC.targetNodeIndex = std::stoi(animChannel.target.nodeId);
 
+				if (animC.targetNodeIndex >= 0 && animC.targetNodeIndex + 1 < (int)(sceneData->nodes.size())) {
+					CNodeData& nodeD = sceneData->nodes[(animC.targetNodeIndex) + 1];
+					nodeD.hasAnimation = true;
+				}
+
 				switch (animChannel.target.path) {
 				case TARGET_TRANSLATION:
 					animC.pathType = CAnimChannelData::path_type_translation;

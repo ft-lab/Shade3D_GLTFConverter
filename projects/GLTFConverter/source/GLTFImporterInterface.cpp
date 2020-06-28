@@ -336,6 +336,16 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 			const sxsdk::vec3 bonePos(0, 0, 0);
 			const sxsdk::vec3 boneAxisDir(1, 0, 0);
 			part = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
+
+		} else if (nodeD.hasAnimation) {
+			// 単独のTransform animationの場合、変換行列に回転を入れる場合もある.
+			// このとき、もしボールジョイントを使用する場合は回転要素は無効にする処理が行われている.
+			// そのため、ここではボーンを使用した.
+			const float bone_r = 10.0f;
+			const sxsdk::vec3 bonePos(0, 0, 0);
+			const sxsdk::vec3 boneAxisDir(1, 0, 0);
+			part = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
+
 		} else {
 			part = &(scene->begin_part(nodeD.name.c_str()));
 		}
@@ -365,6 +375,13 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 		const sxsdk::mat4 m = sceneData->getNodeMatrix(nodeIndex, true);
 
 		if (nodeD.isBone) {
+			// ボーンの行列を指定.
+			compointer<sxsdk::bone_joint_interface> bone(part->get_bone_joint_interface());
+			bone->set_matrix(m);
+
+			scene->end_bone_joint();
+
+		} else if (nodeD.hasAnimation) {
 			// ボーンの行列を指定.
 			compointer<sxsdk::bone_joint_interface> bone(part->get_bone_joint_interface());
 			bone->set_matrix(m);
@@ -855,7 +872,6 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 				if (g_importParam.convertColorFromLinear) {
 					MathUtil::convColorNonLinear(eCol.red, eCol.green, eCol.blue);
 				}
-
 				surface->set_glow_color(eCol);
 				surface->set_glow(1.0f);
 
@@ -1023,7 +1039,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			// Occlusionをマッピングレイヤとして追加.
 			// COcclusionTextureShaderInterfaceで作成したOcclusionのマッピングレイヤに、乗算合成で割り当てるとする.
 			if (materialD.occlusionImageIndex >= 0) {
-				if (materialD.occlusionImageIndex != materialD.metallicRoughnessImageIndex) {
+				//if (materialD.occlusionImageIndex != materialD.metallicRoughnessImageIndex) {
 					surface->append_mapping_layer();
 					const int layerIndex = surface->get_number_of_mapping_layers() - 1;
 					sxsdk::mapping_layer_class& mLayer = surface->mapping_layer(layerIndex);
@@ -1055,7 +1071,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 
 					mLayer.set_repetition_x(std::max(1, (int)materialD.occlusionTexScale.x));
 					mLayer.set_repetition_y(std::max(1, (int)materialD.occlusionTexScale.y));
-				}
+				//}
 			}
 
 			masterSurface.update();
@@ -1196,60 +1212,144 @@ void CGLTFImporterInterface::m_adjustBones (sxsdk::shape_class* shape)
 void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSceneData* sceneData)
 {
 	const size_t animCou = sceneData->animations.channelData.size();
-	for (size_t loop = 0; loop < animCou; ++loop) {
-		const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
-		if (channelD.samplerIndex < 0 || channelD.targetNodeIndex < 0) continue;
-		const CAnimSamplerData& samplerD = sceneData->animations.samplerData[channelD.samplerIndex];
+	if (animCou == 0) return;
+	std::vector<bool> chkAnimA(animCou, false);
 
-		const int frameRate = scene->get_frame_rate();
+	const int frameRate = scene->get_frame_rate();
 
-		try {
-			// Shade3Dでの対象形状を取得.
-			const CNodeData& nodeD = sceneData->nodes[channelD.targetNodeIndex + 1];	// ルートノードは別途追加したものなので+1している.
-			if (!nodeD.pShapeHandle) continue;
-			sxsdk::shape_class* shape = scene->get_shape_by_handle(nodeD.pShapeHandle);
-			if (!shape) continue;
+	// アニメーションはtranslationとrotationをセットにして配列に保持し、Shade3Dのモーションポイントとして格納していく.
+	int targetNodeIndex = 0;
+	while (targetNodeIndex >= 0) {
+		targetNodeIndex = -1;
+		for (size_t loop = 0; loop < animCou; ++loop) {
+			if (chkAnimA[loop]) continue;
+			const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
+			if (channelD.samplerIndex < 0 || channelD.targetNodeIndex < 0) {
+				chkAnimA[loop] = true;
+				continue;
+			}
+			if (channelD.pathType != CAnimChannelData::path_type_translation && channelD.pathType != CAnimChannelData::path_type_rotation) {
+				chkAnimA[loop] = true;
+				continue;
+			}
+			targetNodeIndex = sceneData->animations.channelData[loop].targetNodeIndex;
+			break;
+		}
+		if (targetNodeIndex < 0) break;
 
-			const sxsdk::vec3 boneWCenter = Shade3DUtil::getBoneCenter(*shape, NULL);
-			const sxsdk::mat4 lwMat = shape->get_local_to_world_matrix();
-			const sxsdk::vec3 boneLCenter = (boneWCenter * inv(lwMat));
-			if (!shape->has_motion()) continue;
+		std::vector<float> tmpKeyFrames;
+		std::vector<sxsdk::vec3> tmpOffsets;
+		std::vector<sxsdk::quaternion_class> tmpRotations;
 
-			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
-
+		// キーフレーム位置を取得.
+		for (size_t loop = 0; loop < animCou; ++loop) {
+			if (chkAnimA[loop]) continue;
+			const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
+			if (channelD.targetNodeIndex != targetNodeIndex) continue;
+			const CAnimSamplerData& samplerD = sceneData->animations.samplerData[channelD.samplerIndex];
 			const size_t sCou = samplerD.inputData.size();
-			int iPos = 0;
 			for (size_t i = 0; i < sCou; ++i) {
 				const float fPos = samplerD.inputData[i];		// 秒単位のキーフレーム位置.
 				const float keyFramePos = fPos * (float)frameRate;
 
-				// すでにキーフレームが存在するか.
-				int motionPointIndex = Shade3DUtil::findMotionPoint(motion, keyFramePos);
-				if (motionPointIndex < 0) {
-					motionPointIndex = motion->create_motion_point(keyFramePos);
+				int index = -1;
+				for (size_t j = 0; j < tmpKeyFrames.size(); ++j) {
+					if (MathUtil::isZero(tmpKeyFrames[j] - keyFramePos)) {
+						index = (int)j;
+						break;
+					}
 				}
+				if (index < 0) {
+					tmpKeyFrames.push_back(keyFramePos);
+				}
+			}
+		}
+		if (tmpKeyFrames.empty()) {
+			for (size_t loop = 0; loop < animCou; ++loop) {
+				if (chkAnimA[loop]) continue;
+				const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
+				if (channelD.targetNodeIndex != targetNodeIndex) continue;
+				chkAnimA[loop] = true;
+			}
+			continue;
+		}
 
-				compointer<sxsdk::motion_point_interface> motionP(motion->get_motion_point_interface(motionPointIndex));
+		const size_t framesCou = tmpKeyFrames.size();
+		tmpOffsets.resize(framesCou, sxsdk::vec3(0, 0, 0));
+		tmpRotations.resize(framesCou, sxsdk::quaternion_class::identity);
+
+		// キーフレームに対応するOffset/Rotationを一時的に格納.
+		for (size_t loop = 0; loop < animCou; ++loop) {
+			if (chkAnimA[loop]) continue;
+			const CAnimChannelData& channelD = sceneData->animations.channelData[loop];
+			if (channelD.targetNodeIndex != targetNodeIndex) continue;
+			chkAnimA[loop] = true;
+
+			const CAnimSamplerData& samplerD = sceneData->animations.samplerData[channelD.samplerIndex];
+			const size_t sCou = samplerD.inputData.size();
+			int iPos = 0;
+
+			for (size_t i = 0; i < sCou; ++i) {
+				const float fPos = samplerD.inputData[i];		// 秒単位のキーフレーム位置.
+				const float keyFramePos = fPos * (float)frameRate;
+
+				int index = -1;
+				for (size_t j = 0; j < tmpKeyFrames.size(); ++j) {
+					if (MathUtil::isZero(tmpKeyFrames[j] - keyFramePos)) {
+						index = (int)j;
+						break;
+					}
+				}
+				if (index < 0) continue;
 
 				if (channelD.pathType == CAnimChannelData::path_type_translation) {
 					// オフセット値を取得し、メートルからミリメートルに変換.
-					sxsdk::vec3 offsetV = sxsdk::vec3(samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]) * 1000.0f;
-					offsetV -= boneLCenter;
-
-					motionP->set_offset(offsetV);
+					tmpOffsets[index] = sxsdk::vec3(samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]) * 1000.0f;
 					iPos += 3;
 
 				} else if (channelD.pathType == CAnimChannelData::path_type_rotation) {
-					sxsdk::quaternion_class q = sxsdk::quaternion_class(-samplerD.outputData[iPos + 3], samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]);
-					motionP->set_rotation(q);
+					tmpRotations[index] = sxsdk::quaternion_class(-samplerD.outputData[iPos + 3], samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]);
 					iPos += 4;
-
-				} else {
-					break;
 				}
 			}
+		}
 
-		} catch (...) { }
+		// Shade3Dでの対象形状を取得.
+		const CNodeData& nodeD = sceneData->nodes[targetNodeIndex + 1];		// ルートノードは別途追加したものなので+1している.
+		if (!nodeD.pShapeHandle) continue;
+		sxsdk::shape_class* shape = scene->get_shape_by_handle(nodeD.pShapeHandle);
+		if (!shape) continue;
+		if (!shape->has_motion()) continue;
+
+		compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
+
+		// ローカル変換行列.
+		sxsdk::mat4 localM = shape->get_transformation();
+		if (Shade3DUtil::isBone(*shape)) {
+			compointer<sxsdk::bone_joint_interface> bone(shape->get_bone_joint_interface());
+			localM = bone->get_matrix();
+		}
+
+		// キーフレーム情報として格納.
+		for (size_t i = 0; i < framesCou; ++i) {
+			const float keyFramePos = tmpKeyFrames[i];
+			int motionPointIndex = motion->create_motion_point(keyFramePos);
+
+			compointer<sxsdk::motion_point_interface> motionP(motion->get_motion_point_interface(motionPointIndex));
+
+			// glTFでのoffset + rotationは、ローカル座標での変換行列を表す.
+			sxsdk::vec3 offsetV       = tmpOffsets[i];
+			sxsdk::quaternion_class q = tmpRotations[i];
+			const sxsdk::mat4 rotM = sxsdk::mat4::rotate(sxsdk::vec3(0, 0, 0), q);
+
+			offsetV = offsetV - sxsdk::vec3(localM[3][0], localM[3][1], localM[3][2]);
+			sxsdk::mat4 m = rotM * inv(localM);
+			sxsdk::vec3 scale, shear, rotate, trans;
+			m.unmatrix(scale, shear, rotate, trans);
+
+			motionP->set_offset(offsetV);
+			motionP->set_rotation(sxsdk::quaternion_class(rotate));
+		}
 	}
 }
 

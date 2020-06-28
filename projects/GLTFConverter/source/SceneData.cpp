@@ -32,6 +32,7 @@ CNodeData::CNodeData (const CNodeData& v)
 	this->isBone          = v.isBone;
 	this->isEndBone       = v.isEndBone;
 	this->pShapeHandle    = v.pShapeHandle;
+	this->hasAnimation    = v.hasAnimation;
 }
 
 CNodeData::~CNodeData ()
@@ -50,6 +51,7 @@ void CNodeData::clear ()
 	isBone = false;
 	isEndBone = false;
 	pShapeHandle = NULL;
+	hasAnimation = false;
 
 	translation = sxsdk::vec3(0, 0, 0);
 	scale       = sxsdk::vec3(1, 1, 1);

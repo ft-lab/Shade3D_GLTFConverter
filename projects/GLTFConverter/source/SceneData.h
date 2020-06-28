@@ -41,6 +41,8 @@ public:
 
 	void* pShapeHandle;				// Import/Export時のShade3Dでの形状のhandleの参照 (パートまたはボーン).
 
+	bool hasAnimation;				// インポート時にアニメーションを持つ場合true（isBone=false時はボールジョイントとする）.
+
 public:
 	CNodeData ();
 	CNodeData (const CNodeData& v);
@@ -62,6 +64,7 @@ public:
 		this->isBone          = v.isBone;
 		this->isEndBone       = v.isEndBone;
 		this->pShapeHandle    = v.pShapeHandle;
+		this->hasAnimation    = v.hasAnimation;
 
 		return (*this);
     }
