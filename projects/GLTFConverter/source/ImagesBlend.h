@@ -147,6 +147,11 @@ private:
 	 */
 	void m_packOcclusionRoughnessMetallicImage ();
 
+	/**
+	 * マッピングが「通常」合成かチェック。マッピングが存在しない場合はfalse.
+	 */
+	bool m_checkDefaultBlendMapping (const sxsdk::enums::mapping_type mappingType);
+
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
 	~CImagesBlend ();

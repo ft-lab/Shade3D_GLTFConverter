@@ -1122,6 +1122,11 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	m_diffuseColor.green = std::min(col0.green, col.green);
 	m_diffuseColor.blue  = std::min(col0.blue, col.blue);
 
+	// マッピングが存在し、「通常」合成の場合はdiffuseColorは白にする.
+	if (!m_checkDefaultBlendMapping(sxsdk::enums::diffuse_mapping)) {
+		m_diffuseColor = sxsdk::rgb_class(1, 1, 1);
+	}
+
 	m_metallic     = reflectionV;
 	m_roughness    = m_surface->get_roughness();
 	m_transparency = m_surface->get_transparency();
@@ -1816,4 +1821,40 @@ sxsdk::rgb_class CImagesBlend::getImageFactor (const sxsdk::enums::mapping_type 
 sxsdk::image_interface* CImagesBlend::getMetallicRoughnessImage ()
 {
 	return m_glTFMetallicRoughnessImage;
+}
+
+/**
+ * マッピングが「通常」合成かチェック。マッピングが存在しない場合はfalse.
+ */
+bool CImagesBlend::m_checkDefaultBlendMapping (const sxsdk::enums::mapping_type mappingType)
+{
+	bool chkF = true;
+	const int layersCou = m_surface->get_number_of_mapping_layers();
+	int cou = 0;
+	for (int i = 0; i < layersCou; ++i) {
+		sxsdk::mapping_layer_class& mappingLayer = m_surface->mapping_layer(i);
+		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
+		if (mappingLayer.get_pattern() != sxsdk::enums::image_pattern) continue;
+
+		const float weight = mappingLayer.get_weight();
+		if (MathUtil::isZero(weight)) continue;
+
+		const int type = mappingLayer.get_type();
+		if (type != mappingType) continue;
+
+		compointer<sxsdk::image_interface> image(mappingLayer.get_image_interface());
+		if (!image || !(image->has_image()) || (image->get_size().x) <= 0 || (image->get_size().y) <= 0) continue;
+
+		if (cou == 0) {
+			const int blendMode = mappingLayer.get_blend_mode();
+			if (blendMode != 7) {		// 「乗算」合成でない場合.
+				chkF = false;
+				break;
+			}
+		}
+		cou++;
+	}
+	if (cou >= 2) chkF = false;
+
+	return chkF;
 }
