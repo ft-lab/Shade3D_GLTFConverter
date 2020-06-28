@@ -243,6 +243,13 @@ public:
 	 * glTFでの変換行列をShade3Dのミリメートル単位に変換.
 	 */
 	sxsdk::mat4 convMatrixToShade3D (const sxsdk::mat4& m) const;
+
+	/**
+	 * 指定のマテリアルが頂点カラーを持つか.
+	 * @param[in] materialIndex  マテリアル番号.
+	 * @return 頂点カラーを持つマテリアルの場合はtrue.
+	 */
+	bool hasVertexColorInMaterial (const int materialIndex) const;
 };
 
 #endif

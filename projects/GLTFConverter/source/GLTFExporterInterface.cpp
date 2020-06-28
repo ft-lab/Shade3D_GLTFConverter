@@ -724,6 +724,14 @@ void CGLTFExporterInterface::end_polymesh (void *)
 			} else {
 				m_sceneData->nodes[curNodeIndex].meshIndex = meshIndex;
 			}
+
+			// マテリアルとして頂点カラーを持たず、メッシュとして頂点カラー情報を持つ場合、頂点カラー情報を削除.
+			if (primitiveD.materialIndex >= 0) {
+				if (!m_sceneData->hasVertexColorInMaterial(primitiveD.materialIndex)) {
+					if (!primitiveD.color0.empty()) primitiveD.color0.clear();
+				}
+			}
+
 		} else {
 			// フェイスグループを使用しているポリゴンメッシュの場合、Primitiveを作成してそれに分けて格納.
 			m_storeMeshesWithFaceGroup();
@@ -814,6 +822,14 @@ void CGLTFExporterInterface::m_storeMeshesWithFaceGroup ()
 	for (int i = 0; i < primitivesCou; ++i) {
 		CPrimitiveData& primitiveD = primitivesDataList[i];
 		primitiveD.materialIndex = primitivesDataList[i].materialIndex;
+
+		// マテリアルとして頂点カラーを持たず、メッシュとして頂点カラー情報を持つ場合、頂点カラー情報を削除.
+		if (primitiveD.materialIndex >= 0) {
+			if (!m_sceneData->hasVertexColorInMaterial(primitiveD.materialIndex)) {
+				if (!primitiveD.color0.empty()) primitiveD.color0.clear();
+			}
+		}
+
 		meshD.primitives.push_back(primitiveD);
 	}
 
@@ -1138,6 +1154,18 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	if (surface->get_no_shading()) {
 		materialData.unlit = true;
+	}
+
+	// 頂点カラーを持つか.
+	{
+		const int layersCou = surface->get_number_of_mapping_layers();
+		for (int i = 0; i < layersCou; ++i) {
+			sxsdk::mapping_layer_class& mappingLayer = surface->mapping_layer(i);
+			if (mappingLayer.get_pattern() == sxsdk::enums::vertex_color_pattern) {
+				materialData.hasVertexColor = true;
+				break;
+			}
+		}
 	}
 
 	//----------------------------------------------------.

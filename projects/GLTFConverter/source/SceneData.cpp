@@ -566,3 +566,14 @@ sxsdk::mat4 CSceneData::convMatrixToShade3D (const sxsdk::mat4& m) const
 	return sxsdk::mat4::scale(scale) * sxsdk::mat4::rotate(rotate) * sxsdk::mat4::translate(trans);
 }
 
+/**
+ * 指定のマテリアルが頂点カラーを持つか.
+ * @param[in] materialIndex  マテリアル番号.
+ * @return 頂点カラーを持つマテリアルの場合はtrue.
+ */
+bool CSceneData::hasVertexColorInMaterial (const int materialIndex) const
+{
+	if (materialIndex < 0 || materialIndex >= (int)materials.size()) return false;
+	const CMaterialData& materialD = materials[materialIndex];
+	return materialD.hasVertexColor;
+}

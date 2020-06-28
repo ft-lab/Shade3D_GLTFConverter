@@ -17,6 +17,7 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 	this->alphaMode         = v.alphaMode;
 	this->doubleSided       = v.doubleSided;
 	this->unlit             = v.unlit;
+	this->hasVertexColor    = v.hasVertexColor;
 	this->baseColorFactor   = v.baseColorFactor;
 	this->emissiveFactor    = v.emissiveFactor;
 	this->occlusionStrength = v.occlusionStrength;
@@ -65,6 +66,7 @@ void CMaterialData::clear ()
 	alphaMode   = 1;
 	doubleSided = false;
 	unlit       = false;
+	hasVertexColor = false;
 	baseColorFactor = sxsdk::rgb_class(1, 1, 1);
 	emissiveFactor  = sxsdk::rgb_class(0, 0, 0);
 	roughnessFactor  = 1.0f;
@@ -120,6 +122,7 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->alphaMode) != v.alphaMode) return false;
 	if ((this->doubleSided) != v.doubleSided) return false;
 	if ((this->unlit) != v.unlit) return false;
+	if ((this->hasVertexColor) != v.hasVertexColor) return false;
 	if (!MathUtil::isZero((this->baseColorFactor) - v.baseColorFactor)) return false;
 	if (!MathUtil::isZero((this->emissiveFactor) - v.emissiveFactor)) return false;
 	if (!MathUtil::isZero((this->roughnessFactor) - v.roughnessFactor)) return false;
