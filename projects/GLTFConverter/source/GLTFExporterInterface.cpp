@@ -181,6 +181,9 @@ void CGLTFExporterInterface::clean_up (void *)
 	// ポリゴンメッシュのスキン情報より、スキン情報を格納.
 	m_setSkinsFromMeshes();
 
+	// アニメーションを持つ形状はユニーク名になるように補正.
+	m_renameUniqueNameInBone();
+
 	// アニメーション情報を格納.
 	if (m_exportParam.outputAnimation) {
 		m_setAnimations();
@@ -1703,3 +1706,42 @@ void CGLTFExporterInterface::m_setAnimations ()
 		} catch (...) { }
 	}
 }
+
+/**
+ * ボーンはユニーク名である必要がある。同一名がある場合はリネーム.
+ */
+void CGLTFExporterInterface::m_renameUniqueNameInBone ()
+{
+	const size_t nodesCou =  m_sceneData->nodes.size();
+	if (nodesCou <= 1) return;
+
+	std::vector<std::string> namesList;
+	for (size_t nLoop = 0; nLoop < nodesCou; ++nLoop) {
+		CNodeData& nodeD = m_sceneData->nodes[nLoop];
+		sxsdk::shape_class* shape = m_pScene->get_shape_by_handle(nodeD.pShapeHandle);
+		if (!shape || !Shade3DUtil::isSupportJoint(*shape)) continue;
+		if (!shape->has_motion()) continue;
+
+		// 同一名が存在する場合、連番の名前を付ける.
+		std::string name = nodeD.name;
+		{
+			int cou = 0;
+			bool chkSameF = true;
+			while(true) {
+				chkSameF = false;
+				for (size_t i = 0; i < namesList.size(); ++i) {
+					if (namesList[i] == name) {
+						chkSameF = true;
+						break;
+					}
+				}
+				if (!chkSameF) break;
+				cou++;
+				name = nodeD.name + std::string("_") + std::to_string(cou);
+			}
+			namesList.push_back(name);
+			nodeD.name = name;
+		}
+	}
+}
+

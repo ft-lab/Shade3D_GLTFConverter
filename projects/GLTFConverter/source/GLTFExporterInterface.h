@@ -325,6 +325,11 @@ private:
 	 */
 	int m_getLicenseStringToIndex (const std::string& str);
 
+	/**
+	 * ボーンはユニーク名である必要がある。同一名がある場合はリネーム.
+	 */
+	void m_renameUniqueNameInBone ();
+
 public:
 	CGLTFExporterInterface (sxsdk::shade_interface& shade);
 	~CGLTFExporterInterface ();

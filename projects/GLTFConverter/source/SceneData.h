@@ -141,7 +141,7 @@ public:
 	 * @param[in] unitMtoMM  メートルからミリメートルに単位変換する場合はtrue.
 	 * @return 変換行列.
 	 */
-	sxsdk::mat4 getNodeMatrix (const int nodeIndex, const bool unitMtoMM = true);
+	sxsdk::mat4 getNodeMatrix (const int nodeIndex, const bool unitMtoMM = true) const;
 
 	/**
 	 * 作業フォルダに画像ファイルを出力.

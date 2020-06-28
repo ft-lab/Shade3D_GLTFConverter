@@ -171,7 +171,7 @@ std::string CSceneData::outputTempImage (const int imageIndex, const std::string
  * @param[in] unitMtoMM  メートルからミリメートルに単位変換する場合はtrue.
  * @return 変換行列.
  */
-sxsdk::mat4 CSceneData::getNodeMatrix (const int nodeIndex, const bool unitMtoMM)
+sxsdk::mat4 CSceneData::getNodeMatrix (const int nodeIndex, const bool unitMtoMM) const
 {
 	const CNodeData& nodeD = nodes[nodeIndex];
 

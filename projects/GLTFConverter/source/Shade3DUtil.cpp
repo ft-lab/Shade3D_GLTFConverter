@@ -294,6 +294,18 @@ sxsdk::vec3 Shade3DUtil::getBoneCenter (sxsdk::shape_class& shape, float *size)
 }
 
 /**
+ * glTFConverterでサポートされているジョイントか.
+ * (ボーン/ボールジョイント).
+ */
+bool Shade3DUtil::isSupportJoint (sxsdk::shape_class& shape)
+{
+	if (shape.get_type() != sxsdk::enums::part) return false;
+	sxsdk::part_class& part = shape.get_part();
+	const int partType = part.get_part_type();
+	return (partType == sxsdk::enums::ball_joint || partType == sxsdk::enums::bone_joint);
+}
+
+/**
  * ボーンの向きをそろえる.
  * @param[in] boneRoot  対象のボーンルート.
  */

@@ -71,6 +71,12 @@ namespace Shade3DUtil
 	bool isBone (sxsdk::shape_class& shape);
 
 	/**
+	 * glTFConverterでサポートされているジョイントか.
+	 * (ボーン/ボールジョイント).
+	 */
+	bool isSupportJoint (sxsdk::shape_class& shape);
+
+	/**
 	 * ボーンのワールド座標での中心位置とボーンサイズを取得.
 	 */
 	sxsdk::vec3 getBoneCenter (sxsdk::shape_class& shape, float *size);
