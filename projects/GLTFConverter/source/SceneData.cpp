@@ -318,6 +318,22 @@ void CSceneData::mergeLastTwoMeshes ()
 	for (size_t i = 0; i < vCou; ++i) {
 		mesh1.vertices.push_back(mesh2.vertices[i]);
 	}
+	if (vCou == mesh2.skinJoints.size()) {
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.skinJoints.push_back(mesh2.skinJoints[i]);
+		}
+	}
+	if (vCou == mesh2.skinJointsHandle.size()) {
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.skinJointsHandle.push_back(mesh2.skinJointsHandle[i]);
+		}
+	}
+	if (vCou == mesh2.skinWeights.size()) {
+		for (size_t i = 0; i < vCou; ++i) {
+			mesh1.skinWeights.push_back(mesh2.skinWeights[i]);
+		}
+	}
+
 	if (mesh2.normals.size() == vCou) {
 		for (size_t i = 0; i < vCou; ++i) {
 			mesh1.normals.push_back(mesh2.normals[i]);

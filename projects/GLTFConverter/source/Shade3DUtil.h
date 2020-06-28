@@ -71,6 +71,16 @@ namespace Shade3DUtil
 	bool isBone (sxsdk::shape_class& shape);
 
 	/**
+	 * 指定の形状がボールジョイントかどうか.
+	 */
+	bool isBallJoint (sxsdk::shape_class& shape);
+	
+	/**
+	 * 指定の形状がボーン/ボールジョイントかどうか.
+	 */
+	bool isBoneBallJoint (sxsdk::shape_class& shape);
+
+	/**
 	 * glTFConverterでサポートされているジョイントか.
 	 * (ボーン/ボールジョイント).
 	 */
@@ -80,6 +90,23 @@ namespace Shade3DUtil
 	 * ボーンのワールド座標での中心位置とボーンサイズを取得.
 	 */
 	sxsdk::vec3 getBoneCenter (sxsdk::shape_class& shape, float *size);
+
+	/**
+	 * ボーン/ボールジョイントのワールド座標での中心位置とボーンサイズを取得.
+	 */
+	sxsdk::vec3 getBoneBallJointCenter (sxsdk::shape_class& shape, float *size);
+
+	/**
+	 * ボーン/ボールジョイントのローカル座標での中心を取得.
+	 */
+	sxsdk::vec3 getBoneBallJointCenterL (sxsdk::shape_class& shape);
+
+	/**
+	 * ボールジョイントの変換行列を取得.
+	 * @param[in] shape  対象形状.
+	 * @param[in] worldM ワールド座標での変換行列を取得する場合はtrue.
+	 */
+	sxsdk::mat4 getBallJointMatrix (sxsdk::shape_class& shape, const bool worldM = false);
 
 	/**
 	 * ボーンの向きをそろえる.

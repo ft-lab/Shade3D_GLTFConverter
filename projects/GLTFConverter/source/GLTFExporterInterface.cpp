@@ -314,6 +314,21 @@ void CGLTFExporterInterface::begin (void *)
 
 		if (type == sxsdk::enums::polygon_mesh) {
 			m = sxsdk::mat4::identity;
+
+		} else if (Shade3DUtil::isBallJoint(*m_pCurrentShape)) {
+			// ボールジョイントの場合のローカル座標での変換行列.
+			m = Shade3DUtil::getBallJointMatrix(*m_pCurrentShape);
+
+		} else {
+			// 親がボールジョイントの場合.
+			if (m_pCurrentShape->has_dad()) {
+				sxsdk::shape_class* parentShape = m_pCurrentShape->get_dad();
+				if (Shade3DUtil::isBallJoint(*parentShape)) {
+					const sxsdk::mat4 parentLWMat = Shade3DUtil::getBallJointMatrix(*parentShape, true);
+					m = m * lwMat;
+					m = m * inv(parentLWMat);
+				}
+			}
 		}
 
 		const std::string name = std::string(m_pCurrentShape->get_name());
@@ -1644,18 +1659,68 @@ void CGLTFExporterInterface::m_setAnimations ()
 	for (size_t nLoop = 0; nLoop < nodesCou; ++nLoop) {
 		const CNodeData& nodeD = m_sceneData->nodes[nLoop];
 		sxsdk::shape_class* shape = m_pScene->get_shape_by_handle(nodeD.pShapeHandle);
-		if (!shape || !Shade3DUtil::isBone(*shape)) continue;
+		if (!shape || !Shade3DUtil::isSupportJoint(*shape)) continue;
 		if (!shape->has_motion()) continue;
 
 		const std::string name = shape->get_name();
-		const sxsdk::vec3 boneWCenter = Shade3DUtil::getBoneCenter(*shape, NULL);
 		const sxsdk::mat4 lwMat = shape->get_local_to_world_matrix();
-		const sxsdk::vec3 boneLCenter = (boneWCenter * inv(lwMat));
+		sxsdk::vec3 boneLCenter = Shade3DUtil::getBoneBallJointCenterL(*shape);
 
+		// ボーンの場合.
+		sxsdk::mat4 boneLMat = sxsdk::mat4::identity;
+		bool isBoneJoint = false;
+		if (Shade3DUtil::isBone(*shape)) {
+			isBoneJoint = true;
+			sxsdk::part_class& part = shape->get_part();
+			compointer<sxsdk::bone_joint_interface> bone(shape->get_bone_joint_interface());
+			boneLMat = bone->get_matrix();
+			boneLCenter = sxsdk::vec3(0, 0, 0);
+		}
+
+		std::vector<float> tmpKeyframes;
+		std::vector<sxsdk::vec3> tmpOffsets;
+		std::vector<sxsdk::vec3> tmpRotations;
 		try {
 			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
 			const int pointsCou = motion->get_number_of_motion_points();
 			if (pointsCou == 0) continue;
+
+			float prevRotatorVal = 0.0f;
+			sxsdk::vec3 eularV;
+			float oldSeqPos = -1.0f;
+			for (int i = 0; i < pointsCou; ++i) {
+				compointer<sxsdk::motion_point_interface> motionPoint(motion->get_motion_point_interface(i));
+				float seqPos = motionPoint->get_sequence();
+				if (seqPos < (float)startFrame || seqPos > (float)endFrame) continue;
+
+				// 同一のフレーム位置が格納済みの場合はスキップ.
+				// glTFの処理では、同一のフレーム位置である場合はエラーになる.
+				if (MathUtil::isZero(seqPos - oldSeqPos)) continue;
+				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
+
+				// ボーンまたはボールジョイント時.
+				const sxsdk::vec3 offset  = motionPoint->get_offset();
+				sxsdk::vec3 offset2       = offset + boneLCenter;
+				sxsdk::quaternion_class q = motionPoint->get_rotation();
+				q.get_euler(eularV);
+
+				if (isBoneJoint) {
+					// ボーンの変換行列は、回転 * ローカル変換行列 * オフセット.
+					sxsdk::mat4 m = sxsdk::mat4::rotate(eularV) * boneLMat * sxsdk::mat4::translate(offset2);
+					sxsdk::vec3 scale, shear, rotate, trans;
+					m.unmatrix(scale, shear, rotate, trans);
+					offset2 = trans;
+					eularV  = rotate;
+				}
+
+				tmpKeyframes.push_back(seqPos);
+				tmpOffsets.push_back(offset2);
+				tmpRotations.push_back(eularV);
+
+				oldSeqPos = seqPos;
+			}
+
+			if (tmpKeyframes.empty()) continue;
 
 			// 移動(offset)/回転要素をキーフレームとして格納.
 			const int transI = (int)m_sceneData->animations.channelData.size();
@@ -1677,25 +1742,13 @@ void CGLTFExporterInterface::m_setAnimations ()
 			rotationChannelD.targetNodeIndex = nLoop;
 			rotationChannelD.samplerIndex    = rotationI;
 
-			float oldSeqPos = -1.0f;
-			for (int i = 0; i < pointsCou; ++i) {
-				compointer<sxsdk::motion_point_interface> motionPoint(motion->get_motion_point_interface(i));
-				float seqPos = motionPoint->get_sequence();
-				if (seqPos < (float)startFrame || seqPos > (float)endFrame) continue;
-				seqPos /= frameRate;		// 秒単位に変換.
-
-				// 同一のフレーム位置が格納済みの場合はスキップ.
-				// glTFの処理では、同一のフレーム位置である場合はエラーになる.
-				if (MathUtil::isZero(seqPos - oldSeqPos)) continue;
-				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
-				oldSeqPos = seqPos;
-
-				const sxsdk::vec3 offset        = motionPoint->get_offset();
-				sxsdk::vec3 offset2             = (offset + boneLCenter) * 0.001f;		// メートルに変換.
-				const sxsdk::quaternion_class q = motionPoint->get_rotation();
+			for (size_t i = 0; i < tmpKeyframes.size(); ++i) {
+				const float seqPos = tmpKeyframes[i] / frameRate;		// 秒単位に変換.
 
 				transSamplerD.inputData.push_back(seqPos);
-				for (int j = 0; j < 3; ++j) transSamplerD.outputData.push_back(offset2[j]);
+				sxsdk::vec3 offset = tmpOffsets[i] * 0.001f;		// メートルに変換.;
+				for (int j = 0; j < 3; ++j) transSamplerD.outputData.push_back(offset[j]);
+				sxsdk::quaternion_class q(tmpRotations[i]);
 
 				rotationSamplerD.inputData.push_back(seqPos);
 				rotationSamplerD.outputData.push_back(q.x);
@@ -1703,6 +1756,7 @@ void CGLTFExporterInterface::m_setAnimations ()
 				rotationSamplerD.outputData.push_back(q.z);
 				rotationSamplerD.outputData.push_back(-q.w);
 			}
+
 		} catch (...) { }
 	}
 }
