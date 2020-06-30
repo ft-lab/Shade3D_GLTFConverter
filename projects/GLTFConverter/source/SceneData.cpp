@@ -447,11 +447,17 @@ std::string CSceneData::getUniqueImageName (const std::string& name)
 	}
 	if (!findF) return name2;
 
+	// 拡張子とファイル部を分ける.
+	const std::string fName    = StringUtil::getFileName(name2, false);
+	const std::string fExtName = StringUtil::getFileExtension(name2);
+
 	std::string newName = "";
 	int iCou = 1;
 	while (true) {
 		findF = false;
-		const std::string name3 = name2 + std::string("_") + std::to_string(iCou);
+		std::string name3 = fName + std::string("_") + std::to_string(iCou);
+		if (fExtName != "") name3 += std::string(".") + fExtName;
+
 		for (size_t i = 0; i < imgCou; ++i) {
 			const CImageData& imgD = images[i];
 			if (imgD.name == name3) {
