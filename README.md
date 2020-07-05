@@ -621,6 +621,10 @@ This software is released under the MIT License, see [LICENSE](./LICENSE).
 
 ## 更新履歴
 
+[2020/07/05] ver.0.2.3.1   
+* [Fixed] Export : テクスチャイメージをベイクする際、マスターイメージ名に拡張子指定がある場合にイメージが正しく出力されないことがある問題を修正
+* [Fixed] Import : アニメーションデータが正しく読み込まれない場合があった問題を修正
+
 [2020/06/28] ver.0.2.3.0   
 * [Added] UI : インポート/エクスポート/Occlusion/AlphaModeの名前に「Shade3D Material」を追加。
 * [Added] Import : インポート時にファイルダイアログボックスで「glb/gltf」を同時に表示する選択を追加
