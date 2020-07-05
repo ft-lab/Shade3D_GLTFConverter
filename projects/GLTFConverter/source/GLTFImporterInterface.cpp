@@ -1134,6 +1134,7 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 	CTempMeshData newMeshData;
 	if (!meshD.mergePrimitives(newMeshData)) return;
 	if (newMeshData.skinJoints.empty() || newMeshData.skinWeights.empty()) return;
+	if (newMeshData.skinJoints.size() != newMeshData.skinWeights.size()) return;
 
 	// meshD.pMeshのポリゴンメッシュに対してスキンのバインドとウエイト値を指定.
 	const size_t versCou = newMeshData.vertices.size();
@@ -1157,6 +1158,24 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 				sxsdk::skin_bind_class& skinBindC = skinC.get_bind(j);
 				skinBindC.set_shape(jointParts[ skinJoint[j] ]);
 				skinBindC.set_weight(skinWeight[j]);
+			}
+		}
+
+		if (skinD.skeletonID >= 0) {
+			const int rootNodeIndex = skinD.skeletonID + 1;
+
+			// 格納されたskinD.inverseBindMatrices (ルートボーンのワールドローカル変換行列)、ルートのローカルワールド変換行列より、.
+			// 差分の行列を計算.
+			const sxsdk::mat4 bindM = inv(skinD.inverseBindMatrices[0]);
+			const sxsdk::mat4 lwM   = sceneData->getLocalToWorldMatrix(rootNodeIndex);
+			const sxsdk::mat4 m     = lwM * inv(bindM);
+
+			const int versCou = pMesh.get_number_of_skin_points();
+			if (versCou > 0 && versCou == pMesh.get_total_number_of_control_points()) {
+				for (int i = 0; i < versCou; ++i) {
+					sxsdk::vec3 v = pMesh.vertex(i).get_position() * m;		// ボーンルートからのローカル座標系に変換.
+					pMesh.vertex(i).set_position(v);
+				}
 			}
 		}
 

@@ -406,26 +406,32 @@ namespace {
 					const int jointsID = std::stoi(accessorID);
 					const Accessor& acce = gltfDoc.accessors[jointsID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride = bufferView.byteStride;
 
 					// Jointsの配列を取得.
 					// VEC4として入る。xyzwに対してJointインデックスが入る.
 					std::vector<int> joints;
+					int sizeofD = 0;
 					if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
 						std::vector<unsigned short> joints2;
 						if (reader) joints2 = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 						else if (binReader) joints2 = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 						joints.resize(joints2.size());
 						for (size_t j = 0; j < joints2.size(); ++j) joints[j] = (int)joints2[j];
+						sizeofD = sizeof(unsigned short);
 
 					} else if (acce.componentType == COMPONENT_UNSIGNED_INT) {
 						if (reader) joints = reader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 						else if (binReader) joints = binReader->ReadBinaryData<int>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						sizeofD = sizeof(int);
 					}
 
-					const size_t vCou = joints.size() / 4;
-					if (vCou > 0 && vCou == acce.count) {
-						dstPrimitiveData.skinJoints.resize(vCou);
-						for (size_t j = 0, iPos = 0; j < vCou; ++j, iPos += 4) {
+					if (joints.size() > 0) {
+						const size_t sStride = (byteStride == 0) ? 4 : (byteStride / sizeofD);
+						const size_t offsetI = acce.byteOffset / sizeofD;
+						dstPrimitiveData.skinJoints.resize(acce.count);
+						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += sStride) {
 							dstPrimitiveData.skinJoints[j] = sx::vec<int,4>(joints[iPos + 0], joints[iPos + 1], joints[iPos + 2], joints[iPos + 3]);
 						}
 					}
@@ -1161,7 +1167,9 @@ namespace {
 			if (skinD.skeletonID >= 0) {
 				const int rootNodeIndex = skinD.skeletonID + 1;
 				if (rootNodeIndex < (int)(sceneData->nodes.size())) {
-					sceneData->nodes[rootNodeIndex].isBone = true;
+					CNodeData& node = sceneData->nodes[rootNodeIndex];
+					node.isBone = true;
+					if (node.name == "") node.name = skinD.name;
 				}
 			}
 		}
@@ -1317,17 +1325,63 @@ namespace {
 					const int accessorID = std::stoi(sampler.inputAccessorId);
 					const Accessor& acce = gltfDoc.accessors[accessorID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride = bufferView.byteStride;
 
-					if (reader) samplerD.inputData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) samplerD.inputData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					const size_t floatStride = 1;
+					const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+					std::vector<float> tmpV;
+					if (reader) tmpV = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					else if (binReader) tmpV = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+					// フレーム位置のため、float * 1ごと.
+					samplerD.inputData.resize(acce.count);
+					for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+						samplerD.inputData[j] = tmpV[iPos];
+					}
 				}
 				if (sampler.outputAccessorId != "") {
 					const int accessorID = std::stoi(sampler.outputAccessorId);
 					const Accessor& acce = gltfDoc.accessors[accessorID];
 					const int bufferViewID = std::stoi(acce.bufferViewId);
+					const BufferView& bufferView = gltfDoc.bufferViews[bufferViewID];
+					const size_t byteStride = bufferView.byteStride;
 
-					if (reader) samplerD.outputData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) samplerD.outputData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					size_t floatStride = 0;
+					if (acce.type == TYPE_VEC3) floatStride = 3;
+					else if (acce.type == TYPE_VEC4) floatStride = 4;
+
+					if (floatStride > 0) {
+						const size_t offsetI = acce.byteOffset / (sizeof(float));
+
+						std::vector<float> tmpV;
+						if (reader) tmpV = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) tmpV = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						// offset(VEC3)/scale(VEC3)/rotation(VEC4)のいずれか.
+						samplerD.inputData.resize(acce.count);
+						if (acce.type == TYPE_VEC3) {
+							int iP = 0;
+							samplerD.outputData.resize(acce.count * 3);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								samplerD.outputData[iP + 0] = tmpV[iPos + 0];
+								samplerD.outputData[iP + 1] = tmpV[iPos + 1];
+								samplerD.outputData[iP + 2] = tmpV[iPos + 2];
+								iP += 3;
+							}
+						} else if (acce.type == TYPE_VEC4) {
+							int iP = 0;
+							samplerD.outputData.resize(acce.count * 4);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								samplerD.outputData[iP + 0] = tmpV[iPos + 0];
+								samplerD.outputData[iP + 1] = tmpV[iPos + 1];
+								samplerD.outputData[iP + 2] = tmpV[iPos + 2];
+								samplerD.outputData[iP + 3] = tmpV[iPos + 3];
+								iP += 4;
+							}
+						}
+					}
 				}
 				dstAnimD.samplerData.push_back(samplerD);
 			}
