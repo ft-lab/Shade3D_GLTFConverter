@@ -350,9 +350,9 @@ namespace {
 							}
 						} else if (attrKeyName == ACCESSOR_TANGENT) {
 							if (dataType == draco::DataType::DT_FLOAT32) {
-								dstMeshData.weights.resize(vSize * 3);
+								dstMeshData.tangents.resize(vSize * 3);
 								std::array<float, 3> value;
-								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 4) {
+								for (size_t i = 0, iPos = 0; i < vSize; ++i, iPos += 3) {
 									const draco::AttributeValueIndex index = identityMapping ? draco::AttributeValueIndex(i) : (attr->mapped_index(draco::PointIndex(i)));
 									if (!attr->ConvertValue<float, 3>(index, &value[0])) continue;
 									dstMeshData.tangents[iPos + 0] = value[0];
