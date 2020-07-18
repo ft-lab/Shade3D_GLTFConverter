@@ -155,6 +155,79 @@ namespace {
 							dstPrimitiveData.vertices[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
 						}
 					}
+
+					// 指定の頂点に対して頂点位置を置き換え (sparseの対応).
+					if (acce.sparse.count > 0 && acce.sparse.indicesBufferViewId != "" && acce.sparse.valuesBufferViewId != "") {
+						const size_t sparseCount = acce.sparse.count;
+						std::vector<int> indicesI;
+						std::vector<sxsdk::vec3> vec3V;
+
+						{
+							const int indicesBufferViewID = std::stoi(acce.sparse.indicesBufferViewId);
+							const BufferView& indicesBufferView = gltfDoc.bufferViews[indicesBufferViewID];
+
+							// COMPONENT_BYTE(5120) / COMPONENT_UNSIGNED_SHORT(5123) / COMPONENT_UNSIGNED_INT(5125) / COMPONENT_FLOAT(5126)など.
+							ComponentType compType = acce.sparse.indicesComponentType;
+						
+							if (compType == COMPONENT_UNSIGNED_BYTE) {		// byteデータとして取得.
+								std::vector<unsigned char> tmpIndices;
+								if (reader) {
+									tmpIndices = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								} else if (binReader) {
+									tmpIndices = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								}
+								const int offsetI = acce.sparse.indicesByteOffset / sizeof(unsigned char);
+
+								indicesI.resize(sparseCount);
+								for (size_t j = 0; j < sparseCount; ++j) indicesI[j] = (int)tmpIndices[j + offsetI];
+
+							} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shortデータとして取得.
+								std::vector<unsigned short> tmpIndices;
+								if (reader) {
+									tmpIndices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								} else if (binReader) {
+									tmpIndices = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								}
+								const int offsetI = acce.sparse.indicesByteOffset / sizeof(unsigned short);
+
+								indicesI.resize(sparseCount);
+								for (size_t j = 0; j < sparseCount; ++j) indicesI[j] = (int)tmpIndices[j + offsetI];
+
+							} else if (compType == COMPONENT_UNSIGNED_INT) {	// intデータとして取得.
+								std::vector<unsigned int> tmpIndices;
+								if (reader) {
+									tmpIndices = reader->ReadBinaryData<unsigned int>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								} else if (binReader) {
+									tmpIndices = binReader->ReadBinaryData<unsigned int>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
+								}
+								const int offsetI = acce.sparse.indicesByteOffset / sizeof(unsigned int);
+
+								indicesI.resize(sparseCount);
+								for (size_t j = 0; j < sparseCount; ++j) indicesI[j] = (int)tmpIndices[j + offsetI];
+							}
+						}
+
+						if (!indicesI.empty()) {
+							const int valuesBufferViewID = std::stoi(acce.sparse.valuesBufferViewId);
+							const BufferView& valuesBufferView = gltfDoc.bufferViews[valuesBufferViewID];
+
+							const size_t vByteStride  = valuesBufferView.byteStride;
+							const size_t vFloatStride = (vByteStride == 0) ? 3 : (vByteStride / sizeof(float));
+
+							std::vector<float> fData2;
+							if (reader) fData2 = reader->ReadBinaryData<float>(gltfDoc, valuesBufferView);
+							else if (binReader) fData2 = binReader->ReadBinaryData<float>(gltfDoc, valuesBufferView);
+
+							const size_t offsetI2 = acce.sparse.valuesByteOffset / sizeof(float);
+
+							if (fData2.size() > 0) {
+								for (size_t j = 0, iPos = offsetI2; j < sparseCount; ++j, iPos += vFloatStride) {
+									const int spIndex = indicesI[j];
+									dstPrimitiveData.vertices[spIndex] = sxsdk::vec3(fData2[iPos + 0], fData2[iPos + 1], fData2[iPos + 2]);
+								}
+							}
+						}
+					}
 				}
 
 				// 法線を取得.
@@ -961,6 +1034,17 @@ namespace {
 				CImageData& imageD = sceneData->images[materialD.occlusionImageIndex];
 				if (imageD.name == "") imageD.name = materialD.name + std::string("_occlusion");
 				imageD.imageMask = CImageData::gltf_image_mask_occlusion;
+			}
+
+			if (materialD.pbrSpecularGlossiness_diffuseImageIndex >= 0) {
+				CImageData& imageD = sceneData->images[materialD.pbrSpecularGlossiness_diffuseImageIndex];
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_SpecularGlossiness_diffuse");
+				imageD.imageMask = CImageData::gltf_image_mask_base_color;
+			}
+			if (materialD.pbrSpecularGlossiness_specularGlossinessImageIndex >= 0) {
+				CImageData& imageD = sceneData->images[materialD.pbrSpecularGlossiness_specularGlossinessImageIndex];
+				if (imageD.name == "") imageD.name = materialD.name + std::string("_SpecularGlossiness_specularGlossiness");
+				imageD.imageMask = CImageData::gltf_image_mask_roughness;
 			}
 		}
 		for (size_t i = 0; i < imagesSize; ++i) {
