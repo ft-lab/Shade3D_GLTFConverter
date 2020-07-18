@@ -127,7 +127,8 @@ namespace {
 				dstPrimitiveData.name = mesh.name;
 
 				// マテリアル番号.
-				dstPrimitiveData.materialIndex = std::stoi(meshPrim.materialId);
+				dstPrimitiveData.materialIndex = -1;
+				if (meshPrim.materialId != "") dstPrimitiveData.materialIndex = std::stoi(meshPrim.materialId);
 
 				// 頂点座標を取得.
 				std::string accessorID;

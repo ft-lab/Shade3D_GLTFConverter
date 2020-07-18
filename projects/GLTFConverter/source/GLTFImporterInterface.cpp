@@ -539,25 +539,29 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 		// マテリアルを割り当て.
 		if (faceGroupCou == 1) {
-			const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[0]];
-			if (materialD.shadeMasterSurface) {
-				if (hasVertexColor) {		// 頂点カラーのマッピングレイヤを追加.
-					Shade3DUtil::setVertexColorSurfaceLayer(materialD.shadeMasterSurface);
-				}
-
-				pMesh.set_master_surface(materialD.shadeMasterSurface);
-			}
-		} else {
-			// フェイスグループ情報を追加.
-			for (int i = 0; i < faceGroupCou; ++i) {
-				const int facegroupIndex = pMesh.append_face_group();
-				const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[i]];
+			if (newMeshData.faceGroupMaterialIndex[0] >= 0 && newMeshData.faceGroupMaterialIndex[0] < sceneData->materials.size()) {
+				const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[0]];
 				if (materialD.shadeMasterSurface) {
 					if (hasVertexColor) {		// 頂点カラーのマッピングレイヤを追加.
 						Shade3DUtil::setVertexColorSurfaceLayer(materialD.shadeMasterSurface);
 					}
 
-					pMesh.set_face_group_surface(facegroupIndex, materialD.shadeMasterSurface);
+					pMesh.set_master_surface(materialD.shadeMasterSurface);
+				}
+			}
+		} else {
+			// フェイスグループ情報を追加.
+			for (int i = 0; i < faceGroupCou; ++i) {
+				const int facegroupIndex = pMesh.append_face_group();
+				if (newMeshData.faceGroupMaterialIndex[i] >= 0 && newMeshData.faceGroupMaterialIndex[i] < sceneData->materials.size()) {
+					const CMaterialData& materialD = sceneData->materials[newMeshData.faceGroupMaterialIndex[i]];
+					if (materialD.shadeMasterSurface) {
+						if (hasVertexColor) {		// 頂点カラーのマッピングレイヤを追加.
+							Shade3DUtil::setVertexColorSurfaceLayer(materialD.shadeMasterSurface);
+						}
+
+						pMesh.set_face_group_surface(facegroupIndex, materialD.shadeMasterSurface);
+					}
 				}
 			}
 
