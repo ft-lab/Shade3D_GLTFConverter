@@ -326,13 +326,13 @@ void CGLTFImporterInterface::m_createGLTFScene (sxsdk::scene_interface *scene, C
 void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *scene, CSceneData* sceneData, const int nodeIndex)
 {
 	CNodeData& nodeD = sceneData->nodes[nodeIndex];
+	const float bone_r = 10.0f;
 
 	// パートもしくはボーンとして開始.
 	sxsdk::part_class* part = NULL;
 	nodeD.pShapeHandle = NULL;
 	if (nodeIndex > 0 && nodeD.meshIndex < 0) {
 		if (nodeD.isBone) {
-			const float bone_r = 10.0f;
 			const sxsdk::vec3 bonePos(0, 0, 0);
 			const sxsdk::vec3 boneAxisDir(1, 0, 0);
 			part = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
@@ -341,7 +341,6 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 			// 単独のTransform animationの場合、変換行列に回転を入れる場合もある.
 			// このとき、もしボールジョイントを使用する場合は回転要素は無効にする処理が行われている.
 			// そのため、ここではボーンを使用した.
-			const float bone_r = 10.0f;
 			const sxsdk::vec3 bonePos(0, 0, 0);
 			const sxsdk::vec3 boneAxisDir(1, 0, 0);
 			part = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
@@ -353,9 +352,21 @@ void CGLTFImporterInterface::m_createGLTFNodeHierarchy (sxsdk::scene_interface *
 	}
 
 	if (nodeIndex > 0 && nodeD.meshIndex >= 0) {
+		sxsdk::part_class* part2 = NULL;
+		if (nodeD.hasAnimation) {		// 単一メッシュでアニメーションを持つ場合、ボーンを作成.
+			const sxsdk::vec3 bonePos(0, 0, 0);
+			const sxsdk::vec3 boneAxisDir(1, 0, 0);
+			part2 = &(scene->begin_bone_joint(bonePos, bone_r, false, boneAxisDir, nodeD.name.c_str()));
+		}
+
 		// メッシュを生成.
 		sxsdk::mat4 m = (nodeD.childNodeIndex >= 0) ? sxsdk::mat4::identity : (sceneData->getNodeMatrix(nodeIndex));
 		m_createGLTFMesh(nodeD.name, scene, sceneData, nodeD.meshIndex, m);
+
+		if (part2) {
+			scene->end_bone_joint();
+			nodeD.pShapeHandle = part2->get_handle();
+		}
 	}
 
 	std::vector<int> childNodeIndexList;
