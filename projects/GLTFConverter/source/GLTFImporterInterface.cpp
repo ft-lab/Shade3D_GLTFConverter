@@ -1270,6 +1270,7 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		std::vector<float> tmpKeyFrames;
 		std::vector<sxsdk::vec3> tmpOffsets;
 		std::vector<sxsdk::quaternion_class> tmpRotations;
+		std::vector<bool> tmpLinears;
 
 		// キーフレーム位置を取得.
 		for (size_t loop = 0; loop < animCou; ++loop) {
@@ -1307,6 +1308,7 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		const size_t framesCou = tmpKeyFrames.size();
 		tmpOffsets.resize(framesCou, sxsdk::vec3(0, 0, 0));
 		tmpRotations.resize(framesCou, sxsdk::quaternion_class::identity);
+		tmpLinears.resize(framesCou, false);
 
 		// キーフレームに対応するOffset/Rotationを一時的に格納.
 		for (size_t loop = 0; loop < animCou; ++loop) {
@@ -1331,6 +1333,10 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 					}
 				}
 				if (index < 0) continue;
+
+				if (samplerD.interpolationType == CAnimSamplerData::interpolation_type_linear) {
+					tmpLinears[index] = true;
+				}
 
 				if (channelD.pathType == CAnimChannelData::path_type_translation) {
 					// オフセット値を取得し、メートルからミリメートルに変換.
@@ -1379,6 +1385,11 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 
 			motionP->set_offset(offsetV);
 			motionP->set_rotation(sxsdk::quaternion_class(rotate));
+
+			// モーションをリニアにする。これは「コーナー」をOnにする.
+			if (tmpLinears[i]) {
+				motionP->set_corner(true);
+			}
 		}
 	}
 }

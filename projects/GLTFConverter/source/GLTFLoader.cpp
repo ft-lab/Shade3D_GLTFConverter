@@ -1383,6 +1383,12 @@ namespace {
 						}
 					}
 				}
+
+				if (sampler.interpolation == InterpolationType::INTERPOLATION_LINEAR) {
+					samplerD.interpolationType = CAnimSamplerData::interpolation_type_linear;
+				} else {
+					samplerD.interpolationType = CAnimSamplerData::interpolation_type_smooth;
+				}
 				dstAnimD.samplerData.push_back(samplerD);
 			}
 		}

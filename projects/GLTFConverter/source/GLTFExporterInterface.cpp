@@ -1708,6 +1708,7 @@ void CGLTFExporterInterface::m_setAnimations ()
 		std::vector<float> tmpKeyframes;
 		std::vector<sxsdk::vec3> tmpOffsets;
 		std::vector<sxsdk::vec3> tmpRotations;
+		std::vector<bool> tmpLinears;
 		try {
 			compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
 			const int pointsCou = motion->get_number_of_motion_points();
@@ -1725,6 +1726,8 @@ void CGLTFExporterInterface::m_setAnimations ()
 				// glTFの処理では、同一のフレーム位置である場合はエラーになる.
 				if (MathUtil::isZero(seqPos - oldSeqPos)) continue;
 				if (oldSeqPos < 0.0f) oldSeqPos = seqPos;
+
+				const bool linearF = motionPoint->get_corner();
 
 				// ボーンまたはボールジョイント時.
 				const sxsdk::vec3 offset  = motionPoint->get_offset();
@@ -1744,6 +1747,7 @@ void CGLTFExporterInterface::m_setAnimations ()
 				tmpKeyframes.push_back(seqPos);
 				tmpOffsets.push_back(offset2);
 				tmpRotations.push_back(eularV);
+				tmpLinears.push_back(linearF);
 
 				oldSeqPos = seqPos;
 			}
@@ -1783,6 +1787,8 @@ void CGLTFExporterInterface::m_setAnimations ()
 				rotationSamplerD.outputData.push_back(q.y);
 				rotationSamplerD.outputData.push_back(q.z);
 				rotationSamplerD.outputData.push_back(-q.w);
+
+				rotationSamplerD.interpolationType = (tmpLinears[i]) ? CAnimSamplerData::interpolation_type_linear : CAnimSamplerData::interpolation_type_smooth;
 			}
 
 		} catch (...) { }
