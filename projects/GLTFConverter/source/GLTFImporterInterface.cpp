@@ -1362,6 +1362,7 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		if (!shape->has_motion()) continue;
 
 		compointer<sxsdk::motion_interface> motion(shape->get_motion_interface());
+		motion->prohibit_update();		// モーションウィンドウの描画を停止.
 
 		// ローカル変換行列.
 		sxsdk::mat4 localM = shape->get_transformation();
@@ -1395,6 +1396,8 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 				motionP->set_corner(true);
 			}
 		}
+
+		motion->resume_update();		// モーションウィンドウの描画を再開.
 	}
 }
 
