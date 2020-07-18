@@ -375,6 +375,16 @@ namespace {
 					}
 				}
 
+				// Meshでindicesを持たない場合、POSITIONの順番にインデックスを設ける.
+				if (dracoMeshIndex < 0 && meshPrim.indicesAccessorId == "") {
+					const size_t mVCou = dstPrimitiveData.vertices.size();
+					if ((mVCou % 3) == 0) {
+						const int triCou = (int)(mVCou / 3);
+						dstPrimitiveData.triangleIndices.resize(mVCou);
+						for (int j = 0; j < mVCou; ++j) dstPrimitiveData.triangleIndices[j] = j;
+					}
+				}
+
 				// スキンのWeightを取得.
 				if (dracoMeshIndex < 0 && meshPrim.TryGetAttributeAccessorId(ACCESSOR_WEIGHTS_0, accessorID)) {
 					const int weightsID = std::stoi(accessorID);
