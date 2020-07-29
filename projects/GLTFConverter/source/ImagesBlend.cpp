@@ -747,7 +747,8 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 		if (mappingLayer.get_projection() != 3) continue;		// UV投影でない場合.
 
 		float weight  = std::min(std::max(mappingLayer.get_weight(), 0.0f), 1.0f);
-		if (mappingType == sxsdk::enums::normal_mapping) {
+		const int type = mappingLayer.get_type();
+		if (mappingType == sxsdk::enums::normal_mapping && type == sxsdk::enums::normal_mapping) {
 			if (m_normalTexturesCount == 1) {
 				m_normalStrength = mappingLayer.get_weight();
 				weight = 1.0f;
@@ -758,7 +759,6 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 		if (MathUtil::isZero(weight)) continue;
 
 		bool alphaTrans = false;
-		const int type = mappingLayer.get_type();
 		if (mappingType == MAPPING_TYPE_OPACITY) {
 			if (type == sxsdk::enums::diffuse_mapping) {
 				if (mappingLayer.get_channel_mix() != sxsdk::enums::mapping_transparent_alpha_mode) continue;
