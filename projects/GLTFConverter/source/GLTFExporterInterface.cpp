@@ -1176,8 +1176,12 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		const sxsdk::enums::mapping_type iType = sxsdk::enums::diffuse_mapping;
 		const sxsdk::rgb_class factor = imagesBlend.getImageFactor(iType);
 		if (imagesBlend.hasImage(iType)) {
-			// baseColorテクスチャを使用する場合は、factorはリニア補間しない.
 			materialData.baseColorFactor = factor;
+
+			// 色をリニアにする.
+			if (m_exportParam.convertColorToLinear) {
+				MathUtil::convColorLinear(materialData.baseColorFactor.red, materialData.baseColorFactor.green, materialData.baseColorFactor.blue);
+			}
 
 			const bool useAlphaTrans = imagesBlend.getDiffuseAlphaTrans();		// DiffuseでAlpha成分に不透明度を使用している場合.
 
