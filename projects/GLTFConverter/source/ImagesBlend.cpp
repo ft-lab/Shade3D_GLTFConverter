@@ -1326,6 +1326,11 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 						hsv.y = hsv.y * m2;
 
 						baseColorCol = MathUtil::hsv_to_rgb(hsv);
+
+						const float blendV = metallicV * 0.5f;
+						baseColorCol.red   = baseColorCol.red   * blendV + col.red   * (1.0f - blendV);
+						baseColorCol.green = baseColorCol.green * blendV + col.green * (1.0f - blendV);
+						baseColorCol.blue  = baseColorCol.blue  * blendV + col.blue  * (1.0f - blendV);
 					}
 
 					lineCols[x].red   = baseColorCol.red;
@@ -1413,6 +1418,11 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 					hsv.y = hsv.y * m2;
 
 					baseColorCol = MathUtil::hsv_to_rgb(hsv);
+
+					const float blendV = metallicV * 0.5f;
+					baseColorCol.red   = baseColorCol.red   * blendV + col.red   * (1.0f - blendV);
+					baseColorCol.green = baseColorCol.green * blendV + col.green * (1.0f - blendV);
+					baseColorCol.blue  = baseColorCol.blue  * blendV + col.blue  * (1.0f - blendV);
 				}
 
 				lineCols[x].red   = baseColorCol.red;
