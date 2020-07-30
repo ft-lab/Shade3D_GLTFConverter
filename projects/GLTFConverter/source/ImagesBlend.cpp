@@ -1305,7 +1305,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 					}
 
 					baseColorCol = col;
-					if (metallicV > 0.0f) {
+					if (m_metallic > 0.3f && metallicV > 0.0f) {
 						// RGB ==> HSVに変換.
 						hsv = MathUtil::rgb_to_hsv(col);
 						const float orgS = hsv.y;		// 彩度.
@@ -1322,7 +1322,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 						d2 = 1.0f - d1;
 
 						const float m1 = metallicV * 0.6f;
-						float m2 = (1.0f - m1) * d2;
+						float m2 = std::max((1.0f - m1) * d2, 0.5f);
 						hsv.y = hsv.y * m2;
 
 						baseColorCol = MathUtil::hsv_to_rgb(hsv);
@@ -1392,7 +1392,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 				}
 
 				baseColorCol = col;
-				if (metallicV > 0.0f) {
+				if (m_metallic > 0.3f && metallicV > 0.0f) {
 					// RGB ==> HSVに変換.
 					hsv = MathUtil::rgb_to_hsv(col);
 					const float orgS = hsv.y;		// 彩度.
@@ -1409,7 +1409,7 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 					d2 = 1.0f - d1;
 
 					const float m1 = metallicV * 0.6f;
-					float m2 = (1.0f - m1) * d2;
+					float m2 = std::max((1.0f - m1) * d2, 0.5f);
 					hsv.y = hsv.y * m2;
 
 					baseColorCol = MathUtil::hsv_to_rgb(hsv);
