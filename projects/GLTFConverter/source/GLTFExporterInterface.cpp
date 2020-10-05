@@ -583,10 +583,11 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 		}
 
 		if (errorNormal) {
-			// 頂点座標をmからmmに変換.
+			// 頂点座標をmからできるだけ大きめの値に変換 (極小の三角形の場合もありうるため).
 			sxsdk::vec3 vA[4];
+			const float scaleV = 100000.0f;
 			for (int i = 0; i < n_list; ++i) {
-				vA[i] = m_meshData.vertices[list[i]] * 1000.0f;
+				vA[i] = m_meshData.vertices[list[i]] * scaleV;
 			}
 
 			// 面積を計算.

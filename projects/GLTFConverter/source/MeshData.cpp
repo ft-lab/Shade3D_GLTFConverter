@@ -67,10 +67,16 @@ void CTempMeshData::optimize (const bool removeUnusedVertices)
 {
 	// 面積が0の面を削除.
 	{
-		const float fMin = (float)(1e-5);
+		const float fMin   = (float)(1e-6);
+
 		const size_t triCou = triangleIndices.size() / 3;
 		std::vector<int> removeTriIndexList;
-		const float scale = 1000.0f;
+		const float scale0  = 1000.0f;
+		const float scale2  = 100000.0f;
+
+		sxsdk::vec3 bbMin, bbMax;
+		std::vector<sxsdk::vec3> versA;
+		versA.resize(3);
 		{
 			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
 				const int i1 = triangleIndices[iPos + 0];
@@ -80,14 +86,24 @@ void CTempMeshData::optimize (const bool removeUnusedVertices)
 					removeTriIndexList.push_back(i);
 					continue;
 				}
-				const sxsdk::vec3 v1 = vertices[i1] * scale;
-				const sxsdk::vec3 v2 = vertices[i2] * scale;
-				const sxsdk::vec3 v3 = vertices[i3] * scale;
-				if (MathUtil::isZero(v1 - v2, fMin) || MathUtil::isZero(v2 - v3, fMin) || MathUtil::isZero(v1 - v3, fMin)) {
+				versA[0] = vertices[i1] * scale0;
+				versA[1] = vertices[i2] * scale0;
+				versA[2] = vertices[i3] * scale0;
+				MathUtil::calcBoundingBox(versA, bbMin, bbMax);
+				const float maxDist = std::max(std::max(bbMax.x - bbMin.x, bbMax.y - bbMin.y), bbMax.z - bbMin.z);
+				if (maxDist < 1.0f) {
+					versA[0] = vertices[i1] * scale2;
+					versA[1] = vertices[i2] * scale2;
+					versA[2] = vertices[i3] * scale2;
+				}
+
+				if (MathUtil::isZero(versA[0] - versA[1], fMin) || MathUtil::isZero(versA[1] - versA[2], fMin) || MathUtil::isZero(versA[0] - versA[2], fMin)) {
 					removeTriIndexList.push_back(i);
 					continue;
 				}
-				if (MathUtil::calcTriangleArea(v1, v2, v3) < fMin) {
+
+				const double areaV = MathUtil::calcTriangleArea(versA[0], versA[1], versA[2]);
+				if (areaV <= 0.0) {
 					removeTriIndexList.push_back(i);
 					continue;
 				}
