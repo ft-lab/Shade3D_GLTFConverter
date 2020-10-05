@@ -1275,6 +1275,7 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		std::vector<sxsdk::vec3> tmpOffsets;
 		std::vector<sxsdk::quaternion_class> tmpRotations;
 		std::vector<bool> tmpLinears;
+		std::vector<bool> tmpUsedOffsets, tmpUsedRotations;
 
 		// キーフレーム位置を取得.
 		for (size_t loop = 0; loop < animCou; ++loop) {
@@ -1313,6 +1314,8 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 		tmpOffsets.resize(framesCou, sxsdk::vec3(0, 0, 0));
 		tmpRotations.resize(framesCou, sxsdk::quaternion_class::identity);
 		tmpLinears.resize(framesCou, false);
+		tmpUsedOffsets.resize(framesCou, false);
+		tmpUsedRotations.resize(framesCou, false);
 
 		// キーフレームに対応するOffset/Rotationを一時的に格納.
 		for (size_t loop = 0; loop < animCou; ++loop) {
@@ -1345,10 +1348,12 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 				if (channelD.pathType == CAnimChannelData::path_type_translation) {
 					// オフセット値を取得し、メートルからミリメートルに変換.
 					tmpOffsets[index] = sxsdk::vec3(samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]) * 1000.0f;
+					tmpUsedOffsets[index] = true;
 					iPos += 3;
 
 				} else if (channelD.pathType == CAnimChannelData::path_type_rotation) {
 					tmpRotations[index] = sxsdk::quaternion_class(-samplerD.outputData[iPos + 3], samplerD.outputData[iPos + 0], samplerD.outputData[iPos + 1], samplerD.outputData[iPos + 2]);
+					tmpUsedRotations[index] = true;
 					iPos += 4;
 				}
 			}
@@ -1388,8 +1393,8 @@ void CGLTFImporterInterface::m_setAnimations (sxsdk::scene_interface *scene, CSc
 			sxsdk::vec3 scale, shear, rotate, trans;
 			m.unmatrix(scale, shear, rotate, trans);
 
-			motionP->set_offset(offsetV);
-			motionP->set_rotation(sxsdk::quaternion_class(rotate));
+			if (tmpUsedOffsets[i]) motionP->set_offset(offsetV);
+			if (tmpUsedRotations[i]) motionP->set_rotation(sxsdk::quaternion_class(rotate));
 
 			// モーションをリニアにする。これは「コーナー」をOnにする.
 			if (tmpLinears[i]) {
