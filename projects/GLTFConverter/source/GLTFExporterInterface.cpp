@@ -431,6 +431,9 @@ void CGLTFExporterInterface::begin_polymesh (void *)
 
 	m_meshData.clear();
 	m_meshData.name = std::string(m_pCurrentShape->get_name());
+
+	// NURBSの場合は面がフェイスグループごとに分割されてしまうため、それを判断する.
+	m_isCurrentNurbs = (m_pCurrentShape->get_type() == 13);		// 13はNURBS形状.
 }
 
 /**
@@ -845,6 +848,9 @@ void CGLTFExporterInterface::begin_polymesh_face2 (int n, int number_of_face_gro
 	if (m_skip) return;
 	m_currentFaceGroupIndex = -1;
 	m_faceGroupCount = number_of_face_groups;
+
+	// NURBSの場合はフェイスグループごとに分解が起きるので、フェイスグループは使用しないようにする.
+	if (m_isCurrentNurbs) m_faceGroupCount = 0;
 }
 
 /**
@@ -853,6 +859,10 @@ void CGLTFExporterInterface::begin_polymesh_face2 (int n, int number_of_face_gro
 void CGLTFExporterInterface::begin_polymesh_face_group (int face_group_index, void *)
 {
 	if (m_skip) return;
+
+	// NURBSの場合はフェイスグループごとに分解が起きるので、フェイスグループは使用しないようにする.
+	if (m_isCurrentNurbs) return;
+
 	m_currentFaceGroupIndex = face_group_index;
 }
 
