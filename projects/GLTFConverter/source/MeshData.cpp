@@ -190,6 +190,9 @@ CPrimitiveData::CPrimitiveData (const CPrimitiveData& v)
 	this->skinJoints      = v.skinJoints;
 	this->skinJointsHandle = v.skinJointsHandle;
 	this->morphTargets     = v.morphTargets;
+
+	this->importFlat = v.importFlat;
+	this->importUseQuantization = v.importUseQuantization;
 }
 
 CPrimitiveData::~CPrimitiveData ()
@@ -210,6 +213,9 @@ void CPrimitiveData::clear ()
 	skinJoints.clear();
 	skinJointsHandle.clear();
 	morphTargets.clear();
+
+	importFlat = false;
+	importUseQuantization = false;
 }
 
 /**

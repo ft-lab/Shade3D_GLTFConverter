@@ -98,6 +98,10 @@ public:
 
 	CMorphTargetsData morphTargets;			// Morph Targetsの情報.
 
+	bool importFlat;						// インポート時に頂点インデックスの指定がない場合。この場合は頂点座標を順番に格納する.
+											// 表現としてはフラットシェーディング状態になるため、これがtrueの場合は頂点マージはしない.
+	bool importUseQuantization;				// KHR_mesh_quantizationを使ってインポートされている場合.
+
 public:
 	CPrimitiveData ();
 	CPrimitiveData (const CPrimitiveData& v);
@@ -116,6 +120,9 @@ public:
 		this->skinJoints      = v.skinJoints;
 		this->skinJointsHandle = v.skinJointsHandle;
 		this->morphTargets     = v.morphTargets;
+
+		this->importFlat = v.importFlat;
+		this->importUseQuantization = v.importUseQuantization;
 
 		return (*this);
     }

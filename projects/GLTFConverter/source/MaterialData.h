@@ -55,6 +55,10 @@ public:
 	sxsdk::vec2 metallicRoughnessTexScale;
 	sxsdk::vec2 occlusionTexScale;
 
+	// インポート時のKHR_texture_transform使用時のUV用のoffset/scale.
+	sxsdk::vec2 textureTransformOffset;
+	sxsdk::vec2 textureTransformScale;
+
 	float transparency;					// Shade3Dでの透明度.
 
 	// KHR_materials_pbrSpecularGlossiness使用時の情報.
@@ -103,6 +107,9 @@ public:
 		this->emissiveTexScale          = v.emissiveTexScale;
 		this->metallicRoughnessTexScale = v.metallicRoughnessTexScale;
 		this->occlusionTexScale         = v.occlusionTexScale;
+
+		this->textureTransformOffset = v.textureTransformOffset;
+		this->textureTransformScale  = v.textureTransformScale;
 
 		this->transparency = v.transparency;
 

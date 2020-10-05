@@ -45,6 +45,9 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 	this->metallicRoughnessTexScale = v.metallicRoughnessTexScale;
 	this->occlusionTexScale         = v.occlusionTexScale;
 
+	this->textureTransformOffset = v.textureTransformOffset;
+	this->textureTransformScale  = v.textureTransformScale;
+
 	this->transparency = v.transparency;
 
 	this->pbrSpecularGlossiness_use                = v.pbrSpecularGlossiness_use;
@@ -93,6 +96,9 @@ void CMaterialData::clear ()
 	emissiveTexScale          = sxsdk::vec2(1, 1);
 	metallicRoughnessTexScale = sxsdk::vec2(1, 1);
 	occlusionTexScale         = sxsdk::vec2(1, 1);
+
+	textureTransformOffset = sxsdk::vec2(0, 0);
+	textureTransformScale  = sxsdk::vec2(1, 1);
 
 	transparency = 0.0f;
 

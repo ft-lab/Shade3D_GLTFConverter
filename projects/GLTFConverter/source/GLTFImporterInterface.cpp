@@ -417,6 +417,13 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 	meshD.pMeshHandle = NULL;
 	const size_t primitivesCou = meshD.primitives.size();
 
+	// 重複頂点を結合するか.
+	// これは、glTFで三角形の頂点インデックスがない状態でインポートした場合は最終的にマージをスキップする.
+	bool importFlat = false;
+	if (!meshD.primitives.empty()) {
+		importFlat = meshD.primitives[0].importFlat;
+	}
+
 	// プリミティブを1つにマージする.
 	CTempMeshData newMeshData;
 	if (!meshD.mergePrimitives(newMeshData)) return false;
@@ -468,16 +475,21 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 
 		// 法線を読み込み（ベイク）.
 		if (g_importParam.meshImportNormals) {
-			sxsdk::vec3 normals[4];
-			for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
-				if (triIndexList[i] < 0) continue;
-				try {
-					sxsdk::face_class& f = pMesh.face(triIndexList[i]);
-					const int vCou = f.get_number_of_vertices();
-					if (vCou != 3) continue;
-					for (int j = 0; j < 3; ++j) normals[j] = newMeshData.triangleNormals[iPos + j];
-					f.set_normals(vCou, normals);
-				} catch (...) { }
+			if (!newMeshData.triangleNormals.empty()) {
+				sxsdk::vec3 normals[4];
+				for (size_t i = 0, iPos = 0; i < triCou; ++i, iPos += 3) {
+					const int triIndex = triIndexList[i];
+					if (triIndex < 0) continue;
+					try {
+						sxsdk::face_class& f = pMesh.face(triIndex);
+						const int vCou = f.get_number_of_vertices();
+						if (vCou != 3) continue;
+						for (int j = 0; j < 3; ++j) {
+							normals[j] = normalize(sxsdk::vec3(sxsdk::vec4(newMeshData.triangleNormals[iPos + j], 0.0f) * matrix));
+						}
+						f.set_normals(vCou, normals);
+					} catch (...) { }
+				}
 			}
 		}
 
@@ -614,8 +626,9 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 		// ここではスキップ.
 		if (newMeshData.skinJoints.empty() && newMeshData.skinWeights.empty()) {
 			// 重複頂点のマージ.
-			m_cleanupRedundantVertices(pMesh, &newMeshData);
+			if (!importFlat) m_cleanupRedundantVertices(pMesh, &newMeshData);
 		}
+
 		// 稜線を生成.
 		pMesh.make_edges();
 
@@ -1129,6 +1142,13 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 	if (nodeD.skinIndex < 0) return;
 	const CSkinData& skinD = sceneData->skins[nodeD.skinIndex];
 
+	// 重複頂点を結合するか.
+	// これは、glTFで三角形の頂点インデックスがない状態でインポートした場合は最終的にマージをスキップする.
+	bool importFlat = false;
+	if (!meshD.primitives.empty()) {
+		importFlat = meshD.primitives[0].importFlat;
+	}
+
 	// meshD.pMeshのポリゴンメッシュで使用しているスキンを登録.
 	pMesh.set_skin_type(1);		// 頂点ブレンドの指定.
 	std::vector<sxsdk::shape_class *> jointParts;
@@ -1183,7 +1203,7 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 			// 差分の行列を計算.
 			const sxsdk::mat4 bindM = inv(skinD.inverseBindMatrices[0]);
 			const sxsdk::mat4 lwM   = sceneData->getLocalToWorldMatrix(rootNodeIndex);
-			const sxsdk::mat4 m     = lwM * inv(bindM);
+			const sxsdk::mat4 m     = inv(bindM) * lwM;
 
 			const int versCou = pMesh.get_number_of_skin_points();
 			if (versCou > 0 && versCou == pMesh.get_total_number_of_control_points()) {
@@ -1195,7 +1215,7 @@ void CGLTFImporterInterface::m_setMeshSkin (sxsdk::scene_interface *scene, CScen
 		}
 
 		// 重複頂点のマージ.
-		m_cleanupRedundantVertices(pMesh, &newMeshData);
+		if (!importFlat) m_cleanupRedundantVertices(pMesh, &newMeshData);
 
 		// 稜線を生成.
 		pMesh.make_edges();

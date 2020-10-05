@@ -263,6 +263,8 @@ namespace {
 					const size_t byteStride  = bufferView.byteStride;
 					const size_t floatStride = (byteStride == 0) ? 2 : (byteStride / sizeof(float));
 
+					dstPrimitiveData.importUseQuantization = (acce.componentType != COMPONENT_FLOAT);
+
 					// UV0の配列を取得.
 					// floatの配列で返るため、/2 がUV要素数.
 					std::vector<float> uvs;
@@ -455,6 +457,7 @@ namespace {
 						const int triCou = (int)(mVCou / 3);
 						dstPrimitiveData.triangleIndices.resize(mVCou);
 						for (int j = 0; j < mVCou; ++j) dstPrimitiveData.triangleIndices[j] = j;
+						dstPrimitiveData.importFlat = true;
 					}
 				}
 
@@ -870,6 +873,10 @@ namespace {
 							sxsdk::vec2 offset, scale;
 							getTextureTransform(textureTransformStr, offset, scale);
 							dstMaterialData.baseColorTexScale = scale;
+
+							// KHR_mesh_quantization使用時のUVの補間で使用.
+							dstMaterialData.textureTransformOffset = offset;
+							dstMaterialData.textureTransformScale  = scale;
 						}
 					} catch (...) { }
 				}
@@ -1603,6 +1610,42 @@ namespace {
 		storeVRMExtras_extensions(gltfDoc, sceneData);
 		storeVRMExtras_morphTargets(gltfDoc, sceneData);
 	}
+
+	/**
+	 * KHR_mesh_quantizationを使用している場合の変換処理.
+	 * UV値はKHR_texture_transformのOffset/Scale値を使って補間する必要がある.
+	 */
+	void calcMeshQuantization (CSceneData* sceneData) {
+		for (size_t loop = 0; loop < (sceneData->meshes).size(); ++loop) {
+			CMeshData& meshD = sceneData->meshes[loop];
+			for (size_t primLoop = 0; primLoop < meshD.primitives.size(); ++primLoop) {
+				CPrimitiveData& primD = meshD.primitives[primLoop];
+				if (!primD.importUseQuantization) continue;
+				if (primD.materialIndex < 0) continue;
+
+				CMaterialData& matD = sceneData->materials[primD.materialIndex];
+				const sxsdk::vec2 tOffset = matD.textureTransformOffset;
+				const sxsdk::vec2 tScale  = matD.textureTransformScale;
+
+				if (!primD.uv0.empty()) {
+					const size_t uvCou = primD.uv0.size();
+					for (size_t i = 0; i < uvCou; ++i) {
+						sxsdk::vec2& uv = primD.uv0[i];
+						uv = (uv * tScale) + tOffset;
+					}
+				}
+				if (!primD.uv1.empty()) {
+					const size_t uvCou = primD.uv1.size();
+					for (size_t i = 0; i < uvCou; ++i) {
+						sxsdk::vec2& uv = primD.uv1[i];
+						uv = (uv * tScale) + tOffset;
+					}
+				}
+
+				matD.baseColorTexScale = sxsdk::vec2(1, 1);
+			}
+		}
+	}
 }
 
 CGLTFLoader::CGLTFLoader ()
@@ -1753,6 +1796,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 
 		// マテリアル情報を取得.
 		::storeGLTFMaterials(gltfDoc, reader, sceneData);
+
+		// KHR_mesh_quantizationを使用している場合のUVの変換処理.
+		::calcMeshQuantization(sceneData);
 
 		// ノード階層を取得.
 		::storeGLTFNodes(gltfDoc, reader, sceneData);
