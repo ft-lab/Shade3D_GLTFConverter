@@ -864,6 +864,16 @@ void CGLTFExporterInterface::begin_polymesh_face_group (int face_group_index, vo
 	if (m_isCurrentNurbs) return;
 
 	m_currentFaceGroupIndex = face_group_index;
+
+	// フェイスグループが「無し」の場合.
+	if (m_currentFaceGroupIndex >= 0) {
+		if (m_pCurrentShape->get_type() == sxsdk::enums::polygon_mesh) {
+			sxsdk::polygon_mesh_class& pMesh = m_pCurrentShape->get_polygon_mesh();
+			if (pMesh.get_face_group_surface(m_currentFaceGroupIndex) == NULL) {
+				m_currentFaceGroupIndex = -1;
+			}
+		}
+	}
 }
 
 /**
