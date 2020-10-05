@@ -606,7 +606,7 @@ bool CGLTFImporterInterface::m_createGLTFMesh (const std::string& name, sxsdk::s
 				for (size_t j = 0; j < morphD.vIndices.size(); ++j) {
 					const int vIndex = morphD.vIndices[j];
 					if (vIndex >= 0 && vIndex < versCou) {
-						posList.push_back((morphD.position[j] * scale) + (pMeshSaver->get_point(vIndex)));
+						posList.push_back(((morphD.position[j] * scale) * matrix) + (pMeshSaver->get_point(vIndex)));
 						vIndices.push_back(vIndex);
 					}
 				}
@@ -716,7 +716,6 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 		const size_t materialsCou = sceneData->materials.size();
 		for (size_t i = 0; i < materialsCou; ++i) {
 			CMaterialData& materialD = sceneData->materials[i];
-
 			const std::string materialName = materialD.name;
 
 			std::string name = (materialName == "") ? (std::string("material_") + std::to_string(i)) : materialName;
