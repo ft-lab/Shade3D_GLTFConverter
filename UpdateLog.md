@@ -7,6 +7,8 @@
 * [Fixed] Import : MorphTargetsでノードの変換行列が考慮されていなかった問題を修正
 * [Fixed] Import : スキン使用時に階層構造で回転要素がある場合、正しくインポートできない場合があった問題を修正
 * [Fixed] Import : アニメーションのキーフレームで、translationまたはrotationの指定がない場合に不正にアニメーションする問題の修正
+* [Fixed] Import : 「法線を読み込み」がOnのとき、頂点法線がglTFに存在しない場合にクラッシュする問題を修正
+* [Fixed] Import : glTFでMeshの三角形の頂点インデックスを持たない場合、Shade3Dでメッシュ化するときの重複頂点のマージを行わないようにした
 * Export : 同一マスターサーフェスの判定を最適化。マスターサーフェス多用時のエクスポート速度を改善
 * Export : Shade3Dマテリアルとしてエクスポートする場合の、ベイク処理によるPBRマテリアル近似を微調整    
 * Import : MeshでのKHR_mesh_quantization拡張機能の対応
