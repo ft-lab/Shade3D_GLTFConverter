@@ -88,6 +88,8 @@ private:
 
 public:
 	bool isVRM;								// VRM形式の場合はtrue.
+	bool useMeshQuantization;				// インポート時にKHR_mesh_quantizationを使っているか.
+
 	std::string assetVersion;				// Assetバージョン.
 	std::string assetGenerator;				// 作成ツール.
 	std::string assetCopyRight;				// Copy Right.

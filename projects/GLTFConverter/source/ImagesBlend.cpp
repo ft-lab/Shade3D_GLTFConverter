@@ -1122,11 +1122,6 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	m_diffuseColor.green = std::min(col0.green, col.green);
 	m_diffuseColor.blue  = std::min(col0.blue, col.blue);
 
-	// マッピングが存在し、「通常」合成の場合はdiffuseColorは白にする.
-	if (!m_checkDefaultBlendMapping(sxsdk::enums::diffuse_mapping)) {
-		m_diffuseColor = sxsdk::rgb_class(1, 1, 1);
-	}
-
 	m_metallic     = reflectionV;
 	m_roughness    = m_surface->get_roughness();
 	m_transparency = m_surface->get_transparency();

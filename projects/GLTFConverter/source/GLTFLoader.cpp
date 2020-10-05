@@ -141,18 +141,81 @@ namespace {
 					const size_t byteStride  = bufferView.byteStride;
 					const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
 
+					ComponentType compType = acce.componentType;
+
 					// 頂点座標の配列を取得.
-					// floatの配列に対して、floatStrideの間隔でデータが格納されている.
-					std::vector<float> fData;
-					if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					if (acce.componentType == COMPONENT_FLOAT) {
+						// floatの配列に対して、floatStrideの間隔でデータが格納されている.
+						std::vector<float> fData;
+						if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const size_t offsetI = acce.byteOffset / sizeof(float);
+						const size_t offsetI = acce.byteOffset / sizeof(float);
+						if (fData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.vertices.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								dstPrimitiveData.vertices[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
+							}
+						}
 
-					if (fData.size() > 0 && acce.count > 0) {
-						dstPrimitiveData.vertices.resize(acce.count);
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
-							dstPrimitiveData.vertices[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
+					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE) {
+						std::vector<unsigned char> chData;
+						if (reader) chData = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(unsigned char);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.vertices.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.vertices[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								if (acce.normalized) dstPrimitiveData.vertices[j] /= 255.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_BYTE) {
+						std::vector<char> chData;
+						if (reader) chData = reader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(char);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.vertices.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.vertices[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								if (acce.normalized) dstPrimitiveData.vertices[j] /= 127.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
+						std::vector<unsigned short> chData;
+						if (reader) chData = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(unsigned short);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.vertices.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.vertices[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								if (acce.normalized) dstPrimitiveData.vertices[j] /= 65535.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_SHORT) {
+						std::vector<short> chData;
+						if (reader) chData = reader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(short);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.vertices.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.vertices[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								if (acce.normalized) dstPrimitiveData.vertices[j] /= 32767.0f;
+							}
 						}
 					}
 
@@ -169,7 +232,7 @@ namespace {
 							// COMPONENT_BYTE(5120) / COMPONENT_UNSIGNED_SHORT(5123) / COMPONENT_UNSIGNED_INT(5125) / COMPONENT_FLOAT(5126)など.
 							ComponentType compType = acce.sparse.indicesComponentType;
 						
-							if (compType == COMPONENT_UNSIGNED_BYTE) {		// byteデータとして取得.
+							if (compType == COMPONENT_UNSIGNED_BYTE) {
 								std::vector<unsigned char> tmpIndices;
 								if (reader) {
 									tmpIndices = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
@@ -181,7 +244,7 @@ namespace {
 								indicesI.resize(sparseCount);
 								for (size_t j = 0; j < sparseCount; ++j) indicesI[j] = (int)tmpIndices[j + offsetI];
 
-							} else if (compType == COMPONENT_UNSIGNED_SHORT) {	// shortデータとして取得.
+							} else if (compType == COMPONENT_UNSIGNED_SHORT) {
 								std::vector<unsigned short> tmpIndices;
 								if (reader) {
 									tmpIndices = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
@@ -193,7 +256,7 @@ namespace {
 								indicesI.resize(sparseCount);
 								for (size_t j = 0; j < sparseCount; ++j) indicesI[j] = (int)tmpIndices[j + offsetI];
 
-							} else if (compType == COMPONENT_UNSIGNED_INT) {	// intデータとして取得.
+							} else if (compType == COMPONENT_UNSIGNED_INT) {
 								std::vector<unsigned int> tmpIndices;
 								if (reader) {
 									tmpIndices = reader->ReadBinaryData<unsigned int>(gltfDoc, gltfDoc.bufferViews[indicesBufferViewID]);
@@ -239,17 +302,77 @@ namespace {
 					const size_t byteStride  = bufferView.byteStride;
 					const size_t floatStride = (byteStride == 0) ? 3 : (byteStride / sizeof(float));
 
-					// 法線の配列を取得.
-					std::vector<float> fData;
-					if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					if (acce.componentType == COMPONENT_FLOAT) {
+						// 法線の配列を取得.
+						std::vector<float> fData;
+						if (reader) fData = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) fData = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const size_t offsetI = acce.byteOffset / sizeof(float);
+						const size_t offsetI = acce.byteOffset / sizeof(float);
+						if (fData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.normals.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								dstPrimitiveData.normals[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
+							}
+						}
+					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE) {
+						std::vector<unsigned char> chData;
+						if (reader) chData = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					if (fData.size() > 0 && acce.count > 0) {
-						dstPrimitiveData.normals.resize(acce.count);
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
-							dstPrimitiveData.normals[j] = sxsdk::vec3(fData[iPos + 0], fData[iPos + 1], fData[iPos + 2]);
+						const size_t offsetI = acce.byteOffset / sizeof(unsigned char);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.normals.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.normals[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								dstPrimitiveData.normals[j] /= 255.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_BYTE) {
+						std::vector<char> chData;
+						if (reader) chData = reader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(char);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.normals.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.normals[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								dstPrimitiveData.normals[j] /= 127.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
+						std::vector<unsigned short> chData;
+						if (reader) chData = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(unsigned short);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.normals.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.normals[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								dstPrimitiveData.normals[j] /= 65535.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_SHORT) {
+						std::vector<short> chData;
+						if (reader) chData = reader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) chData = binReader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / sizeof(short);
+						const size_t strideI = 4;		// 4 byte align.
+						if (chData.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.normals.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.normals[j] = sxsdk::vec3((float)chData[iPos + 0], (float)chData[iPos + 1], (float)chData[iPos + 2]);
+								dstPrimitiveData.normals[j] /= 32767.0f;
+							}
 						}
 					}
 				}
@@ -265,19 +388,79 @@ namespace {
 
 					dstPrimitiveData.importUseQuantization = (acce.componentType != COMPONENT_FLOAT);
 
-					// UV0の配列を取得.
-					// floatの配列で返るため、/2 がUV要素数.
-					std::vector<float> uvs;
-					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					if (acce.componentType == COMPONENT_FLOAT) {
+						// UV0の配列を取得.
+						// floatの配列で返るため、/2 がUV要素数.
+						std::vector<float> uvs;
+						if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const size_t offsetI = acce.byteOffset / (sizeof(float));
+						const size_t offsetI = acce.byteOffset / (sizeof(float));
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								dstPrimitiveData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+							}
+						}
 
-					if (uvs.size() > 0 && acce.count > 0) {
-						dstPrimitiveData.uv0.resize(acce.count);
+					} else if (acce.componentType == COMPONENT_BYTE) {
+						std::vector<char> uvs;
+						if (reader) uvs = reader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
-							dstPrimitiveData.uv0[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+						const size_t offsetI = acce.byteOffset / (sizeof(char));
+						const size_t strideI = 4;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv0[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv0[j] /= 127.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE) {
+						std::vector<unsigned char> uvs;
+						if (reader) uvs = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned char));
+						const size_t strideI = 4;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv0[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv0[j] /= 255.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_SHORT) {
+						std::vector<short> uvs;
+						if (reader) uvs = reader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(short));
+						const size_t strideI = 2;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv0[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv0[j] /= 32767.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
+						std::vector<unsigned short> uvs;
+						if (reader) uvs = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned short));
+						const size_t strideI = 2;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv0[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv0[j] /=  65535.0f;
+							}
 						}
 					}
 				}
@@ -291,18 +474,80 @@ namespace {
 					const size_t byteStride  = bufferView.byteStride;
 					const size_t floatStride = (byteStride == 0) ? 2 : (byteStride / sizeof(float));
 
-					// UV1の配列を取得.
-					// floatの配列で返るため、/2 がUV要素数.
-					std::vector<float> uvs;
-					if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
-					else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+					if (acce.componentType == COMPONENT_FLOAT) {
+						// UV1の配列を取得.
+						// floatの配列で返るため、/2 がUV要素数.
+						std::vector<float> uvs;
+						if (reader) uvs = reader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<float>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
 
-					const size_t offsetI = acce.byteOffset / (sizeof(float));
+						const size_t offsetI = acce.byteOffset / (sizeof(float));
 
-					if (uvs.size() > 0 && acce.count > 0) {
-						dstPrimitiveData.uv1.resize(acce.count);
-						for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
-							dstPrimitiveData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv1.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += floatStride) {
+								dstPrimitiveData.uv1[j] = sxsdk::vec2(uvs[iPos + 0], uvs[iPos + 1]);
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_BYTE) {
+						std::vector<char> uvs;
+						if (reader) uvs = reader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(char));
+						const size_t strideI = 4;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv1[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv1[j] /= 127.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_BYTE) {
+						std::vector<unsigned char> uvs;
+						if (reader) uvs = reader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<unsigned char>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned char));
+						const size_t strideI = 4;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv1[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv1[j] /= 255.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_SHORT) {
+						std::vector<short> uvs;
+						if (reader) uvs = reader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(short));
+						const size_t strideI = 2;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv1[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv1[j] /= 32767.0f;
+							}
+						}
+
+					} else if (acce.componentType == COMPONENT_UNSIGNED_SHORT) {
+						std::vector<unsigned short> uvs;
+						if (reader) uvs = reader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+						else if (binReader) uvs = binReader->ReadBinaryData<unsigned short>(gltfDoc, gltfDoc.bufferViews[bufferViewID]);
+
+						const size_t offsetI = acce.byteOffset / (sizeof(unsigned short));
+						const size_t strideI = 2;		// 4 byte align.
+						if (uvs.size() > 0 && acce.count > 0) {
+							dstPrimitiveData.uv0.resize(acce.count);
+							for (size_t j = 0, iPos = offsetI; j < acce.count; ++j, iPos += strideI) {
+								dstPrimitiveData.uv1[j] = sxsdk::vec2((float)uvs[iPos + 0], (float)uvs[iPos + 1]);
+								if (acce.normalized) dstPrimitiveData.uv1[j] /=  65535.0f;
+							}
 						}
 					}
 				}
@@ -1766,8 +2011,10 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 		const size_t bufferViewsSize = gltfDoc.bufferViews.Size();
 		const size_t imagesSize      = gltfDoc.images.Size();
 
-		// VRMかどうか.
+		// 拡張機能をチェック.
+		// VRMかどうか。mesh_quantizationを使っているかどうか.
 		sceneData->isVRM = false;
+		sceneData->useMeshQuantization = false;
 		{
 			const size_t eCou = gltfDoc.extensionsUsed.size();
 			for (std::unordered_set<std::string>::iterator it = gltfDoc.extensionsUsed.begin(); it != gltfDoc.extensionsUsed.end(); ++it) {
@@ -1775,7 +2022,9 @@ bool CGLTFLoader::loadGLTF (const std::string& fileName, CSceneData* sceneData)
 				std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 				if (str == "vrm") {
 					sceneData->isVRM = true;
-					break;
+				}
+				if (str == "khr_mesh_quantization") {
+					sceneData->useMeshQuantization = true;
 				}
 			}
 		}

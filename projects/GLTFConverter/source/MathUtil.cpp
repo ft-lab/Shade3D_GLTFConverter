@@ -65,7 +65,7 @@ double MathUtil::calcTriangleArea (const sxsdk::vec3& v1, const sxsdk::vec3& v2,
 	fDat3 *= fDat3;
 
 	fDat1 = fDat1 * fDat2 - fDat3;
-	if (fDat1 < (1e-5)) return 0.0;
+	if (fDat1 < (1e-8)) return 0.0;
 	S = std::sqrt(fDat1) * 0.5;
 	return S;
 }

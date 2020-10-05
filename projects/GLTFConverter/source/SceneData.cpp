@@ -82,6 +82,7 @@ CSceneData::CSceneData ()
 void CSceneData::clear()
 {
 	isVRM = false;
+	useMeshQuantization = false;
 
 	assetVersion    = "";
 	assetGenerator  = "";
