@@ -1245,6 +1245,11 @@ namespace {
 					dstMaterialData.unlit = true;
 				}
 			}
+
+			if (dstMaterialData.unlit) {
+				dstMaterialData.metallicFactor  = 0.0f;
+				dstMaterialData.roughnessFactor = 0.0f;
+			}
 		}
 
 		// イメージ名はGLTFには格納されないようであるので、.
