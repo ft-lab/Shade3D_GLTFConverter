@@ -206,6 +206,14 @@ public:
 	int findSameMaterial (const CMaterialData& materialData);
 
 	/**
+	 * 同一のマテリアルがあるか、マスターサーフェスより調べる.
+	 * @param[in] masterSurface  マスターサーフェスクラス.
+	 * @return 同一のマテリアルがある場合はマテリアルのインデックスを返す。.
+	 *         存在しない場合は-1を返す.
+	 */
+	int findSameMaterial (sxsdk::master_surface_class* masterSurface);
+
+	/**
 	 * 同一のイメージがあるか調べる.
 	 * @param[in] imageData  イメージ情報.
 	 * @return 同一のイメージがある場合はイメージのインデックスを返す。.

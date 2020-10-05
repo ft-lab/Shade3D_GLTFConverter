@@ -1450,6 +1450,12 @@ int CGLTFExporterInterface::m_setMaterialCurrentShape (sxsdk::shape_class* shape
 			}
 		}
 
+		// 同一マスターサーフェスがすでに格納済みかチェック.
+		if (masterSurface) {
+			int mIndex = m_sceneData->findSameMaterial(masterSurface);
+			if (mIndex >= 0) return mIndex;
+		}
+
 		CMaterialData materialData;
 		bool ret = false;
 		if (masterSurface) {

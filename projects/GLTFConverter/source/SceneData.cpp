@@ -408,6 +408,28 @@ int CSceneData::findSameMaterial (const CMaterialData& materialData)
 }
 
 /**
+ * 同一のマテリアルがあるか、マスターサーフェスより調べる.
+ * @param[in] masterSurface  マスターサーフェスクラス.
+ * @return 同一のマテリアルがある場合はマテリアルのインデックスを返す。.
+ *         存在しない場合は-1を返す.
+ */
+int CSceneData::findSameMaterial (sxsdk::master_surface_class* masterSurface)
+{
+	void* mHandle = masterSurface->get_handle();
+	const size_t mCou = materials.size();
+	int index = -1;
+	for (size_t i = 0; i < mCou; ++i) {
+		if (!materials[i].shadeMasterSurface) continue;
+		void* mHandle2 = materials[i].shadeMasterSurface->get_handle();
+		if (mHandle == mHandle2) {
+			index = (int)i;
+			break;
+		}
+	}
+	return index;
+}
+
+/**
  * 同一のイメージがあるか調べる.
  * @param[in] imageData  イメージ情報.
  * @return 同一のイメージがある場合はイメージのインデックスを返す。.
