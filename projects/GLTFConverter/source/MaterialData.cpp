@@ -134,6 +134,7 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if (!MathUtil::isZero((this->roughnessFactor) - v.roughnessFactor)) return false;
 	if (!MathUtil::isZero((this->metallicFactor) - v.metallicFactor)) return false;
 	if (!MathUtil::isZero((this->occlusionStrength) - v.occlusionStrength)) return false;
+	if (!MathUtil::isZero((this->normalStrength) - v.normalStrength)) return false;
 	if ((this->baseColorImageIndex) != v.baseColorImageIndex) return false;
 	if ((this->normalImageIndex) != v.normalImageIndex) return false;
 	if ((this->emissiveImageIndex) != v.emissiveImageIndex) return false;
