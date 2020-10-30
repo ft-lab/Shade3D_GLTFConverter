@@ -126,7 +126,7 @@ extern "C" SXSDKEXPORT sx::uuid_class STDCALL get_uuid (const IID &iid, int i, v
  */
 extern "C" SXSDKEXPORT void STDCALL get_info (sxsdk::shade_plugin_info &info, sxsdk::shade_interface *shade, void *) {
 	info.sdk_version = SHADE_BUILD_NUMBER;
-	info.recommended_shade_version = 491000;
+	info.recommended_shade_version = 491000;		// ver.16の場合は49xxxx。ver.15の場合は48xxxx.
 	info.major_version = 0;
 	info.minor_version = 2;
 	info.micro_version = 4;

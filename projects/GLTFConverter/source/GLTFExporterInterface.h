@@ -59,6 +59,10 @@ private:
 	CWarningCheck m_warningCheck;					// 警告を出すための情報を蓄えるクラス.
 	int m_currentShapeSkinType;						// カレント形状でのスキンの種類.
 
+	int m_currentMeshFaceIndex;						// ポリゴンメッシュのオリジナルの面番号.
+	std::vector<bool> m_currentMeshFaceUseList;		// ポリゴンメッシュのオリジナルの面が格納されているか（頂点カラーとの同期用）.
+	int m_tempZeroMeshCount;						// 面積がゼロの面のカウント用.
+
 	virtual sx::uuid_class get_uuid (void *) { return GLTF_EXPORTER_INTERFACE_ID; }
 	virtual int get_shade_version () const { return SHADE_BUILD_NUMBER; }
 

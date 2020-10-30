@@ -434,6 +434,10 @@ void CGLTFExporterInterface::begin_polymesh (void *)
 
 	// NURBSの場合は面がフェイスグループごとに分割されてしまうため、それを判断する.
 	m_isCurrentNurbs = (m_pCurrentShape->get_type() == 13);		// 13はNURBS形状.
+
+	m_currentMeshFaceIndex = 0;
+	m_currentMeshFaceUseList.clear();
+	m_tempZeroMeshCount = 0;
 }
 
 /**
@@ -555,6 +559,10 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 {
 	if (m_skip) return;
 
+	// カレントの面番号のリスト（面積0のスキップ確認用）を保持.
+	m_currentMeshFaceIndex++;
+	m_currentMeshFaceUseList.push_back(true);
+
 	std::vector<int> indicesList;
 	std::vector<sxsdk::vec3> normalsList;
 	std::vector<sxsdk::vec2> uvs0List, uvs1List;
@@ -592,12 +600,15 @@ void CGLTFExporterInterface::polymesh_face_uvs (int n_list, const int list[], co
 
 			// 面積を計算.
 			const double areaV = MathUtil::calcTriangleArea(vA[0], vA[1], vA[2]);
-			if (areaV <= 0.0) return;
+			if (areaV <= 0.0) {
+				m_currentMeshFaceUseList.back() = false;
+				m_tempZeroMeshCount++;
 
-			// 法線を計算.
-			const sxsdk::vec3 n = MathUtil::calcTriangleNormal(vA[0], vA[1], vA[2]);
-
-			for (int i = 0; i < n_list; ++i) normalsList[i] = n;
+			} else {
+				// 法線を計算.
+				const sxsdk::vec3 n = MathUtil::calcTriangleNormal(vA[0], vA[1], vA[2]);
+				for (int i = 0; i < n_list; ++i) normalsList[i] = n;
+			}
 		}
 	}
 
@@ -698,6 +709,33 @@ void CGLTFExporterInterface::end_polymesh (void *)
 		if (!m_meshData.triangleColor1.empty()) {
 			m_meshData.triangleColor0 = m_meshData.triangleColor1;
 			m_meshData.triangleColor1.clear();
+		}
+	}
+
+	// 面積ゼロの面がある場合はカットしていく.
+	if (m_tempZeroMeshCount > 0) {
+		const int iCou = (int)m_currentMeshFaceUseList.size();
+		int iPos = (iCou - 1) * 3;
+		for (int i = iCou - 1; i >= 0; --i, iPos -= 3) {
+			if (!m_currentMeshFaceUseList[i]) {
+				for (int j = 2; j >= 0; --j) m_meshData.triangleIndices.erase(m_meshData.triangleIndices.begin() + iPos + j);
+				if (!m_meshData.triangleNormals.empty()) {
+					for (int j = 2; j >= 0; --j) m_meshData.triangleNormals.erase(m_meshData.triangleNormals.begin() + iPos + j);
+				}
+				if (!m_meshData.triangleUV0.empty()) {
+					for (int j = 2; j >= 0; --j) m_meshData.triangleUV0.erase(m_meshData.triangleUV0.begin() + iPos + j);
+				}
+				if (!m_meshData.triangleUV1.empty()) {
+					for (int j = 2; j >= 0; --j) m_meshData.triangleUV1.erase(m_meshData.triangleUV1.begin() + iPos + j);
+				}
+				if (!m_meshData.triangleColor0.empty()) {
+					for (int j = 2; j >= 0; --j) m_meshData.triangleColor0.erase(m_meshData.triangleColor0.begin() + iPos + j);
+				}
+				
+				if (!m_meshData.triangleFaceGroupIndex.empty()) {
+					m_meshData.triangleFaceGroupIndex.erase(m_meshData.triangleFaceGroupIndex.begin() + i);
+				}
+			}
 		}
 	}
 
