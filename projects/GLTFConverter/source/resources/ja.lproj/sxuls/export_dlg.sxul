@@ -22,4 +22,5 @@
 	<bool id="104" label="アニメーションを出力" />
 	<bool id="105" label="Draco圧縮" />
 	<bool id="108" label="色をリニアに変換" />
+	<bool id="109" label="テクスチャを加工せずにベイク" />
 </dialog>

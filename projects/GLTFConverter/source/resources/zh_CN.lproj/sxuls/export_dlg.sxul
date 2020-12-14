@@ -21,5 +21,6 @@
 	<bool id="103" label="Output vertex color" />
 	<bool id="104" label="Outout animation" />
 	<bool id="105" label="Draco compression" />
-	<bool id="108" label="Convert color to linear" />	
+	<bool id="108" label="Convert color to linear" />
+	<bool id="109" label="Bake without processing textures" />
 </dialog>

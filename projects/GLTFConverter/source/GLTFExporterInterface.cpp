@@ -24,6 +24,7 @@ enum
 	dlg_output_max_texture_size_id = 106,	// 最大テクスチャサイズ.
 	dlg_output_share_vertices_mesh_id = 107,	// Mesh内のPrimitiveの頂点情報を共有.
 	dlg_output_convert_color_to_linear_id = 108,	// 色をリニアに変換.
+	dlg_output_bake_without_processing_textures_id = 109,	// テクスチャを加工せずにベイク.
 
 	dlg_asset_title_id = 201,				// タイトル.
 	dlg_asset_author_id = 202,				// 制作者.
@@ -1033,6 +1034,11 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_output_convert_color_to_linear_id));
 		item->set_bool(m_exportParam.convertColorToLinear);
 	}
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_bake_without_processing_textures_id));
+		item->set_bool(m_exportParam.bakeWithoutProcessingTextures);
+	}
 
 	{
 		sxsdk::dialog_item_class* item;
@@ -1135,6 +1141,10 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 		m_exportParam.convertColorToLinear = item.get_bool();
 		return true;
 	}
+	if (id == dlg_output_bake_without_processing_textures_id) {
+		m_exportParam.bakeWithoutProcessingTextures = item.get_bool();
+		return true;
+	}
 
 	if (id == dlg_asset_title_id) {
 		m_exportParam.assetExtrasTitle = item.get_string();
@@ -1181,7 +1191,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 
 	// diffuse/reflection/roughness/glow/normalのイメージをあらかじめ合成する.
 	CImagesBlend imagesBlend(m_pScene, surface);
-	CImagesBlend::IMAGE_BAKE_RESULT blendResult = imagesBlend.blendImages();		// 複数のマッピングレイヤのイメージを合成.
+	CImagesBlend::IMAGE_BAKE_RESULT blendResult = imagesBlend.blendImages(!m_exportParam.bakeWithoutProcessingTextures);		// 複数のマッピングレイヤのイメージを合成.
 
 	if (blendResult == CImagesBlend::bake_error_mixed_uv_layer) {
 		const std::string str = std::string("[") + smName + std::string("] ") + std::string(m_pScene->gettext("bake_msg_error_mixed_uv_layer"));

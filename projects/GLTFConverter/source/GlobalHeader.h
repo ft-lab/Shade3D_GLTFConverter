@@ -22,7 +22,8 @@
 #define GLTF_IMPORTER_DLG_STREAM_VERSION_101	0x101
 #define GLTF_IMPORTER_DLG_STREAM_VERSION_100	0x100
 
-#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x103
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x104
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_104	0x104
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_103	0x103
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_102	0x102
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_101	0x101
@@ -132,6 +133,7 @@ public:
 	bool dracoCompression;									// Draco圧縮.
 	bool shareVerticesMesh;									// Mesh内のPrimitiveの頂点情報を共有.
 	bool convertColorToLinear;								// 色をリニアに変換.
+	bool bakeWithoutProcessingTextures;						// テクスチャを加工せずにベイク.
 
 	std::string assetExtrasTitle;							// タイトル.
 	std::string assetExtrasAuthor;							// 作成者.
@@ -154,6 +156,7 @@ public:
 		dracoCompression    = false;
 		shareVerticesMesh   = true;
 		convertColorToLinear = true;
+		bakeWithoutProcessingTextures = false;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";

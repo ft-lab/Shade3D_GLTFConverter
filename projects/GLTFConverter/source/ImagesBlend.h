@@ -21,6 +21,8 @@ private:
 	sxsdk::scene_interface* m_pScene;
 	sxsdk::surface_class* m_surface;
 
+	bool m_bakeConvPBRMaterial;							// PBRマテリアルとして加工するか.
+
 	// sxsdk::image_interfaceで確保した一時イメージは、明示的にReleaseで解放する必要がある.
 	sxsdk::image_interface* m_diffuseImage;				// Diffuseの画像.
 	sxsdk::image_interface* m_normalImage;				// Normalの画像.
@@ -143,6 +145,11 @@ private:
 	void m_convShade3DToPBRMaterial ();
 
 	/**
+	 * 加工せずにそのままPBRマテリアルとして格納.
+	 */
+	void m_noBakeShade3DToPBRMaterial ();
+
+	/**
 	 * glTFのMetallic-Roughnessのパック処理 (Occlusion(R)/Roughness(G)/Metallic(B)).
 	 */
 	void m_packOcclusionRoughnessMetallicImage ();
@@ -162,7 +169,7 @@ public:
 	 * 個々のイメージを合成.
 	 * @return ベイクの結果.
 	 */
-	IMAGE_BAKE_RESULT blendImages ();
+	IMAGE_BAKE_RESULT blendImages (const bool bakeConvPBRMaterial);
 
 	/**
 	 * 各種イメージを持つか (単一または複数).
