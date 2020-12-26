@@ -1215,6 +1215,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		break;
 	case GLTFConverter::alpha_mode_mask:
 		materialData.alphaMode = 3;
+		materialData.alphaCutOff = imagesBlend.getAlphaCutoff();
 		break;
 	case GLTFConverter::alpha_mode_blend:
 		materialData.alphaMode = 2;
