@@ -457,39 +457,42 @@ std::string CSceneData::getUniqueImageName (const std::string& name)
 {
 	const size_t imgCou = images.size();
 
+	// 「red_05.shdsfc: 0」「red_05.shdsfc: 1」のような名前の場合、異なる名前として通ってしまうため「.」より後は判断材料にしない.
+
 	// ファイル名にできない文字を置き換え.
 	const std::string name2 = StringUtil::convAsFileName(name);
+
+	// 拡張子とファイル部を分ける.
+	const std::string fName    = StringUtil::getFileName(name2, false);
+	const std::string fExtName = StringUtil::getFileExtension(name2);
 
 	bool findF = false;
 	for (size_t i = 0; i < imgCou; ++i) {
 		const CImageData& imgD = images[i];
-		if (imgD.name == name2) {
+		const std::string fName2 = StringUtil::getFileName(imgD.name, false);
+		if (fName2 == fName) {
 			findF = true;
 			break;
 		}
 	}
 	if (!findF) return name2;
 
-	// 拡張子とファイル部を分ける.
-	const std::string fName    = StringUtil::getFileName(name2, false);
-	const std::string fExtName = StringUtil::getFileExtension(name2);
-
 	std::string newName = "";
 	int iCou = 1;
 	while (true) {
 		findF = false;
 		std::string name3 = fName + std::string("_") + std::to_string(iCou);
-		if (fExtName != "") name3 += std::string(".") + fExtName;
-
 		for (size_t i = 0; i < imgCou; ++i) {
 			const CImageData& imgD = images[i];
-			if (imgD.name == name3) {
+			const std::string fName2 = StringUtil::getFileName(imgD.name, false);
+			if (fName2 == name3) {
 				findF = true;
 				break;
 			}
 		}
 		if (!findF) {
 			newName = name3;
+			if (fExtName != "") newName += std::string(".") + fExtName;
 			break;
 		}
 		iCou++;
