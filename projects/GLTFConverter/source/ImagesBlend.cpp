@@ -298,8 +298,13 @@ bool CImagesBlend::m_checkImage (const sxsdk::enums::mapping_type mappingType,
 				if (type != MAPPING_TYPE_OPACITY) continue;
 			}
 		} else {
-			if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
-				if (type != mappingType) continue;
+			if (mappingType == sxsdk::enums::normal_mapping) {
+				// バンプマップの場合は法線マップに変換するため.
+				if (type != mappingType && type != sxsdk::enums::bump_mapping) continue;
+			} else {
+				if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
+					if (type != mappingType) continue;
+				}
 			}
 		}
 
@@ -486,8 +491,13 @@ sx::vec<int,2> CImagesBlend::m_getMaxMappingImageSize (const sxsdk::enums::mappi
 				if (type != MAPPING_TYPE_OPACITY) continue;
 			}
 		} else {
-			if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
-				if (type != mappingType) continue;
+			if (mappingType == sxsdk::enums::normal_mapping) {
+				// バンプマップの場合は法線マップに変換するため.
+				if (type != mappingType && type != sxsdk::enums::bump_mapping) continue;
+			} else {
+				if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
+					if (type != mappingType) continue;
+				}
 			}
 		}
 
@@ -562,8 +572,13 @@ sx::vec<int,2> CImagesBlend::m_getMaxMappingImageSize (const sxsdk::enums::mappi
 				if (type != MAPPING_TYPE_OPACITY) continue;
 			}
 		} else {
-			if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
-				if (type != mappingType) continue;
+			if (mappingType == sxsdk::enums::normal_mapping) {
+				// バンプマップの場合は法線マップに変換するため.
+				if (type != mappingType && type != sxsdk::enums::bump_mapping) continue;
+			} else {
+				if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
+					if (type != mappingType) continue;
+				}
 			}
 		}
 
@@ -754,7 +769,7 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 
 		float weight  = std::min(std::max(mappingLayer.get_weight(), 0.0f), 1.0f);
 		const int type = mappingLayer.get_type();
-		if (mappingType == sxsdk::enums::normal_mapping && type == sxsdk::enums::normal_mapping) {
+		if (mappingType == sxsdk::enums::normal_mapping && (type == sxsdk::enums::normal_mapping || type == sxsdk::enums::bump_mapping)) {
 			if (m_normalTexturesCount == 1) {
 				m_normalStrength = mappingLayer.get_weight();
 				weight = 1.0f;
@@ -773,8 +788,13 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 				if (type != MAPPING_TYPE_OPACITY) continue;
 			}
 		} else {
-			if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
-				if (type != mappingType) continue;
+			if (mappingType == sxsdk::enums::normal_mapping) {
+				// バンプマップの場合は法線マップに変換するため.
+				if (type != mappingType && type != sxsdk::enums::bump_mapping) continue;
+			} else {
+				if (mappingType != MAPPING_TYPE_GLTF_OCCLUSION) {
+					if (type != mappingType) continue;
+				}
 			}
 		}
 
@@ -891,6 +911,7 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 					if (singleSimpleMapping) {
 						singleSimpleMapping = (!flipColor && !flipH && !flipV && !rotate90 && !useChannelMix);
 					}
+					if (type == sxsdk::enums::bump_mapping) singleSimpleMapping = false;
 					newTexName = pNewMasterImage->get_name();
 				}
 			}
@@ -902,6 +923,11 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 			compointer<sxsdk::image_interface> weightImage2;
 			if (weightWidth > 0) {
 				weightImage2 = m_duplicateImage(weightImage, newImgSize, weightFlipColor, weightFlipH, weightFlipV, weightRotate90, weightRepeatU, weightRepeatV);
+			}
+
+			// バンプの場合は法線マップに置き換え.
+			if (mappingType == sxsdk::enums::normal_mapping) {
+				if (type == sxsdk::enums::bump_mapping) image2->convert_bump_to_normalmap(1.0f);
 			}
 
 			for (int y = 0; y < newHeight; ++y) {
@@ -974,7 +1000,6 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 					if (mappingType == sxsdk::enums::normal_mapping) {
 						sxsdk::vec3 n, n2;
 						sxsdk::rgb_class col;
-
 						for (int x = 0; x < newWidth; ++x) {
 							const float w  = alphaTrans ? 1.0f : ((weightWidth > 0) ? rgbaWeightLine[x].red * weight : weight);
 							const float w2 = 1.0f - w;
