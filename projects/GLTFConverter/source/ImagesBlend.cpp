@@ -969,11 +969,13 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 				}
 
 				// Roughnessの場合、Shade3Dはテクスチャの濃淡は逆転している.
-				if (mappingType == sxsdk::enums::roughness_mapping) {
-					for (int x = 0; x < newWidth; ++x) {
-						rgbaLine[x].red   = 1.0f - rgbaLine[x].red;
-						rgbaLine[x].green = 1.0f - rgbaLine[x].green;
-						rgbaLine[x].blue  = 1.0f - rgbaLine[x].blue;
+				if (m_bakeConvPBRMaterial) {
+					if (mappingType == sxsdk::enums::roughness_mapping) {
+						for (int x = 0; x < newWidth; ++x) {
+							rgbaLine[x].red   = 1.0f - rgbaLine[x].red;
+							rgbaLine[x].green = 1.0f - rgbaLine[x].green;
+							rgbaLine[x].blue  = 1.0f - rgbaLine[x].blue;
+						}
 					}
 				}
 
@@ -1636,6 +1638,7 @@ void CImagesBlend::m_noBakeShade3DToPBRMaterial ()
 	if (m_glowImage) m_emissiveColor = sxsdk::rgb_class(1, 1, 1);
 
 	// Roughnessテクスチャは濃淡を逆転.
+#if 0
 	if (m_roughnessImage) {
 		const int width  = m_roughnessImage->get_size().x;
 		const int height = m_roughnessImage->get_size().y;
@@ -1653,6 +1656,7 @@ void CImagesBlend::m_noBakeShade3DToPBRMaterial ()
 			m_roughnessImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
 		}
 	}
+#endif
 
 	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
 	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
