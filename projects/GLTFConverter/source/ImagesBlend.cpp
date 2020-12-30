@@ -969,6 +969,7 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 				}
 
 				// Roughnessの場合、Shade3Dはテクスチャの濃淡は逆転している.
+				// 「テクスチャを加工せずにベイク」の場合はそのまま採用するため、この処理は行わない.
 				if (m_bakeConvPBRMaterial) {
 					if (mappingType == sxsdk::enums::roughness_mapping) {
 						for (int x = 0; x < newWidth; ++x) {
@@ -1636,27 +1637,6 @@ void CImagesBlend::m_noBakeShade3DToPBRMaterial ()
 
 	m_emissiveColor = (m_surface->get_glow_color()) * (m_surface->get_glow());
 	if (m_glowImage) m_emissiveColor = sxsdk::rgb_class(1, 1, 1);
-
-	// Roughnessテクスチャは濃淡を逆転.
-#if 0
-	if (m_roughnessImage) {
-		const int width  = m_roughnessImage->get_size().x;
-		const int height = m_roughnessImage->get_size().y;
-
-		std::vector<sxsdk::rgba_class> col1A;
-		col1A.resize(width);
-
-		float fV;
-		for (int y = 0; y < height; ++y) {
-			m_roughnessImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-			for (int x = 0; x < width; ++x) {
-				fV = 1.0f - col1A[x].red;
-				col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
-			}
-			m_roughnessImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-		}
-	}
-#endif
 
 	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
 	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
