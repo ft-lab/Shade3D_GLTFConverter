@@ -23,4 +23,10 @@
 	<bool id="105" label="Draco compression" />
 	<bool id="108" label="Convert color to linear" />
 	<bool id="109" label="Bake without processing textures" />
+
+	<group label="Output additional textures">
+		<bool id="401" label="Output textures for each engine" />
+		<selection id="402" label="Engine:|Unity|Unigine" />
+	</group>
+
 </dialog>

@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#include <filesystem>
 
 using namespace Microsoft::glTF;
 
@@ -1317,9 +1318,134 @@ namespace {
 	}
 
 	/**
+	 * イメージを、RGBA分解して、それぞれのエンジンに合うように出力.
+	 * @param[in] image        image_interface.
+	 * @param[in] materialName マテリアル名.
+	 * @param[in] fileDir      出力するフォルダ.
+	 * @param[in] exportParam  エクスポート情報.
+	 */
+	void saveImageByEngine (sxsdk::shade_interface* shade, sxsdk::image_interface* image, const std::string& materialName, const int imageMask, const std::string& fileDir, const CExportDlgParam& exportParam) {
+		if (!exportParam.outputAdditionalTextures) return;
+
+		const std::string baseFileDir = fileDir + std::string("/images");
+
+		// baseFileDirのフォルダが存在しない場合は作成.
+		// Visual Studio 2017の場合は、「std::filesystem」を使用するにはC++17にする必要があるが、.
+		// C++17にするとboost 1.55.0とぶつかってしまう。そのため、プロパティの「C++言語標準」での指定を行わないようにし.
+		// 「std::experimental::filesystem」を使うようにしている.
+#if _WINDOWS
+		// UTF-8からShiftJISに変換.
+		std::string sjisStr;
+		StringUtil::convUTF8ToSJIS(baseFileDir, sjisStr);
+
+		if (!std::experimental::filesystem::exists(sjisStr)) {
+			std::experimental::filesystem::create_directory(sjisStr);
+		}
+#else
+		if (!std::filesystem::exists(baseFileDir)) {
+			std::filesystem::create_directory(baseFileDir);
+		}
+#endif
+
+		const std::string baseFileName = baseFileDir + std::string("/") + materialName;
+
+		// baseColorの出力.
+		if (imageMask == CImageData::gltf_image_mask_base_color) {
+			const std::string fName = baseFileName + std::string("_albedo.png");
+			image->save(fName.c_str());
+			return;
+		}
+
+		// emissiveの出力.
+		if (imageMask == CImageData::gltf_image_mask_emissive) {
+			const std::string fName = baseFileName + std::string("_emissive.png");
+			image->save(fName.c_str());
+			return;
+		}
+
+		// Normalの出力.
+		if (imageMask == CImageData::gltf_image_mask_normal) {
+			const std::string fName = baseFileName + std::string("_normal.png");
+			image->save(fName.c_str());
+			return;
+		}
+
+		// Occlusionの出力.
+		if (imageMask & CImageData::gltf_image_mask_occlusion) {
+			const std::string fName = baseFileName + std::string("_occlusion.png");
+			const int width  = image->get_size().x;
+			const int height = image->get_size().y;
+			std::vector<sxsdk::rgba_class> colLine, colLine2;
+			colLine.resize(width);
+			colLine2.resize(width);
+
+			try {
+				const sx::vec<int,2> iSize(width, height);
+				compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
+				float vR;
+				for (int y = 0; y < height; ++y) {
+					image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
+					for (int x = 0; x < width; ++x) {
+						vR = colLine[x].red;
+						colLine2[x] = sxsdk::rgba_class(vR, vR, vR, 1.0f);
+					}
+					image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
+				}
+				image2->save(fName.c_str());
+			} catch (...) { }
+		}
+
+		// Roughness-Metallicの場合.
+		// glTFでは、[G]にRoughness、[B]にMetallicが入っている.
+		if ((imageMask & CImageData::gltf_image_mask_roughness) && (imageMask & CImageData::gltf_image_mask_metallic)) {
+			const int width  = image->get_size().x;
+			const int height = image->get_size().y;
+			std::vector<sxsdk::rgba_class> colLine, colLine2;
+			colLine.resize(width);
+			colLine2.resize(width);
+
+			if (exportParam.engineType == GLTFConverter::engine_unigine) {
+				// Unigineの場合.
+				// R:Metalness / G:Roughness / B:Specular Reflection / A:Microfiber.
+				try {
+					const sx::vec<int,2> iSize(width, height);
+					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
+					for (int y = 0; y < height; ++y) {
+						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
+						for (int x = 0; x < width; ++x) {
+							colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].green, 1.0f, 1.0f);
+						}
+						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
+					}
+					const std::string fName = baseFileName + std::string("_shading.png");
+					image2->save(fName.c_str());
+				} catch (...) { }
+
+			} else if (exportParam.engineType == GLTFConverter::engine_unity) {
+				// Unityの場合.
+				// R: Metallic / A : Smoothness.
+				try {
+					const sx::vec<int,2> iSize(width, height);
+					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
+					for (int y = 0; y < height; ++y) {
+						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
+						for (int x = 0; x < width; ++x) {
+							colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].blue, colLine[x].blue, 1.0f - colLine[x].green);
+						}
+						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
+					}
+					const std::string fName = baseFileName + std::string("_metallicSmoothness.png");
+					image2->save(fName.c_str());
+				} catch (...) { }
+
+			}
+		}
+	}
+
+	/**
 	 *   Image/Textures情報を格納.
 	 */
-	void setImagesData (Document& gltfDoc,  const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade) {
+	void setImagesData (Document& gltfDoc, const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade, const CExportDlgParam& exportParam) {
 		const size_t imagesCou = sceneData->images.size();
 
 		std::vector<std::string> imageFileNameList;
@@ -1395,6 +1521,16 @@ namespace {
 				}
 
 				imageFileNameList[i] = fileFullPath;
+
+				// 各種エンジン向けにコンバートしたテクスチャを出力.
+				if (exportParam.outputAdditionalTextures) {
+					const std::string fileDir = sceneData->getFileDir();
+					if (image2 && image2->has_image()) {
+						saveImageByEngine(shade, image2, imageD.materialName, imageD.imageMask, fileDir, exportParam);
+					} else {
+						saveImageByEngine(shade, image, imageD.materialName, imageD.imageMask, fileDir, exportParam);
+					}
+				}
 
 				// GLTFにImage要素を追加.
 				Image img;
@@ -1641,7 +1777,7 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 		::setBufferData(gltfDoc, sceneData, glbBuilder);
 
 		// 画像情報を格納.
-		::setImagesData(gltfDoc, sceneData, glbBuilder, shade);
+		::setImagesData(gltfDoc, sceneData, glbBuilder, shade, sceneData->exportParam);
 
 		if (glbBuilder) {
 			gltfDoc.buffers.Clear();

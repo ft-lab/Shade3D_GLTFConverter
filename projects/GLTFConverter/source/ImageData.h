@@ -37,6 +37,7 @@ public:
 	sxsdk::master_image_class* shadeMasterImage;	// Shade3Dでのマスターイメージクラス.
 	std::vector<unsigned char> imageRGBAData;		// Shade3Dでのイメージを1ピクセルRGBAで保持 (合成したもの)。エクスポータで使用.
 
+	std::string materialName;			// 参照しているマスターマテリアル名.
 	int imageMask;						// テクスチャとして使用している情報.
 	bool useBaseColorAlpha;				// BaseColorとしてAlphaを使用するか.
 
@@ -55,6 +56,7 @@ public:
 		this->useBaseColorAlpha = v.useBaseColorAlpha;
 		this->shadeMasterImage  = v.shadeMasterImage;
 		this->imageRGBAData = v.imageRGBAData;
+		this->materialName = v.materialName;
 
 		return (*this);
     }

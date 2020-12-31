@@ -34,6 +34,10 @@ enum
 	dlg_asset_source_id = 206,				// 参照先.
 
 	dlg_export_file_format_id = 301,		// 出力形式 (0:glb / 1:gltf).
+
+	dlg_output_textures_id = 401,					// エンジン別にテクスチャを別途出力.
+	dlg_output_textures_engine_type_id = 402,		// エンジンの種類.
+
 };
 
 CGLTFExporterInterface::CGLTFExporterInterface (sxsdk::shade_interface& shade) : shade(shade)
@@ -1082,6 +1086,19 @@ void CGLTFExporterInterface::load_dialog_data (sxsdk::dialog_interface &d,void *
 		item = &(d.get_dialog_item(dlg_export_file_format_id));
 		item->set_selection(m_exportParam.exportFileFormat);
 	}
+
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_textures_id));
+		item->set_bool(m_exportParam.outputAdditionalTextures);
+	}
+
+	{
+		sxsdk::dialog_item_class* item;
+		item = &(d.get_dialog_item(dlg_output_textures_engine_type_id));
+		item->set_selection((int)m_exportParam.engineType);
+		item->set_enabled(m_exportParam.outputAdditionalTextures);
+	}
 }
 
 void CGLTFExporterInterface::save_dialog_data (sxsdk::dialog_interface &dialog,void *)
@@ -1176,6 +1193,16 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 		return true;
 	}
 
+	if (id == dlg_output_textures_id) {
+		m_exportParam.outputAdditionalTextures = item.get_bool();
+		load_dialog_data(dialog);
+		return true;
+	}
+	if (id == dlg_output_textures_engine_type_id) {
+		m_exportParam.engineType = (GLTFConverter::engine_type)item.get_selection();
+		return true;
+	}
+
 	return false;
 }
 
@@ -1188,6 +1215,9 @@ bool CGLTFExporterInterface::respond (sxsdk::dialog_interface &dialog, sxsdk::di
 bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, CMaterialData& materialData, const std::string& smName)
 {
 	materialData.clear();
+
+	// ユニークなマテリアル名を取得.
+	materialData.name = m_sceneData->getUniqueMaterialName(smName);
 
 	// diffuse/reflection/roughness/glow/normalのイメージをあらかじめ合成する.
 	CImagesBlend imagesBlend(m_pScene, surface);
@@ -1264,6 +1294,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			imageData.setCustomImage(image);
 			imageData.name = imagesBlend.getImageName(iType);
 			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			imageData.materialName = materialData.name;
+			imageData.imageMask    = CImageData::gltf_image_mask_base_color;
 
 			int imageIndex = m_sceneData->findSameImage(imageData);
 			if (imageIndex < 0) {
@@ -1323,6 +1355,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			imageData.setCustomImage(image);
 			imageData.name = imagesBlend.getImageName(iType);
 			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			imageData.materialName = materialData.name;
+			imageData.imageMask    = CImageData::gltf_image_mask_normal;
 
 			int imageIndex = m_sceneData->findSameImage(imageData);
 			if (imageIndex < 0) {
@@ -1353,6 +1387,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			imageData.setCustomImage(image);
 			imageData.name = imagesBlend.getImageName(iType);
 			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			imageData.materialName = materialData.name;
+			imageData.imageMask    = CImageData::gltf_image_mask_emissive;
 
 			int imageIndex = m_sceneData->findSameImage(imageData);
 			if (imageIndex < 0) {
@@ -1390,6 +1426,13 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			imageData.setCustomImage(metallicRoughnessImg);
 			imageData.name = smName + std::string("_metallicRoughness");
 			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			imageData.materialName = materialData.name;
+			imageData.imageMask    = CImageData::gltf_image_mask_metallic | CImageData::gltf_image_mask_roughness;
+
+			if (imagesBlend.getUseOcclusionInMetallicRoughnessTexture()) {
+				imageData.imageMask |= CImageData::gltf_image_mask_occlusion;
+			}
+
 			int imageIndex = m_sceneData->findSameImage(imageData);
 			if (imageIndex < 0) {
 				imageIndex = (int)m_sceneData->images.size();
@@ -1428,6 +1471,8 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 			imageData.setCustomImage(image);
 			imageData.name = imagesBlend.getImageName(iType);
 			imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+			imageData.materialName = materialData.name;
+			imageData.imageMask    = CImageData::gltf_image_mask_occlusion;
 
 			int imageIndex = m_sceneData->findSameImage(imageData);
 			if (imageIndex < 0) {
@@ -1453,7 +1498,7 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::master_surface_class* mas
 		sxsdk::surface_class* surface = master_surface->get_surface();
 		bool ret = m_setMaterialData(surface, materialData, smName);
 		if (!ret) return false;
-		materialData.name = std::string(master_surface->get_name());
+		//materialData.name = std::string(master_surface->get_name());
 
 		materialData.shadeMasterSurface = master_surface;
 

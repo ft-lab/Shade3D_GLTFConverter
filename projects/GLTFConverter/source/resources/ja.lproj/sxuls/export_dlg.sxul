@@ -23,4 +23,9 @@
 	<bool id="105" label="Draco圧縮" />
 	<bool id="108" label="色をリニアに変換" />
 	<bool id="109" label="テクスチャを加工せずにベイク" />
+
+	<group label="追加テクスチャ出力">
+		<bool id="401" label="エンジン別にテクスチャを別途出力" />
+		<selection id="402" label="エンジン:|Unity|Unigine" />
+	</group>
 </dialog>

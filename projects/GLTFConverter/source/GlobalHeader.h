@@ -22,7 +22,8 @@
 #define GLTF_IMPORTER_DLG_STREAM_VERSION_101	0x101
 #define GLTF_IMPORTER_DLG_STREAM_VERSION_100	0x100
 
-#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x104
+#define GLTF_EXPORTER_DLG_STREAM_VERSION		0x105
+#define GLTF_EXPORTER_DLG_STREAM_VERSION_105	0x105
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_104	0x104
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_103	0x103
 #define GLTF_EXPORTER_DLG_STREAM_VERSION_102	0x102
@@ -71,6 +72,14 @@ namespace GLTFConverter {
 		alpha_mode_opaque = 0,					// OPAQUE.
 		alpha_mode_mask,						// MASK.
 		alpha_mode_blend,						// BLEND.
+	};
+
+	/**
+	 * エンジンの種類.
+	 */
+	enum engine_type {
+		engine_unity = 0,					// Unity.
+		engine_unigine,						// Unigine.
 	};
 }
 
@@ -140,6 +149,9 @@ public:
 	std::string assetExtrasLicense;							// ライセンス.
 	std::string assetExtrasSource;							// オリジナルモデルの参照先.
 
+	bool outputAdditionalTextures;							// エンジン別にテクスチャを別途出力.
+	GLTFConverter::engine_type engineType;					// エンジンの種類.
+
 public:
 	CExportDlgParam () {
 		clear();
@@ -162,6 +174,9 @@ public:
 		assetExtrasAuthor  = "";
 		assetExtrasLicense = "All rights reserved";
 		assetExtrasSource  = "";
+
+		outputAdditionalTextures = false;
+		engineType = GLTFConverter::engine_unity;
 	}
 
 	/**

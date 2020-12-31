@@ -21,6 +21,7 @@ CImageData::CImageData (const CImageData& v)
 	this->useBaseColorAlpha = v.useBaseColorAlpha;
 	this->shadeMasterImage  = v.shadeMasterImage;
 	this->imageRGBAData = v.imageRGBAData;
+	this->materialName = v.materialName;
 }
 
 CImageData::~CImageData ()
@@ -35,6 +36,7 @@ void CImageData::clear ()
 	width = height = 0;
 	useBaseColorAlpha = false;
 	imageMask = CImageData::gltf_image_mask_none;
+	materialName = "";
 
 	shadeMasterImage = NULL;
 

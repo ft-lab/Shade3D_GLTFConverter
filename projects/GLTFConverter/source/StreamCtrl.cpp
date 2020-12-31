@@ -170,9 +170,18 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 			stream->write_int(iDat);
 		}
 
-		// ver.0.2.5.0 - 
+		// ver.0.2.4.2 - 
 		{
 			iDat = data.bakeWithoutProcessingTextures ? 1 : 0;
+			stream->write_int(iDat);
+		}
+
+		// ver.0.2.5.0 - .
+		{
+			iDat = data.outputAdditionalTextures ? 1 : 0;
+			stream->write_int(iDat);
+
+			iDat = (int)data.engineType;
 			stream->write_int(iDat);
 		}
 
@@ -259,10 +268,19 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 			data.convertColorToLinear = iDat ? true : false;
 		}
 
-		// ver.0.2.5.0 - 
+		// ver.0.2.4.2 - 
 		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_104) {
 			stream->read_int(iDat);
 			data.bakeWithoutProcessingTextures = iDat ? true : false;;
+		}
+
+		// ver.0.2.5.0 - .
+		if (iVersion >= GLTF_EXPORTER_DLG_STREAM_VERSION_105) {
+			stream->read_int(iDat);
+			data.outputAdditionalTextures = iDat ? true : false;
+
+			stream->read_int(iDat);
+			data.engineType = (GLTFConverter::engine_type)iDat;
 		}
 
 	} catch (...) { }

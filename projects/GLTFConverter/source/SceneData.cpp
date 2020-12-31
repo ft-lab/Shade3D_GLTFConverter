@@ -510,21 +510,23 @@ std::string CSceneData::getUniqueMaterialName (const std::string& name)
 {
 	const size_t mCou = materials.size();
 
+	const std::string newName0 = StringUtil::convAsFileName(name);
+
 	bool findF = false;
 	for (size_t i = 0; i < mCou; ++i) {
 		const CMaterialData& matD = materials[i];
-		if (matD.name == name) {
+		if (matD.name == newName0) {
 			findF = true;
 			break;
 		}
 	}
-	if (!findF) return name;
+	if (!findF) return newName0;
 
 	std::string newName = "";
 	int iCou = 1;
 	while (true) {
 		findF = false;
-		const std::string name2 = name + std::string("_") + std::to_string(iCou);
+		const std::string name2 = newName0 + std::string("_") + std::to_string(iCou);
 		for (size_t i = 0; i < mCou; ++i) {
 			const CMaterialData& matD = materials[i];
 			if (matD.name == name2) {
