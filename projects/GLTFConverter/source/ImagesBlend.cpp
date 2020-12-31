@@ -631,22 +631,122 @@ compointer<sxsdk::image_interface> CImagesBlend::m_duplicateImage (sxsdk::image_
 	if (repeatU > 1 || repeatV > 1) {
 		dstImage = m_pScene->create_image_interface(dstSize);
 
-		try {
-			compointer<sxsdk::graphic_context_interface> gc(dstImage->get_graphic_context_interface());
-			gc->set_color(sxsdk::rgb_class(1, 1, 1));
-			const float dx = (float)width / (float)repeatU;
-			const float dy = (float)height / (float)repeatV;
+		// gc->draw_imageでは、アルファ値も合成してしまうためアルファは分けて考える.
+		if (Shade3DUtil::hasImageAlpha(image)) {
+			const sx::vec<int,2> imgSize = image->get_size();
+			const int imgWidth  = imgSize.x;
+			const int imgHeight = imgSize.y;
 
-			sx::rectangle_class rect;
-			for (float y = 0.0f; y < (float)(height - 1); y += dy) {
-				for (float x = 0.0f; x < (float)(width - 1); x += dx) {
-					rect.min = sx::vec<int,2>((int)x, (int)y);
-					rect.max = sx::vec<int,2>((int)(x + dx), (int)(y + dy));
-					gc->draw_image(image, rect);
+			// アルファだけを取得し、Redに一時的に入れる.
+			compointer<sxsdk::image_interface> alphaImage(m_pScene->create_image_interface(imgSize));
+			{
+				std::vector<sxsdk::rgba_class> lineD, lineD2;
+				lineD.resize(imgWidth);
+				lineD2.resize(imgWidth, sxsdk::rgba_class(0, 0, 0, 1));
+				for (int y = 0; y < imgHeight; ++y) {
+					image->get_pixels_rgba_float(0, y, imgWidth, 1, &(lineD[0]));
+					for (int x = 0; x < imgWidth; ++x) lineD2[x].red = lineD[x].alpha;
+					alphaImage->set_pixels_rgba_float(0, y, imgWidth, 1, &(lineD2[0]));
 				}
 			}
-			gc->restore_color();
-		} catch (...) { }
+
+			// イメージのAlphaを1にする.
+			compointer<sxsdk::image_interface> image2(m_pScene->create_image_interface(imgSize));
+			{
+				std::vector<sxsdk::rgba_class> lineD;
+				lineD.resize(imgWidth);
+				for (int y = 0; y < imgHeight; ++y) {
+					image->get_pixels_rgba_float(0, y, imgWidth, 1, &(lineD[0]));
+					for (int x = 0; x < imgWidth; ++x) lineD[x].alpha = 1.0f;
+					image2->set_pixels_rgba_float(0, y, imgWidth, 1, &(lineD[0]));
+				}
+			}
+
+			// RGBをタイリング.
+			try {
+				compointer<sxsdk::graphic_context_interface> gc(dstImage->get_graphic_context_interface());
+				gc->set_color(sxsdk::rgb_class(1, 1, 1));
+				const float dx = (float)width / (float)repeatU;
+				const float dy = (float)height / (float)repeatV;
+
+				sx::rectangle_class rect;
+				for (float y = 0.0f; y < (float)(height - 1); y += dy) {
+					for (float x = 0.0f; x < (float)(width - 1); x += dx) {
+						rect.min = sx::vec<int,2>((int)x, (int)y);
+						rect.max = sx::vec<int,2>((int)(x + dx), (int)(y + dy));
+						rect.min.x = std::max(0, rect.min.x);
+						rect.min.y = std::max(0, rect.min.y);
+						rect.max.x = std::min(width - 1, rect.max.x);
+						rect.max.y = std::min(height - 1, rect.max.y);
+						gc->draw_image(image2, rect);
+					}
+				}
+				gc->restore_color();
+			} catch (...) { }
+
+			// Aをタイリング.
+			compointer<sxsdk::image_interface> dstImageA(m_pScene->create_image_interface(dstSize));
+			try {
+				compointer<sxsdk::graphic_context_interface> gc(dstImageA->get_graphic_context_interface());
+				gc->set_color(sxsdk::rgb_class(1, 1, 1));
+				const float dx = (float)width / (float)repeatU;
+				const float dy = (float)height / (float)repeatV;
+
+				sx::rectangle_class rect;
+				for (float y = 0.0f; y < (float)(height - 1); y += dy) {
+					for (float x = 0.0f; x < (float)(width - 1); x += dx) {
+						rect.min = sx::vec<int,2>((int)x, (int)y);
+						rect.max = sx::vec<int,2>((int)(x + dx), (int)(y + dy));
+						rect.min.x = std::max(0, rect.min.x);
+						rect.min.y = std::max(0, rect.min.y);
+						rect.max.x = std::min(width - 1, rect.max.x);
+						rect.max.y = std::min(height - 1, rect.max.y);
+						gc->draw_image(alphaImage, rect);
+					}
+				}
+				gc->restore_color();
+			} catch (...) { }
+
+			// RGB + AをdstImageに格納.
+			try {
+				std::vector<sxsdk::rgba_class> lineD, lineD2;
+				lineD.resize(width);
+				lineD2.resize(width);
+
+				for (int y = 0; y < height; ++y) {
+					dstImage->get_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
+					dstImageA->get_pixels_rgba_float(0, y, width, 1, &(lineD2[0]));
+
+					for (int x = 0; x < width; ++x) {
+						lineD[x].alpha = lineD2[x].red;
+					}
+					dstImage->set_pixels_rgba_float(0, y, width, 1, &(lineD[0]));
+				}
+
+			} catch (...) { }
+
+		} else {
+			try {
+				compointer<sxsdk::graphic_context_interface> gc(dstImage->get_graphic_context_interface());
+				gc->set_color(sxsdk::rgb_class(1, 1, 1));
+				const float dx = (float)width / (float)repeatU;
+				const float dy = (float)height / (float)repeatV;
+
+				sx::rectangle_class rect;
+				for (float y = 0.0f; y < (float)(height - 1); y += dy) {
+					for (float x = 0.0f; x < (float)(width - 1); x += dx) {
+						rect.min = sx::vec<int,2>((int)x, (int)y);
+						rect.max = sx::vec<int,2>((int)(x + dx), (int)(y + dy));
+						rect.min.x = std::max(0, rect.min.x);
+						rect.min.y = std::max(0, rect.min.y);
+						rect.max.x = std::min(width - 1, rect.max.x);
+						rect.max.y = std::min(height - 1, rect.max.y);
+						gc->draw_image(image, rect);
+					}
+				}
+				gc->restore_color();
+			} catch (...) { }
+		}
 
 	} else {
 		dstImage = Shade3DUtil::resizeImageWithAlpha(m_pScene, image, dstSize);
@@ -965,6 +1065,13 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 							fVal = (rgbaLine[x].red + rgbaLine[x].green + rgbaLine[x].blue) * 0.3333f;
 							rgbaLine[x] = sxsdk::rgba_class(fVal, fVal, fVal, 1.0f);
 						}
+					}
+				}
+
+				// 「アルファ乗算済み」でアルファ値を使用しない場合.
+				if (mappingType == sxsdk::enums::diffuse_mapping) {
+					if (channelMix == sxsdk::enums::mapping_premultiplied_alpha_mode) {
+						for (int x = 0; x < newWidth; ++x) rgbaLine[x].alpha = 1.0f;
 					}
 				}
 

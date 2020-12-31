@@ -154,6 +154,7 @@ namespace Shade3DUtil
 	 * @return アルファ要素が1.0でないものがある場合はtrueを返す.
 	 */
 	bool hasImageAlpha (sxsdk::master_image_class* masterImage);
+	bool hasImageAlpha (sxsdk::image_interface* image);
 
 	/**
 	 * 画像を指定のサイズにリサイズ。アルファも考慮（image->duplicate_imageはアルファを考慮しないため）.

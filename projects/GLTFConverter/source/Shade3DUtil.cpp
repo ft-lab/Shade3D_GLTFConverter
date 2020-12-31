@@ -669,6 +669,11 @@ bool Shade3DUtil::hasImageAlpha (sxsdk::master_image_class* masterImage)
 	return false;
 }
 
+bool Shade3DUtil::hasImageAlpha (sxsdk::image_interface* image)
+{
+	return ::m_hasImageAlpha(image);
+}
+
 /**
  * 画像を指定のサイズにリサイズ。アルファも考慮（image->duplicate_imageはアルファを考慮しないため）.
  * @param[in] image  元の画像.
