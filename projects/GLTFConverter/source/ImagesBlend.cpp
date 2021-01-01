@@ -1068,9 +1068,9 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 					}
 				}
 
-				// 「アルファ乗算済み」でアルファ値を使用しない場合.
+				// 「アルファ透明」でない場合.
 				if (mappingType == sxsdk::enums::diffuse_mapping) {
-					if (channelMix == sxsdk::enums::mapping_premultiplied_alpha_mode) {
+					if (channelMix != sxsdk::enums::mapping_transparent_alpha_mode) {
 						for (int x = 0; x < newWidth; ++x) rgbaLine[x].alpha = 1.0f;
 					}
 				}

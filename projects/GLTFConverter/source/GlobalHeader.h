@@ -78,7 +78,8 @@ namespace GLTFConverter {
 	 * エンジンの種類.
 	 */
 	enum engine_type {
-		engine_unity = 0,					// Unity.
+		engine_unity = 0,					// Unity(Standard Shader).
+		engine_unity_hdrp,					// Unity (HDRP).
 		engine_unigine,						// Unigine.
 	};
 }

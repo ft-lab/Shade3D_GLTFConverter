@@ -1370,33 +1370,35 @@ namespace {
 			return;
 		}
 
-		// Occlusionの出力.
+		// Occlusionの出力 (Unity(Standard Shader)/Unigineの場合).
 		if (imageMask & CImageData::gltf_image_mask_occlusion) {
-			const std::string fName = baseFileName + std::string("_occlusion.png");
-			const int width  = image->get_size().x;
-			const int height = image->get_size().y;
-			std::vector<sxsdk::rgba_class> colLine, colLine2;
-			colLine.resize(width);
-			colLine2.resize(width);
+			if (exportParam.engineType == GLTFConverter::engine_unity || exportParam.engineType == GLTFConverter::engine_unigine) {
+				const std::string fName = baseFileName + std::string("_occlusion.png");
+				const int width  = image->get_size().x;
+				const int height = image->get_size().y;
+				std::vector<sxsdk::rgba_class> colLine, colLine2;
+				colLine.resize(width);
+				colLine2.resize(width);
 
-			try {
-				const sx::vec<int,2> iSize(width, height);
-				compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
-				float vR;
-				for (int y = 0; y < height; ++y) {
-					image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
-					for (int x = 0; x < width; ++x) {
-						vR = colLine[x].red;
-						colLine2[x] = sxsdk::rgba_class(vR, vR, vR, 1.0f);
+				try {
+					const sx::vec<int,2> iSize(width, height);
+					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
+					float vR;
+					for (int y = 0; y < height; ++y) {
+						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
+						for (int x = 0; x < width; ++x) {
+							vR = colLine[x].red;
+							colLine2[x] = sxsdk::rgba_class(vR, vR, vR, 1.0f);
+						}
+						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
 					}
-					image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
-				}
-				image2->save(fName.c_str());
-			} catch (...) { }
+					image2->save(fName.c_str());
+				} catch (...) { }
+			}
 		}
 
 		// Roughness-Metallicの場合.
-		// glTFでは、[G]にRoughness、[B]にMetallicが入っている.
+		// glTFでは、[R]にOcclusion、[G]にRoughness、[B]にMetallicが入っている.
 		if ((imageMask & CImageData::gltf_image_mask_roughness) && (imageMask & CImageData::gltf_image_mask_metallic)) {
 			const int width  = image->get_size().x;
 			const int height = image->get_size().y;
@@ -1421,23 +1423,35 @@ namespace {
 					image2->save(fName.c_str());
 				} catch (...) { }
 
-			} else if (exportParam.engineType == GLTFConverter::engine_unity) {
+			} else if (exportParam.engineType == GLTFConverter::engine_unity || exportParam.engineType == GLTFConverter::engine_unity_hdrp) {
 				// Unityの場合.
-				// R: Metallic / A : Smoothness.
+				//   Standard Shader ==> RGB : Metallic / A : Smoothness.
+				//   HDRP            ==> R: Metallic / G : Occlusion / B : Detail / A : Smoothness.
 				try {
+					float vR, vG, vB;
 					const sx::vec<int,2> iSize(width, height);
 					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
 					for (int y = 0; y < height; ++y) {
 						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
-						for (int x = 0; x < width; ++x) {
-							colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].blue, colLine[x].blue, 1.0f - colLine[x].green);
+						if (exportParam.engineType == GLTFConverter::engine_unity_hdrp) {
+							for (int x = 0; x < width; ++x) {
+								vB = colLine[x].blue;		// Metallic.
+								vG = colLine[x].green;		// Roughness.
+								vR = (imageMask & CImageData::gltf_image_mask_occlusion) ? colLine[x].red : 1.0f;		// Occlusion.
+								colLine2[x] = sxsdk::rgba_class(vB, vR, 1.0f, 1.0f - vG);
+							}
+						} else {
+							for (int x = 0; x < width; ++x) {
+								vB = colLine[x].blue;		// Metallic.
+								vG = colLine[x].green;		// Roughness.
+								colLine2[x] = sxsdk::rgba_class(vB, vB, vB, 1.0f - vG);
+							}
 						}
 						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
 					}
-					const std::string fName = baseFileName + std::string("_metallicSmoothness.png");
+					const std::string fName = baseFileName + (((imageMask & CImageData::gltf_image_mask_occlusion) && exportParam.engineType == GLTFConverter::engine_unity_hdrp) ? std::string("_metallicOcclusionSmoothness.png") : std::string("_metallicSmoothness.png"));
 					image2->save(fName.c_str());
 				} catch (...) { }
-
 			}
 		}
 	}
