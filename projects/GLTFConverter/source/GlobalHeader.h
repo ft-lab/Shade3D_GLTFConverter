@@ -143,7 +143,9 @@ public:
 	bool dracoCompression;									// Draco圧縮.
 	bool shareVerticesMesh;									// Mesh内のPrimitiveの頂点情報を共有.
 	bool convertColorToLinear;								// 色をリニアに変換.
+
 	bool bakeWithoutProcessingTextures;						// テクスチャを加工せずにベイク.
+	bool separateOpacityAndTransmission;					// 「不透明(Opacity)」と「透明(Transmission)」を分ける.
 
 	std::string assetExtrasTitle;							// タイトル.
 	std::string assetExtrasAuthor;							// 作成者.
@@ -158,6 +160,26 @@ public:
 		clear();
 	}
 
+	void clone (const CExportDlgParam& v) {
+		this->outputTexture         = v.outputTexture;
+		this->maxTextureSize        = v.maxTextureSize;
+		this->exportFileFormat      = v.exportFileFormat;
+		this->outputBonesAndSkins   = v.outputBonesAndSkins;
+		this->outputVertexColor     = v.outputVertexColor;
+		this->outputAnimation       = v.outputAnimation;
+		this->dracoCompression      = v.dracoCompression;
+		this->shareVerticesMesh     = v.shareVerticesMesh;
+		this->convertColorToLinear  = v.convertColorToLinear;
+		this->bakeWithoutProcessingTextures  = v.bakeWithoutProcessingTextures;
+		this->separateOpacityAndTransmission = v.separateOpacityAndTransmission;
+		this->assetExtrasTitle   = v.assetExtrasTitle;
+		this->assetExtrasAuthor  = v.assetExtrasAuthor;
+		this->assetExtrasLicense = v.assetExtrasLicense;
+		this->assetExtrasSource  = v.assetExtrasSource;
+		this->outputAdditionalTextures = v.outputAdditionalTextures;
+		this->engineType               = v.engineType;
+	}
+
 	void clear () {
 		exportFileFormat = 0;
 		outputTexture       = GLTFConverter::export_texture_name;
@@ -169,7 +191,9 @@ public:
 		dracoCompression    = false;
 		shareVerticesMesh   = true;
 		convertColorToLinear = true;
+
 		bakeWithoutProcessingTextures = false;
+		separateOpacityAndTransmission = false;
 
 		assetExtrasTitle   = "";
 		assetExtrasAuthor  = "";

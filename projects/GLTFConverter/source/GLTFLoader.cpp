@@ -1085,8 +1085,8 @@ namespace {
 			dstMaterialData.doubleSided = material.doubleSided;
 			{
 				Color4 col = material.metallicRoughness.baseColorFactor;
-				dstMaterialData.baseColorFactor = sxsdk::rgb_class(col.r, col.g, col.b);
-				dstMaterialData.transparency = 1.0f - col.a;		// 透明度は、BaseColorのAlpha要素を採用.
+				dstMaterialData.baseColorFactor  = sxsdk::rgb_class(col.r, col.g, col.b);
+				dstMaterialData.baseColorOpacity = col.a;
 			}
 			{
 				Color3 col = material.emissiveFactor;

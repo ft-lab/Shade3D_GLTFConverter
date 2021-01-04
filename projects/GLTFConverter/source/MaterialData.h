@@ -59,7 +59,7 @@ public:
 	sxsdk::vec2 textureTransformOffset;
 	sxsdk::vec2 textureTransformScale;
 
-	float transparency;					// Shade3Dでの透明度.
+	float baseColorOpacity;					// BaseColorでの不透明度.
 
 	// KHR_materials_pbrSpecularGlossiness使用時の情報.
 	bool pbrSpecularGlossiness_use;								// KHR_materials_pbrSpecularGlossinessを使用しているか.
@@ -68,6 +68,23 @@ public:
 	int pbrSpecularGlossiness_diffuseImageIndex;				// diffuseの画像番号.
 	int pbrSpecularGlossiness_specularGlossinessImageIndex;		// specularの画像番号.
 	float pbrSpecularGlossiness_glossinessFactor;				// glossiness.
+
+	// KHR_materials_clearcoat.
+	float clearcoatFactor;
+	float clearcoatRoughnessFactor;
+	int clearcoatTextureIndex;				// 未使用.
+	int clearcoatRoughnessIndex;			// 未使用.
+	int clearcoatNormalIndex;				// 未使用.
+
+	// KHR_materials_sheen.
+	sxsdk::rgb_class sheenColorFactor;
+	int sheenColorTextureIndex;			// 未使用.
+	float sheenRoughnessFactor;
+	int sheenRoughnessTextureIndex;		// 未使用.
+
+	// KHR_materials_transmission.
+	float transmissionFactor;
+	int transmissionTextureIndex;
 
 public:
 	CMaterialData ();
@@ -111,7 +128,7 @@ public:
 		this->textureTransformOffset = v.textureTransformOffset;
 		this->textureTransformScale  = v.textureTransformScale;
 
-		this->transparency = v.transparency;
+		this->baseColorOpacity = v.baseColorOpacity;
 
 		this->pbrSpecularGlossiness_use                = v.pbrSpecularGlossiness_use;
 		this->pbrSpecularGlossiness_diffuseFactor      = v.pbrSpecularGlossiness_diffuseFactor;
@@ -119,6 +136,20 @@ public:
 		this->pbrSpecularGlossiness_diffuseImageIndex  = v.pbrSpecularGlossiness_diffuseImageIndex;
 		this->pbrSpecularGlossiness_specularGlossinessImageIndex = v.pbrSpecularGlossiness_specularGlossinessImageIndex;
 		this->pbrSpecularGlossiness_glossinessFactor   = v.pbrSpecularGlossiness_glossinessFactor;
+
+		this->clearcoatFactor          = v.clearcoatFactor;
+		this->clearcoatRoughnessFactor = v.clearcoatRoughnessFactor;
+		this->clearcoatTextureIndex    = v.clearcoatTextureIndex;
+		this->clearcoatRoughnessIndex  = v.clearcoatRoughnessIndex;
+		this->clearcoatNormalIndex     = v.clearcoatNormalIndex;
+
+		this->sheenColorFactor           = v.sheenColorFactor;
+		this->sheenColorTextureIndex     = v.sheenColorTextureIndex;
+		this->sheenRoughnessFactor       = v.sheenRoughnessFactor;
+		this->sheenRoughnessTextureIndex = v.sheenRoughnessTextureIndex;
+
+		this->transmissionFactor         = v.transmissionFactor;
+		this->transmissionTextureIndex   = v.transmissionTextureIndex;
 
 		return (*this);
     }

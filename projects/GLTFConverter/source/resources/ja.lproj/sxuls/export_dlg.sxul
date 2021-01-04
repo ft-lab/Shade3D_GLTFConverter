@@ -22,7 +22,11 @@
 	<bool id="104" label="アニメーションを出力" />
 	<bool id="105" label="Draco圧縮" />
 	<bool id="108" label="色をリニアに変換" />
-	<bool id="109" label="テクスチャを加工せずにベイク" />
+
+	<group label="マテリアル">
+		<bool id="501" label="テクスチャを加工せずにベイク" />
+		<bool id="502" label="「不透明(Opacity)」と「透明(Transmission)」を分ける" />
+	</group>
 
 	<group label="追加テクスチャ出力">
 		<bool id="401" label="エンジン別にテクスチャを別途出力" />

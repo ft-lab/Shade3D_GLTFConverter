@@ -183,6 +183,9 @@ void StreamCtrl::saveExportDialogParam (sxsdk::shade_interface& shade, const CEx
 
 			iDat = (int)data.engineType;
 			stream->write_int(iDat);
+
+			iDat = data.separateOpacityAndTransmission ? 1 : 0;
+			stream->write_int(iDat);
 		}
 
 	} catch (...) { }
@@ -281,6 +284,9 @@ void StreamCtrl::loadExportDialogParam (sxsdk::shade_interface& shade, CExportDl
 
 			stream->read_int(iDat);
 			data.engineType = (GLTFConverter::engine_type)iDat;
+
+			stream->read_int(iDat);
+			data.separateOpacityAndTransmission = iDat ? true : false;
 		}
 
 	} catch (...) { }

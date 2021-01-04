@@ -21,7 +21,7 @@ private:
 	sxsdk::scene_interface* m_pScene;
 	sxsdk::surface_class* m_surface;
 
-	bool m_bakeConvPBRMaterial;							// PBRマテリアルとして加工するか.
+	CExportDlgParam m_exportParam;						// glTFエクスポート時の情報.
 
 	// sxsdk::image_interfaceで確保した一時イメージは、明示的にReleaseで解放する必要がある.
 	sxsdk::image_interface* m_diffuseImage;				// Diffuseの画像.
@@ -169,7 +169,7 @@ public:
 	 * 個々のイメージを合成.
 	 * @return ベイクの結果.
 	 */
-	IMAGE_BAKE_RESULT blendImages (const bool bakeConvPBRMaterial);
+	IMAGE_BAKE_RESULT blendImages (const CExportDlgParam& exportParam);
 
 	/**
 	 * 各種イメージを持つか (単一または複数).

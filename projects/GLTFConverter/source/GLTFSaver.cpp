@@ -135,6 +135,61 @@ namespace {
 	}
 
 	/**
+	 * KHR_materials_transmissionの指定を文字列化.
+	 */
+	std::string getMaterialTransmissionStr (const CMaterialData& materialD) {
+		std::string str = "";
+
+		str += "\"transmissionFactor\": " + std::to_string(materialD.transmissionFactor);
+		if (materialD.transmissionTextureIndex >= 0) {
+			str += std::string(",\n");
+			str += "\"transmissionTexture\": " + std::to_string(materialD.transmissionTextureIndex);
+
+		}
+		str += std::string("\n");
+
+		str = std::string("{\n") + str + std::string("}\n");
+
+		return str;
+	}
+
+	/**
+	 * KHR_materials_sheenの指定を文字列化.
+	 */
+	std::string getMaterialSheenStr (const CMaterialData& materialD) {
+		std::string str = "";
+
+		str += "\"sheenColorFactor\": [" + std::to_string(materialD.sheenColorFactor.red) + std::string(", ") + std::to_string(materialD.sheenColorFactor.green) + std::string(", ") + std::to_string(materialD.sheenColorFactor.blue) + std::string("]");
+		{
+			str += std::string(",\n");
+			str += "\"sheenRoughnessFactor\": " + std::to_string(materialD.sheenRoughnessFactor);
+		}
+		str += std::string("\n");
+
+		str = std::string("{\n") + str + std::string("}\n");
+
+		return str;
+	}
+
+	/**
+	 * KHR_materials_clearcoatの指定を文字列化.
+	 */
+	std::string getMaterialClearcoatStr (const CMaterialData& materialD) {
+		std::string str = "";
+
+		str += "\"clearcoatFactor\": " + std::to_string(materialD.clearcoatFactor);
+		{
+			str += std::string(",\n");
+			str += "\"clearcoatRoughnessFactor\": " + std::to_string(materialD.clearcoatRoughnessFactor);
+		}
+		str += std::string("\n");
+
+		str = std::string("{\n") + str + std::string("}\n");
+
+		return str;
+	}
+
+	/**
 	 * マテリアル情報を指定.
 	 */
 	void setMaterialsData (Document& gltfDoc,  const CSceneData* sceneData) {
@@ -162,12 +217,51 @@ namespace {
 			}
 		}
 
+		// transmissionの指定があるかチェック.
+		bool transmissionMaterial = false;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
+			if (materialD.transmissionFactor > 0.0f) {
+				transmissionMaterial = true;
+				break;
+			}
+		}
+
+		// sheenの指定があるかチェック.
+		bool sheenMaterial = false;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
+			if (!MathUtil::isZero(materialD.sheenColorFactor)) {
+				sheenMaterial = true;
+				break;
+			}
+		}
+
+		// clearcoatの指定があるかチェック.
+		bool clearcoatMaterial = false;
+		for (size_t i = 0; i < mCou; ++i) {
+			const CMaterialData& materialD = sceneData->materials[i];
+			if (materialD.clearcoatFactor > 0.0f) {
+				clearcoatMaterial = true;
+				break;
+			}
+		}
+
 		// 拡張として使用する要素名を追加.
 		if (repeatTex) {
 			gltfDoc.extensionsUsed.insert("KHR_texture_transform");
 		}
 		if (unlitMaterial) {
 			gltfDoc.extensionsUsed.insert("KHR_materials_unlit");
+		}
+		if (transmissionMaterial) {
+			gltfDoc.extensionsUsed.insert("KHR_materials_transmission");
+		}
+		if (sheenMaterial) {
+			gltfDoc.extensionsUsed.insert("KHR_materials_sheen");
+		}
+		if (clearcoatMaterial) {
+			gltfDoc.extensionsUsed.insert("KHR_materials_clearcoat");
 		}
 
 		for (size_t i = 0; i < mCou; ++i) {
@@ -250,8 +344,8 @@ namespace {
 					material.alphaMode   = (AlphaMode)3;		// ALPHA_MASK.
 					material.alphaCutoff = materialD.alphaCutOff;
 				}
-				// 透明度をBaseColorのAlphaに反映.
-				material.metallicRoughness.baseColorFactor.a = 1.0f - materialD.transparency;
+				// 不透明度(Opacity)をBaseColorのAlphaに反映.
+				material.metallicRoughness.baseColorFactor.a = materialD.baseColorOpacity;
 			}
 
 			// Unlitの指定.
@@ -260,6 +354,24 @@ namespace {
 				material.metallicRoughness.metallicFactor  = 0.0f;
 				material.metallicRoughness.roughnessFactor = 1.0f;
 				material.extensions["KHR_materials_unlit"] = "{ }";
+			}
+
+			// transmissionの指定.
+			if (materialD.transmissionFactor > 0.0f) {
+				const std::string str = getMaterialTransmissionStr(materialD);
+				material.extensions["KHR_materials_transmission"] = str;
+			}
+
+			// sheenの指定.
+			if (!MathUtil::isZero(materialD.sheenColorFactor)) {
+				const std::string str = getMaterialSheenStr(materialD);
+				material.extensions["KHR_materials_sheen"] = str;
+			}
+
+			// clearcoatの指定.
+			if (materialD.clearcoatFactor > 0.0f) {
+				const std::string str = getMaterialClearcoatStr(materialD);
+				material.extensions["KHR_materials_clearcoat"] = str;
 			}
 
 			gltfDoc.materials.Append(material);

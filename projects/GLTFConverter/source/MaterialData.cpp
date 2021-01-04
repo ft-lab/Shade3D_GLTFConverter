@@ -48,7 +48,7 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 	this->textureTransformOffset = v.textureTransformOffset;
 	this->textureTransformScale  = v.textureTransformScale;
 
-	this->transparency = v.transparency;
+	this->baseColorOpacity = v.baseColorOpacity;
 
 	this->pbrSpecularGlossiness_use                = v.pbrSpecularGlossiness_use;
 	this->pbrSpecularGlossiness_diffuseFactor      = v.pbrSpecularGlossiness_diffuseFactor;
@@ -56,6 +56,20 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 	this->pbrSpecularGlossiness_diffuseImageIndex  = v.pbrSpecularGlossiness_diffuseImageIndex;
 	this->pbrSpecularGlossiness_specularGlossinessImageIndex = v.pbrSpecularGlossiness_specularGlossinessImageIndex;
 	this->pbrSpecularGlossiness_glossinessFactor   = v.pbrSpecularGlossiness_glossinessFactor;
+
+	this->clearcoatFactor          = v.clearcoatFactor;
+	this->clearcoatRoughnessFactor = v.clearcoatRoughnessFactor;
+	this->clearcoatTextureIndex    = v.clearcoatTextureIndex;
+	this->clearcoatRoughnessIndex  = v.clearcoatRoughnessIndex;
+	this->clearcoatNormalIndex     = v.clearcoatNormalIndex;
+
+	this->sheenColorFactor           = v.sheenColorFactor;
+	this->sheenColorTextureIndex     = v.sheenColorTextureIndex;
+	this->sheenRoughnessFactor       = v.sheenRoughnessFactor;
+	this->sheenRoughnessTextureIndex = v.sheenRoughnessTextureIndex;
+
+	this->transmissionFactor         = v.transmissionFactor;
+	this->transmissionTextureIndex   = v.transmissionTextureIndex;
 }
 
 CMaterialData::~CMaterialData ()
@@ -100,7 +114,7 @@ void CMaterialData::clear ()
 	textureTransformOffset = sxsdk::vec2(0, 0);
 	textureTransformScale  = sxsdk::vec2(1, 1);
 
-	transparency = 0.0f;
+	baseColorOpacity = 1.0f;
 
 	pbrSpecularGlossiness_use = false;
 	pbrSpecularGlossiness_diffuseFactor  = sxsdk::rgba_class(1, 1, 1 ,1);
@@ -108,6 +122,20 @@ void CMaterialData::clear ()
 	pbrSpecularGlossiness_diffuseImageIndex  = -1;
 	pbrSpecularGlossiness_specularGlossinessImageIndex = -1;
 	pbrSpecularGlossiness_glossinessFactor   = 1.0f;
+
+	clearcoatFactor = 0.0f;
+	clearcoatRoughnessFactor = 0.0f;
+	clearcoatTextureIndex = -1;
+	clearcoatRoughnessIndex = -1;
+	clearcoatNormalIndex = -1;
+
+	sheenColorFactor = sxsdk::rgb_class(0, 0, 0);
+	sheenColorTextureIndex = -1;
+	sheenRoughnessFactor = 0.0f;
+	sheenRoughnessTextureIndex = -1;
+
+	transmissionFactor = 0.0f;
+	transmissionTextureIndex = -1;
 }
 
 /**
@@ -153,7 +181,21 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 	if ((this->metallicRoughnessTexScale) != v.metallicRoughnessTexScale) return false;
 	if ((this->occlusionTexScale)         != v.occlusionTexScale) return false;
 
-	if (!MathUtil::isZero((this->transparency) - v.transparency)) return false;
+	if (!MathUtil::isZero((this->baseColorOpacity) - v.baseColorOpacity)) return false;
+
+	if (!MathUtil::isZero((this->clearcoatFactor) - (v.clearcoatFactor))) return false;
+	if (!MathUtil::isZero((this->clearcoatRoughnessFactor) - (v.clearcoatRoughnessFactor))) return false;
+	if ((this->clearcoatTextureIndex) != (v.clearcoatTextureIndex)) return false;
+	if ((this->clearcoatRoughnessIndex) != (v.clearcoatRoughnessIndex)) return false;
+	if ((this->clearcoatNormalIndex) != (v.clearcoatNormalIndex)) return false;
+
+	if (!MathUtil::isZero((this->sheenColorFactor) - (v.sheenColorFactor))) return false;
+	if ((this->sheenColorTextureIndex) != (v.sheenColorTextureIndex)) return false;
+	if (!MathUtil::isZero((this->sheenRoughnessFactor) - (v.sheenRoughnessFactor))) return false;
+	if ((this->sheenRoughnessTextureIndex) != (v.sheenRoughnessTextureIndex)) return false;
+
+	if (!MathUtil::isZero((this->transmissionFactor) - (v.transmissionFactor))) return false;
+	if ((this->transmissionTextureIndex) != (v.transmissionTextureIndex)) return false;
 
 	return true;
 }

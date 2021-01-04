@@ -758,7 +758,7 @@ void CGLTFImporterInterface::m_createGLTFMaterials (sxsdk::scene_interface *scen
 			}
 
 			bool needAlpha = false;
-			const float transparency = alphaBlend ? materialD.transparency : 0.0f;
+			const float transparency = alphaBlend ? (1.0f - materialD.baseColorOpacity) : 0.0f;
 			surface->set_transparency(transparency);
 
 			// 陰影付けなしの指定.
