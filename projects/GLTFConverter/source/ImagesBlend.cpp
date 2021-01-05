@@ -1247,6 +1247,152 @@ bool CImagesBlend::m_blendImages (const sxsdk::enums::mapping_type mappingType, 
 }
 
 /**
+ * 「不透明」と「透明」のテクスチャを分離もしくは合成して再格納.
+ * @return 不透明度のテクスチャを格納.
+ */
+sxsdk::image_interface* CImagesBlend::m_storeOpasicyTransparencyTexture ()
+{
+	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
+	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
+	sxsdk::image_interface* dstOpacityImage = NULL;
+	if (m_exportParam.separateOpacityAndTransmission) {
+		// 「「不透明(Opacity)」と「透明(Transmission)」を分ける」がOnの場合.
+		if (m_opacityMaskImage) {
+			const int width  = m_opacityMaskImage->get_size().x;
+			const int height = m_opacityMaskImage->get_size().y;
+
+			std::vector<sxsdk::rgba_class> col1A;
+			col1A.resize(width);
+
+			dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
+			for (int y = 0; y < height; ++y) {
+				m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+				dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+			}
+		}
+
+	} else {
+		if (m_transparencyImage || m_opacityMaskImage) {
+			if (m_transparencyImage) m_transparency = 0.0f;
+			if (m_transparencyImage) {
+				const int width  = m_transparencyImage->get_size().x;
+				const int height = m_transparencyImage->get_size().y;
+
+				std::vector<sxsdk::rgba_class> col1A;
+				col1A.resize(width);
+
+				// transparencyを逆転して、Opacityにする.
+				dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
+				for (int y = 0; y < height; ++y) {
+					m_transparencyImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+					for (int x = 0; x < width; ++x) {
+						const float fV = 1.0f - col1A[x].red;
+						col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
+					}
+					dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+				}
+			} else if (m_opacityMaskImage) {
+				const int width  = m_opacityMaskImage->get_size().x;
+				const int height = m_opacityMaskImage->get_size().y;
+
+				std::vector<sxsdk::rgba_class> col1A;
+				col1A.resize(width);
+
+				dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
+				for (int y = 0; y < height; ++y) {
+					m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+					dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+				}
+			}
+
+			// transparencyとopacityMaskを合成 ==> dstOpacityImageに出力.
+			if (dstOpacityImage) {
+				if (m_transparencyImage && m_opacityMaskImage) {
+					if (m_transparencyTexCoord == m_opacityMaskTexCoord && m_transparencyRepeat == m_opacityMaskRepeat) {
+						const int width  = dstOpacityImage->get_size().x;
+						const int height = dstOpacityImage->get_size().y;
+						const int width2  = m_opacityMaskImage->get_size().x;
+						const int height2 = m_opacityMaskImage->get_size().y;
+
+						std::vector<sxsdk::rgba_class> col1A, col2A;
+						col1A.resize(width);
+						col2A.resize(width);
+						if (width != width2 || height != height2) {
+							sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_opacityMaskImage, sx::vec<int,2>(width, height));
+							IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
+							m_opacityMaskImage = image;
+						}
+						for (int y = 0; y < height; ++y) {
+							dstOpacityImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+							m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
+
+							for (int x = 0; x < width; ++x) {
+								const float fV = col1A[x].red * col2A[x].red;
+								col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
+							}
+							dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
+						}
+					}
+				}
+			}
+		}
+	}
+	return dstOpacityImage;
+}
+
+/**
+ * 透明度テクスチャがある場合に、BaseColorと透明色を考慮してglTF用に補正する.
+ */
+void CImagesBlend::m_convTransparencyData ()
+{
+	if (!m_exportParam.separateOpacityAndTransmission) return;
+	if (m_transparency <= 0.0f) return;
+	const float trans2 = 1.0f - m_transparency;
+
+	const sxsdk::rgb_class transCol = m_surface->get_transparency_color();
+	if (!m_transparencyImage) {
+		// DiffuseColorは、透明の色と合成される.
+		m_diffuseColor = transCol * m_transparency + m_diffuseColor * trans2;
+		return;
+	}
+
+	const int transWid = m_transparencyImage->get_size().x;
+	const int transHei = m_transparencyImage->get_size().y;
+
+	// 透明度テクスチャの値と透明色、拡散反射色より、拡散反射テクスチャを作成.
+	if (!m_diffuseImage) {
+		m_diffuseImage = m_pScene->create_image_interface(sx::vec<int,2>(transWid, transHei));
+
+		std::vector<sxsdk::rgba_class> lineCols;
+		lineCols.resize(transWid);
+		float vR;
+		for (int y = 0; y < transHei; ++y) {
+			m_transparencyImage->get_pixels_rgba_float(0, y, transWid, 1, &(lineCols[0]));
+			for (int x = 0; x < transWid; ++x) {
+				vR = lineCols[x].red * m_transparency;
+				lineCols[x].red   = transCol.red   * vR + m_diffuseColor.red   * (1.0f - vR);
+				lineCols[x].green = transCol.green * vR + m_diffuseColor.green * (1.0f - vR);
+				lineCols[x].blue  = transCol.blue  * vR + m_diffuseColor.blue  * (1.0f - vR);
+				lineCols[x].alpha = 1.0f;
+			}
+			m_diffuseImage->set_pixels_rgba_float(0, y, transWid, 1, &(lineCols[0]));
+		}
+		m_diffuseRepeat   = m_transparencyRepeat;
+		m_diffuseTexCoord = m_transparencyTexCoord;
+
+		m_diffuseColor = sxsdk::rgb_class(1, 1, 1);
+		m_diffuseTexturesCount = 1;
+		m_hasDiffuseImage   = true;
+		m_diffuseAlphaTrans = false;
+		m_useDiffuseAlpha   = false;
+		return;
+	}
+
+	// 透明テクスチャと拡散反射テクスチャが存在する場合、.
+
+}
+
+/**
  * diffuse/roughness/metallicのテクスチャを、Shade3Dの状態からPBRマテリアルに変換.
  */
 void CImagesBlend::m_convShade3DToPBRMaterial ()
@@ -1293,73 +1439,8 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 		}
 	}
 
-	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
-	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
-	sxsdk::image_interface* dstOpacityImage = NULL;
-	if (m_transparencyImage || m_opacityMaskImage) {
-		if (m_transparencyImage) m_transparency = 0.0f;
-		if (m_transparencyImage) {
-			const int width  = m_transparencyImage->get_size().x;
-			const int height = m_transparencyImage->get_size().y;
-
-			std::vector<sxsdk::rgba_class> col1A;
-			col1A.resize(width);
-
-			// transparencyを逆転して、Opacityにする.
-			dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-			for (int y = 0; y < height; ++y) {
-				m_transparencyImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-				for (int x = 0; x < width; ++x) {
-					const float fV = 1.0f - col1A[x].red;
-					col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
-				}
-				dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-			}
-		} else if (m_opacityMaskImage) {
-			const int width  = m_opacityMaskImage->get_size().x;
-			const int height = m_opacityMaskImage->get_size().y;
-
-			std::vector<sxsdk::rgba_class> col1A;
-			col1A.resize(width);
-
-			dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-			for (int y = 0; y < height; ++y) {
-				m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-				dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-			}
-		}
-
-		// transparencyとopacityMaskを合成 ==> dstOpacityImageに出力.
-		if (dstOpacityImage) {
-			if (m_transparencyImage && m_opacityMaskImage) {
-				if (m_transparencyTexCoord == m_opacityMaskTexCoord && m_transparencyRepeat == m_opacityMaskRepeat) {
-					const int width  = dstOpacityImage->get_size().x;
-					const int height = dstOpacityImage->get_size().y;
-					const int width2  = m_opacityMaskImage->get_size().x;
-					const int height2 = m_opacityMaskImage->get_size().y;
-
-					std::vector<sxsdk::rgba_class> col1A, col2A;
-					col1A.resize(width);
-					col2A.resize(width);
-					if (width != width2 || height != height2) {
-						sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_opacityMaskImage, sx::vec<int,2>(width, height));
-						IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
-						m_opacityMaskImage = image;
-					}
-					for (int y = 0; y < height; ++y) {
-						dstOpacityImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-						m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
-
-						for (int x = 0; x < width; ++x) {
-							const float fV = col1A[x].red * col2A[x].red;
-							col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
-						}
-						dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-					}
-				}
-			}
-		}
-	}
+	// 「不透明」と「透明」のテクスチャを分離もしくは合成して再格納.
+	sxsdk::image_interface* dstOpacityImage = m_storeOpasicyTransparencyTexture();
 
 	// DiffuseとOpacityの両方が存在する場合、DiffuseのA要素としてOpacityを格納.
 	if (m_diffuseImage && dstOpacityImage) {
@@ -1709,22 +1790,27 @@ void CImagesBlend::m_convShade3DToPBRMaterial ()
 	}
 
 	// OpacityMaskにdstOpacityImageの内容を入れる.
-	if (dstOpacityImage) {
-		if (m_transparencyImage) {
-			IMAGE_INTERFACE_RELEASE(m_transparencyImage);
-			m_hasTransparencyImage = false;
+	if (!m_exportParam.separateOpacityAndTransmission) {
+		if (dstOpacityImage) {
+			if (m_transparencyImage) {
+				IMAGE_INTERFACE_RELEASE(m_transparencyImage);
+				m_hasTransparencyImage = false;
+			}
+			IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
+			m_opacityMaskImage = dstOpacityImage;
+			m_hasOpacityMaskImage = true;
+			dstOpacityImage = NULL;
 		}
-		IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
-		m_opacityMaskImage = dstOpacityImage;
-		m_hasOpacityMaskImage = true;
-		dstOpacityImage = NULL;
-	}
 
-	if (m_diffuseAlphaTrans) {
-		IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
-		m_hasOpacityMaskImage = false;
+		if (m_diffuseAlphaTrans) {
+			IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
+			m_hasOpacityMaskImage = false;
+		}
 	}
 	IMAGE_INTERFACE_RELEASE(dstOpacityImage);
+
+	// 透明度による変換処理.
+	m_convTransparencyData();
 
 	// Metallic/Roughnessテクスチャのパック処理.
 	m_packOcclusionRoughnessMetallicImage();
@@ -1747,91 +1833,8 @@ void CImagesBlend::m_noBakeShade3DToPBRMaterial ()
 	m_emissiveColor = (m_surface->get_glow_color()) * (m_surface->get_glow());
 	if (m_glowImage) m_emissiveColor = sxsdk::rgb_class(1, 1, 1);
 
-	// TransparencyとOpacityMaskを持つ場合、合成してdstOpacityImageに入れる.
-	// 最終的にTransparencyテクスチャは削除し、m_opacityMaskImageに格納される.
-	sxsdk::image_interface* dstOpacityImage = NULL;
-	if (m_exportParam.separateOpacityAndTransmission) {
-		// 「「不透明(Opacity)」と「透明(Transmission)」を分ける」がOnの場合.
-		if (m_opacityMaskImage) {
-			const int width  = m_opacityMaskImage->get_size().x;
-			const int height = m_opacityMaskImage->get_size().y;
-
-			std::vector<sxsdk::rgba_class> col1A;
-			col1A.resize(width);
-
-			dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-			for (int y = 0; y < height; ++y) {
-				m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-				dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-			}
-		}
-
-	} else {
-		if (m_transparencyImage || m_opacityMaskImage) {
-			if (m_transparencyImage) m_transparency = 0.0f;
-			if (m_transparencyImage) {
-				const int width  = m_transparencyImage->get_size().x;
-				const int height = m_transparencyImage->get_size().y;
-
-				std::vector<sxsdk::rgba_class> col1A;
-				col1A.resize(width);
-
-				// transparencyを逆転して、Opacityにする.
-				dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-				for (int y = 0; y < height; ++y) {
-					m_transparencyImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-					for (int x = 0; x < width; ++x) {
-						const float fV = 1.0f - col1A[x].red;
-						col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
-					}
-					dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-				}
-			} else if (m_opacityMaskImage) {
-				const int width  = m_opacityMaskImage->get_size().x;
-				const int height = m_opacityMaskImage->get_size().y;
-
-				std::vector<sxsdk::rgba_class> col1A;
-				col1A.resize(width);
-
-				dstOpacityImage = m_pScene->create_image_interface(sx::vec<int,2>(width, height));
-				for (int y = 0; y < height; ++y) {
-					m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-					dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-				}
-			}
-
-			// transparencyとopacityMaskを合成 ==> dstOpacityImageに出力.
-			if (dstOpacityImage) {
-				if (m_transparencyImage && m_opacityMaskImage) {
-					if (m_transparencyTexCoord == m_opacityMaskTexCoord && m_transparencyRepeat == m_opacityMaskRepeat) {
-						const int width  = dstOpacityImage->get_size().x;
-						const int height = dstOpacityImage->get_size().y;
-						const int width2  = m_opacityMaskImage->get_size().x;
-						const int height2 = m_opacityMaskImage->get_size().y;
-
-						std::vector<sxsdk::rgba_class> col1A, col2A;
-						col1A.resize(width);
-						col2A.resize(width);
-						if (width != width2 || height != height2) {
-							sxsdk::image_interface* image = Shade3DUtil::resizeImageWithAlphaNotCom(m_pScene, m_opacityMaskImage, sx::vec<int,2>(width, height));
-							IMAGE_INTERFACE_RELEASE(m_opacityMaskImage);
-							m_opacityMaskImage = image;
-						}
-						for (int y = 0; y < height; ++y) {
-							dstOpacityImage->get_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-							m_opacityMaskImage->get_pixels_rgba_float(0, y, width, 1, &(col2A[0]));
-
-							for (int x = 0; x < width; ++x) {
-								const float fV = col1A[x].red * col2A[x].red;
-								col1A[x] = sxsdk::rgba_class(fV, fV, fV, 1.0f);
-							}
-							dstOpacityImage->set_pixels_rgba_float(0, y, width, 1, &(col1A[0]));
-						}
-					}
-				}
-			}
-		}
-	}
+	// 「不透明」と「透明」のテクスチャを分離もしくは合成して再格納.
+	sxsdk::image_interface* dstOpacityImage = m_storeOpasicyTransparencyTexture();
 
 	// DiffuseとOpacityの両方が存在する場合、DiffuseのA要素としてOpacityを格納.
 	if (m_diffuseImage && dstOpacityImage) {
@@ -1905,6 +1908,9 @@ void CImagesBlend::m_noBakeShade3DToPBRMaterial ()
 		}
 	}
 	IMAGE_INTERFACE_RELEASE(dstOpacityImage);
+
+	// 透明度による変換処理.
+	m_convTransparencyData();
 
 	// Metallic/Roughnessテクスチャのパック処理.
 	m_packOcclusionRoughnessMetallicImage();

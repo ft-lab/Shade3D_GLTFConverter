@@ -143,8 +143,25 @@ namespace {
 		str += "\"transmissionFactor\": " + std::to_string(materialD.transmissionFactor);
 		if (materialD.transmissionTextureIndex >= 0) {
 			str += std::string(",\n");
-			str += "\"transmissionTexture\": " + std::to_string(materialD.transmissionTextureIndex);
+			str += "\"transmissionTexture\": {\n";
+			str += "  \"index\": " + std::to_string(materialD.transmissionTextureIndex);
 
+			if (materialD.transmissionTexCoord > 0) {
+				str += ",\n";
+				str += "  \"texCoord\": " + std::to_string(materialD.transmissionTexCoord);
+			}
+
+			if (!MathUtil::isZero(materialD.transmissionTexScale - sxsdk::vec2(1, 1))) {
+				const std::string str2 = getTextureTransformStr(sxsdk::vec2(0, 0), materialD.transmissionTexScale);
+				str += ",\n";
+				str += "  \"extensions\": {\n";
+				str += "    \"KHR_texture_transform\": " + str2 + "\n";
+				str += "  }\n";
+			} else {
+				str += "\n";
+			}
+
+			str += "}\n";
 		}
 		str += std::string("\n");
 
@@ -197,13 +214,15 @@ namespace {
 
 		// テクスチャの繰り返しで (1, 1)でないものがあるかチェック.
 		bool repeatTex = false;
+		const sxsdk::vec2 scaleOne(1, 1);
 		for (size_t i = 0; i < mCou; ++i) {
 			const CMaterialData& materialD = sceneData->materials[i];
-			if (materialD.baseColorTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
-			if (materialD.emissiveTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
-			if (materialD.normalTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
-			if (materialD.metallicRoughnessTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
-			if (materialD.occlusionTexScale != sxsdk::vec2(1, 1)) repeatTex = true;
+			if (materialD.baseColorTexScale != scaleOne) repeatTex = true;
+			if (materialD.emissiveTexScale != scaleOne) repeatTex = true;
+			if (materialD.normalTexScale != scaleOne) repeatTex = true;
+			if (materialD.metallicRoughnessTexScale != scaleOne) repeatTex = true;
+			if (materialD.occlusionTexScale != scaleOne) repeatTex = true;
+			if (materialD.transmissionTexScale != scaleOne) repeatTex = true;
 			if (repeatTex) break;
 		}
 

@@ -85,6 +85,8 @@ public:
 	// KHR_materials_transmission.
 	float transmissionFactor;
 	int transmissionTextureIndex;
+	int transmissionTexCoord;
+	sxsdk::vec2 transmissionTexScale;
 
 public:
 	CMaterialData ();
@@ -150,6 +152,8 @@ public:
 
 		this->transmissionFactor         = v.transmissionFactor;
 		this->transmissionTextureIndex   = v.transmissionTextureIndex;
+		this->transmissionTexCoord       = v.transmissionTexCoord;
+		this->transmissionTexScale       = v.transmissionTexScale;
 
 		return (*this);
     }

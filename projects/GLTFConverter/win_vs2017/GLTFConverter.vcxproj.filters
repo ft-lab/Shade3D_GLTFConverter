@@ -88,6 +88,9 @@
     <ClCompile Include="..\source\WarningCheck.cpp">
       <Filter>mysources</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\DOKIMaterialParam.cpp">
+      <Filter>mysources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -176,6 +179,9 @@
       <Filter>mysources</Filter>
     </ClInclude>
     <ClInclude Include="..\source\WarningCheck.h">
+      <Filter>mysources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DOKIMaterialParam.h">
       <Filter>mysources</Filter>
     </ClInclude>
   </ItemGroup>

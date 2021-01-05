@@ -70,6 +70,8 @@ CMaterialData::CMaterialData (const CMaterialData& v)
 
 	this->transmissionFactor         = v.transmissionFactor;
 	this->transmissionTextureIndex   = v.transmissionTextureIndex;
+	this->transmissionTexCoord       = v.transmissionTexCoord;
+	this->transmissionTexScale       = v.transmissionTexScale;
 }
 
 CMaterialData::~CMaterialData ()
@@ -136,6 +138,8 @@ void CMaterialData::clear ()
 
 	transmissionFactor = 0.0f;
 	transmissionTextureIndex = -1;
+	transmissionTexCoord = 0;
+	transmissionTexScale = sxsdk::vec2(1, 1);
 }
 
 /**
@@ -196,6 +200,8 @@ bool CMaterialData::isSame (const CMaterialData& v) const
 
 	if (!MathUtil::isZero((this->transmissionFactor) - (v.transmissionFactor))) return false;
 	if ((this->transmissionTextureIndex) != (v.transmissionTextureIndex)) return false;
+	if ((this->transmissionTexCoord) != (v.transmissionTexCoord)) return false;
+	if ((this->transmissionTexScale) != v.transmissionTexScale) return false;
 
 	return true;
 }

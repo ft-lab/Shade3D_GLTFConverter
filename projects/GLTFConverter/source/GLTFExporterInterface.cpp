@@ -1369,11 +1369,28 @@ bool CGLTFExporterInterface::m_setMaterialData (sxsdk::surface_class* surface, C
 		materialData.transmissionFactor = imagesBlend.getTransparency();
 
 		if (materialData.transmissionFactor > 0.0f) {
-			sxsdk::rgb_class tCol = surface->get_transparency_color();
-			if (m_exportParam.convertColorToLinear) {
-				MathUtil::convColorLinear(tCol.red, tCol.green, tCol.blue);
+			const sxsdk::enums::mapping_type iType = sxsdk::enums::transparency_mapping;
+			if (imagesBlend.hasImage(iType)) {
+				sxsdk::image_interface* image = imagesBlend.getImage(iType);
+				CImageData imageData;
+				imageData.setCustomImage(image);
+				imageData.name = imagesBlend.getImageName(iType);
+				imageData.name = m_sceneData->getUniqueImageName(imageData.name);
+				imageData.materialName = materialData.name;
+				imageData.imageMask    = CImageData::gltf_image_mask_none;
+
+				int imageIndex = m_sceneData->findSameImage(imageData);
+				if (imageIndex < 0) {
+					imageIndex = (int)m_sceneData->images.size();
+					m_sceneData->images.push_back(imageData);
+				}
+				materialData.transmissionTextureIndex = imageIndex;
+
+				materialData.transmissionTexCoord = imagesBlend.getTexCoord(iType);
+
+				const sx::vec<int,2> repeatV = imagesBlend.getImageRepeat(iType);
+				materialData.transmissionTexScale = sxsdk::vec2(repeatV.x, repeatV.y);
 			}
-			materialData.baseColorFactor = tCol * materialData.transmissionFactor + materialData.baseColorFactor * (1.0f - materialData.transmissionFactor);
 		}
 	}
 

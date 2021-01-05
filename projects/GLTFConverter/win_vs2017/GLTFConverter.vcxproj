@@ -283,6 +283,7 @@
     <ClCompile Include="..\..\..\include\sxcore\vectors.cpp" />
     <ClCompile Include="..\source\AlphaModeMaterialAttributeInterface.cpp" />
     <ClCompile Include="..\source\AnimationData.cpp" />
+    <ClCompile Include="..\source\DOKIMaterialParam.cpp" />
     <ClCompile Include="..\source\GLTFExporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFImporterInterface.cpp" />
     <ClCompile Include="..\source\GLTFLoader.cpp" />
@@ -312,6 +313,7 @@
     <ClInclude Include="..\source\AlphaModeMaterialAttributeInterface.h" />
     <ClInclude Include="..\source\AnimationData.h" />
     <ClInclude Include="..\source\BinStreamReaderWriter.h" />
+    <ClInclude Include="..\source\DOKIMaterialParam.h" />
     <ClInclude Include="..\source\GlobalHeader.h" />
     <ClInclude Include="..\source\GLTFExporterInterface.h" />
     <ClInclude Include="..\source\GLTFImporterInterface.h" />

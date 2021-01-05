@@ -159,6 +159,17 @@ private:
 	 */
 	bool m_checkDefaultBlendMapping (const sxsdk::enums::mapping_type mappingType);
 
+	/**
+	 * 「不透明」と「透明」のテクスチャを分離もしくは合成して再格納.
+	 * @return 不透明度のテクスチャを格納.
+	 */
+	sxsdk::image_interface* m_storeOpasicyTransparencyTexture ();
+
+	/**
+	 * 透明度テクスチャがある場合に、BaseColorと透明色を考慮してglTF用に補正する.
+	 */
+	void m_convTransparencyData ();
+
 public:
 	CImagesBlend (sxsdk::scene_interface* scene, sxsdk::surface_class* surface);
 	~CImagesBlend ();

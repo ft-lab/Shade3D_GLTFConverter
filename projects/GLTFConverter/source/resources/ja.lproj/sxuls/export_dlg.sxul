@@ -30,6 +30,6 @@
 
 	<group label="追加テクスチャ出力">
 		<bool id="401" label="エンジン別にテクスチャを別途出力" />
-		<selection id="402" label="エンジン:|Unity(Standard Shader)|Unity(HDRP)|Unigine" />
+		<selection id="402" label="エンジン:|Unity (Standard Shader)|Unity (HDRP)|Unigine" />
 	</group>
 </dialog>
