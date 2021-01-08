@@ -491,6 +491,8 @@ Transmissionを使用した半透明の場合は、背景がマテリアルの�
 なお、2021年1月段階では、Transmission表現はWebGLフレームワークでも対応しているものが少ないです。     
 上記画像は「Filament」( https://google.github.io/filament/ )を使用して表示しました。    
 
+Shade3Dの表面材質の基本設定での「透明」値と「透明色」、マッピングの「透明度」が出力対象になります。     
+
 ## エクスポート時のClearcoat/Sheen対応 (ver.0.2.5.0 -)
 
 ※ 仮対応になります。     
@@ -512,6 +514,50 @@ glTF Converter ver.0.2.5.0より、glTFの拡張機能「KHR_materials_clearcoat
 上記の「光沢」がSheenに相当します。     
 「光沢」の値と色、ラフネス値が渡されます。     
 光沢の値が0の場合は、光沢(Sheen)情報は出力されません。     
+
+## エクスポート時の「エンジン別にテクスチャを別途出力」 (ver.0.2.5.0 -)
+
+glTFエクスポートダイアログボックスで「エンジン別にテクスチャを別途出力」チェックボックスをオンにした場合、     
+Unity/Unigineに対するテクスチャを別途出力できます。    
+
+![gltfConverter_export_dlg_engine_tex_01](./wiki_images/gltfConverter_export_dlg_engine_tex_01.png)    
+
+Unityの場合、標準機能ではglTF(glb)ファイルの読み込みに対応していません。    
+また、標準(Standard Shader),URPとHDRPではテクスチャのRGBAのパックが異なります。     
+これらを考慮し、glTFエクスポート時に各エンジン別のテクスチャを出力します。      
+※ これは、glTFの機能ではありません。     
+
+これらのテクスチャは、gltf/glbファイルを出力したフォルダ上に「images」フォルダを作成し、その中にpng形式で出力します。     
+なお、テクスチャはマテリアル別に出力されます。    
+
+### 共通で出力されるテクスチャ
+
+|テクスチャの種類|出力ファイル名|説明|     
+|---|---|---|     
+|ベースカラー|マテリアル名_baseColor.png|RGB : BaseColor<br>A : Opacity|     
+|法線マップ|マテリアル名_normal.png|RGB : Normal|     
+|発光|マテリアル名_emissive.png|RGB : EmissiveColor|     
+|透明|マテリアル名_transmission.png|RGB : Transmission|     
+
+### Unity (Standard Shader/URP)を選択した場合
+
+|テクスチャの種類|出力ファイル名|説明|     
+|---|---|---|     
+|オクルージョン|マテリアル名_occlusion.png|RGB : Occlusion|     
+|メタリック-スムーズネス|マテリアル名_MetallicSmoothness.png|R,G,B : Metallic<br>A : 1.0 - Roughness|     
+
+### Unity (HDRP)を選択した場合
+
+|テクスチャの種類|出力ファイル名|説明|     
+|---|---|---|     
+|メタリック-オクルージョン-スムーズネス|マテリアル名_MetallicOcclusionSmoothness.png|R : Metallic<br>G : Occlusion<br>B : Detail(1.0)<br>A : 1.0 - Roughness|     
+
+### Unigineを選択した場合
+
+|テクスチャの種類|出力ファイル名|説明|     
+|---|---|---|     
+|オクルージョン|マテリアル名_occlusion.png|RGB : Occlusion|     
+|メタリック-ラフネス|マテリアル名_shading.png|R : Metallic<br>G : Roughness<br>B : Specular Reflection(1.0)<br>A : Microfiber(1.0)|     
 
 
 ## 制限事項
