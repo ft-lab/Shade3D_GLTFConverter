@@ -209,7 +209,7 @@ namespace {
 	/**
 	 * マテリアル情報を指定.
 	 */
-	void setMaterialsData (Document& gltfDoc,  const CSceneData* sceneData) {
+	void setMaterialsData (Document& gltfDoc, const CSceneData* sceneData) {
 		const size_t mCou = sceneData->materials.size();
 
 		// テクスチャの繰り返しで (1, 1)でないものがあるかチェック.
@@ -1449,145 +1449,6 @@ namespace {
 	}
 
 	/**
-	 * イメージを、RGBA分解して、それぞれのエンジンに合うように出力.
-	 * @param[in] image        image_interface.
-	 * @param[in] materialName マテリアル名.
-	 * @param[in] fileDir      出力するフォルダ.
-	 * @param[in] exportParam  エクスポート情報.
-	 */
-	void saveImageByEngine (sxsdk::shade_interface* shade, sxsdk::image_interface* image, const std::string& materialName, const int imageMask, const std::string& fileDir, const CExportDlgParam& exportParam) {
-		if (!exportParam.outputAdditionalTextures) return;
-
-		const std::string baseFileDir = fileDir + std::string("/images");
-
-		// baseFileDirのフォルダが存在しない場合は作成.
-		// Visual Studio 2017の場合は、「std::filesystem」を使用するにはC++17にする必要があるが、.
-		// C++17にするとboost 1.55.0とぶつかってしまう。そのため、プロパティの「C++言語標準」での指定を行わないようにし.
-		// 「std::experimental::filesystem」を使うようにしている.
-#if _WINDOWS
-		// UTF-8からShiftJISに変換.
-		std::string sjisStr;
-		StringUtil::convUTF8ToSJIS(baseFileDir, sjisStr);
-
-		if (!std::experimental::filesystem::exists(sjisStr)) {
-			std::experimental::filesystem::create_directory(sjisStr);
-		}
-#else
-		if (!std::filesystem::exists(baseFileDir)) {
-			std::filesystem::create_directory(baseFileDir);
-		}
-#endif
-
-		const std::string baseFileName = baseFileDir + std::string("/") + materialName;
-
-		// baseColorの出力.
-		if (imageMask == CImageData::gltf_image_mask_base_color) {
-			const std::string fName = baseFileName + std::string("_albedo.png");
-			image->save(fName.c_str());
-			return;
-		}
-
-		// emissiveの出力.
-		if (imageMask == CImageData::gltf_image_mask_emissive) {
-			const std::string fName = baseFileName + std::string("_emissive.png");
-			image->save(fName.c_str());
-			return;
-		}
-
-		// Normalの出力.
-		if (imageMask == CImageData::gltf_image_mask_normal) {
-			const std::string fName = baseFileName + std::string("_normal.png");
-			image->save(fName.c_str());
-			return;
-		}
-
-		// Occlusionの出力 (Unity(Standard Shader)/Unigineの場合).
-		if (imageMask & CImageData::gltf_image_mask_occlusion) {
-			if (exportParam.engineType == GLTFConverter::engine_unity || exportParam.engineType == GLTFConverter::engine_unigine) {
-				const std::string fName = baseFileName + std::string("_occlusion.png");
-				const int width  = image->get_size().x;
-				const int height = image->get_size().y;
-				std::vector<sxsdk::rgba_class> colLine, colLine2;
-				colLine.resize(width);
-				colLine2.resize(width);
-
-				try {
-					const sx::vec<int,2> iSize(width, height);
-					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
-					float vR;
-					for (int y = 0; y < height; ++y) {
-						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
-						for (int x = 0; x < width; ++x) {
-							vR = colLine[x].red;
-							colLine2[x] = sxsdk::rgba_class(vR, vR, vR, 1.0f);
-						}
-						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
-					}
-					image2->save(fName.c_str());
-				} catch (...) { }
-			}
-		}
-
-		// Roughness-Metallicの場合.
-		// glTFでは、[R]にOcclusion、[G]にRoughness、[B]にMetallicが入っている.
-		if ((imageMask & CImageData::gltf_image_mask_roughness) && (imageMask & CImageData::gltf_image_mask_metallic)) {
-			const int width  = image->get_size().x;
-			const int height = image->get_size().y;
-			std::vector<sxsdk::rgba_class> colLine, colLine2;
-			colLine.resize(width);
-			colLine2.resize(width);
-
-			if (exportParam.engineType == GLTFConverter::engine_unigine) {
-				// Unigineの場合.
-				// R:Metalness / G:Roughness / B:Specular Reflection / A:Microfiber.
-				try {
-					const sx::vec<int,2> iSize(width, height);
-					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
-					for (int y = 0; y < height; ++y) {
-						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
-						for (int x = 0; x < width; ++x) {
-							colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].green, 1.0f, 1.0f);
-						}
-						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
-					}
-					const std::string fName = baseFileName + std::string("_shading.png");
-					image2->save(fName.c_str());
-				} catch (...) { }
-
-			} else if (exportParam.engineType == GLTFConverter::engine_unity || exportParam.engineType == GLTFConverter::engine_unity_hdrp) {
-				// Unityの場合.
-				//   Standard Shader ==> RGB : Metallic / A : Smoothness.
-				//   HDRP            ==> R: Metallic / G : Occlusion / B : Detail / A : Smoothness.
-				try {
-					float vR, vG, vB;
-					const sx::vec<int,2> iSize(width, height);
-					compointer<sxsdk::image_interface> image2(shade->create_image_interface(iSize));
-					for (int y = 0; y < height; ++y) {
-						image->get_pixels_rgba_float(0, y, width, 1, &(colLine[0]));
-						if (exportParam.engineType == GLTFConverter::engine_unity_hdrp) {
-							for (int x = 0; x < width; ++x) {
-								vB = colLine[x].blue;		// Metallic.
-								vG = colLine[x].green;		// Roughness.
-								vR = (imageMask & CImageData::gltf_image_mask_occlusion) ? colLine[x].red : 1.0f;		// Occlusion.
-								colLine2[x] = sxsdk::rgba_class(vB, vR, 1.0f, 1.0f - vG);
-							}
-						} else {
-							for (int x = 0; x < width; ++x) {
-								vB = colLine[x].blue;		// Metallic.
-								vG = colLine[x].green;		// Roughness.
-								colLine2[x] = sxsdk::rgba_class(vB, vB, vB, 1.0f - vG);
-							}
-						}
-						image2->set_pixels_rgba_float(0, y, width, 1, &(colLine2[0]));
-					}
-					const std::string fName = baseFileName + (((imageMask & CImageData::gltf_image_mask_occlusion) && exportParam.engineType == GLTFConverter::engine_unity_hdrp) ? std::string("_metallicOcclusionSmoothness.png") : std::string("_metallicSmoothness.png"));
-					image2->save(fName.c_str());
-				} catch (...) { }
-			}
-		}
-	}
-
-	/**
 	 *   Image/Textures情報を格納.
 	 */
 	void setImagesData (Document& gltfDoc, const CSceneData* sceneData, std::unique_ptr<BufferBuilder>& bufferBuilder, sxsdk::shade_interface* shade, const CExportDlgParam& exportParam) {
@@ -1666,16 +1527,6 @@ namespace {
 				}
 
 				imageFileNameList[i] = fileFullPath;
-
-				// 各種エンジン向けにコンバートしたテクスチャを出力.
-				if (exportParam.outputAdditionalTextures) {
-					const std::string fileDir = sceneData->getFileDir();
-					if (image2 && image2->has_image()) {
-						saveImageByEngine(shade, image2, imageD.materialName, imageD.imageMask, fileDir, exportParam);
-					} else {
-						saveImageByEngine(shade, image, imageD.materialName, imageD.imageMask, fileDir, exportParam);
-					}
-				}
 
 				// GLTFにImage要素を追加.
 				Image img;
@@ -1831,6 +1682,188 @@ namespace {
 		return accessorID;
 	}
 
+	/**
+	 * イメージをRGBA分解して、それぞれのエンジンに合うように出力.
+	 * これはマテリアルごとに出力される.
+	 * @param[in] exportParam  エクスポート情報.
+	 */
+	void saveImagesByEngine (sxsdk::shade_interface* shade, const CSceneData* sceneData, const CExportDlgParam& exportParam) {
+		if (!exportParam.outputAdditionalTextures) return;
+
+		const std::string fileDir = sceneData->getFileDir();
+		const std::string baseFileDir = fileDir + std::string("/images");
+
+		// baseFileDirのフォルダが存在しない場合は作成.
+		// Visual Studio 2017の場合は、「std::filesystem」を使用するにはC++17にする必要があるが、.
+		// C++17にするとboost 1.55.0とぶつかってしまう。そのため、プロパティの「C++言語標準」での指定を行わないようにし.
+		// 「std::experimental::filesystem」を使うようにしている.
+#if _WINDOWS
+		// UTF-8からShiftJISに変換.
+		std::string sjisStr;
+		StringUtil::convUTF8ToSJIS(baseFileDir, sjisStr);
+
+		if (!std::experimental::filesystem::exists(sjisStr)) {
+			std::experimental::filesystem::create_directory(sjisStr);
+		}
+#else
+		if (!std::filesystem::exists(baseFileDir)) {
+			std::filesystem::create_directory(baseFileDir);
+		}
+#endif
+
+		compointer<sxsdk::scene_interface> scene(shade->get_scene_interface());
+
+		const size_t materialsCou = sceneData->materials.size();
+
+		for (size_t mLoop = 0; mLoop < materialsCou; ++mLoop) {
+			const CMaterialData& materialD = sceneData->materials[mLoop];
+			const std::string baseFileName = baseFileDir + std::string("/") + materialD.name;
+
+			// baseColorの出力.
+			if (materialD.baseColorImageIndex >= 0) {
+				const std::string fName = baseFileName + std::string("_baseColor.png");
+				const CImageData& imageD = sceneData->images[materialD.baseColorImageIndex];
+				try {
+					compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+					if (image) {
+						image->save(fName.c_str());
+					}
+				} catch (...) { }
+			}
+
+			// 法線マップの出力.
+			if (materialD.normalImageIndex >= 0) {
+				const std::string fName = baseFileName + std::string("_normal.png");
+				const CImageData& imageD = sceneData->images[materialD.normalImageIndex];
+				try {
+					compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+					if (image) {
+						image->save(fName.c_str());
+					}
+				} catch (...) { }
+			}
+
+			// Emissiveの出力.
+			if (materialD.emissiveImageIndex >= 0) {
+				const std::string fName = baseFileName + std::string("_emissive.png");
+				const CImageData& imageD = sceneData->images[materialD.emissiveImageIndex];
+				try {
+					compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+					if (image) {
+						image->save(fName.c_str());
+					}
+				} catch (...) { }
+			}
+
+			// Transmissionの出力.
+			if (materialD.transmissionTextureIndex >= 0) {
+				const std::string fName = baseFileName + std::string("_transmission.png");
+				const CImageData& imageD = sceneData->images[materialD.transmissionTextureIndex];
+				try {
+					compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+					if (image) {
+						image->save(fName.c_str());
+					}
+				} catch (...) { }
+			}
+
+			// Occlusionの出力 (Unity(Standard Shader, URP)/Unigineの場合).
+			// [R]成分を取り出し.
+			if (materialD.occlusionImageIndex >= 0 || materialD.metallicRoughnessImageIndex >= 0) {
+				if (exportParam.engineType == GLTFConverter::engine_unity || exportParam.engineType == GLTFConverter::engine_unigine) {
+					const std::string fName = baseFileName + std::string("_occlusion.png");
+					const CImageData& imageD = sceneData->images[(materialD.occlusionImageIndex >= 0) ? materialD.occlusionImageIndex : materialD.metallicRoughnessImageIndex];
+					try {
+						compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+						if (image) {
+							const sx::vec<int,2> size = image->get_size();
+							compointer<sxsdk::image_interface> sImage(shade->create_image_interface(size));
+							const int wid = size.x;
+							const int hei = size.y;
+							std::vector<sxsdk::rgba_class> colLine;
+							colLine.resize(wid);
+							float rV;
+
+							for (int y = 0; y < hei; ++y) {
+								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
+								for (int x = 0; x < wid; ++x) {
+									rV = colLine[x].red;
+									colLine[x] = sxsdk::rgba_class(rV, rV, rV, 1.0f);
+								}
+								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
+							}
+							sImage->save(fName.c_str());
+						}
+					} catch (...) { }
+				}
+			}
+
+			// Metallic-Roughness(Occlusion)の出力.
+			// glTFでは、[R]にOcclusion、[G]にRoughness、[B]にMetallicが入っている.
+			if (materialD.metallicRoughnessImageIndex >= 0) {
+				const CImageData& imageD = sceneData->images[materialD.metallicRoughnessImageIndex];
+				try {
+					compointer<sxsdk::image_interface> image(imageD.getImage(scene));
+					if (image) {
+						const sx::vec<int,2> size = image->get_size();
+						compointer<sxsdk::image_interface> sImage(shade->create_image_interface(size));
+						const int wid = size.x;
+						const int hei = size.y;
+						std::vector<sxsdk::rgba_class> colLine, colLine2;
+						colLine.resize(wid);
+						colLine2.resize(wid);
+						float vR, vG, vB;
+
+						std::string fName = "";
+						if (exportParam.engineType == GLTFConverter::engine_unigine) {
+							// Unigineの場合.
+							// R:Metalness / G:Roughness / B:Specular Reflection / A:Microfiber.
+							const sx::vec<int,2> iSize(wid, hei);
+							for (int y = 0; y < hei; ++y) {
+								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
+								for (int x = 0; x < wid; ++x) {
+									colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].green, 1.0f, 1.0f);
+								}
+								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
+							}
+							fName = baseFileName + std::string("_shading.png");
+
+						} else if (exportParam.engineType == GLTFConverter::engine_unity) {
+							// UnityのStandard Shader/URP場合.
+							// ==> RGB : Metallic / A : Smoothness.
+							for (int y = 0; y < hei; ++y) {
+								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
+								for (int x = 0; x < wid; ++x) {
+									vB = colLine[x].blue;		// Metallic.
+									vG = colLine[x].green;		// Roughness.
+									colLine2[x] = sxsdk::rgba_class(vB, vB, vB, 1.0f - vG);
+								}
+								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
+							}
+							fName = baseFileName + std::string("_MetallicSmoothness.png");
+
+						} else if (exportParam.engineType == GLTFConverter::engine_unity_hdrp) {
+							// UnityのHDRPの場合.
+							// ==> R: Metallic / G : Occlusion / B : Detail / A : Smoothness.
+							for (int y = 0; y < hei; ++y) {
+								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
+								for (int x = 0; x < wid; ++x) {
+									vB = colLine[x].blue;			// Metallic.
+									vG = colLine[x].green;			// Roughness.
+									vR = colLine[x].red;			// Occlusion.
+									colLine2[x] = sxsdk::rgba_class(vB, vR, 1.0f, 1.0f - vG);
+								}
+								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
+							}
+							fName = baseFileName + std::string("_MetallicOcclusionSmoothness.png");
+						}
+
+						if (fName != "") sImage->save(fName.c_str());
+					}
+				} catch (...) { }
+			}
+		}
+	}
 }
 
 CGLTFSaver::CGLTFSaver (sxsdk::shade_interface* shade) : shade(shade)
@@ -1923,6 +1956,11 @@ bool CGLTFSaver::saveGLTF (const std::string& fileName, const CSceneData* sceneD
 
 		// 画像情報を格納.
 		::setImagesData(gltfDoc, sceneData, glbBuilder, shade, sceneData->exportParam);
+
+		// ゲームエンジン別のテクスチャを出力.
+		if (sceneData->exportParam.outputAdditionalTextures) {
+			::saveImagesByEngine(shade, sceneData, sceneData->exportParam);
+		}
 
 		if (glbBuilder) {
 			gltfDoc.buffers.Clear();

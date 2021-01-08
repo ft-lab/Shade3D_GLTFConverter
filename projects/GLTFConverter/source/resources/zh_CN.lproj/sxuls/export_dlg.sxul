@@ -30,7 +30,7 @@
 
 	<group label="Output additional textures">
 		<bool id="401" label="Output textures for each engine" />
-		<selection id="402" label="Engine:|Unity (Standard Shader)|Unity (HDRP)|Unigine" />
+		<selection id="402" label="Engine:|Unity (Standard Shader/URP)|Unity (HDRP)|Unigine" />
 	</group>
 
 </dialog>
