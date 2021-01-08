@@ -24,7 +24,13 @@
 #include <sstream>
 #include <string>
 #include <memory>
+#if _WINDOWS
 #include <filesystem>
+#else
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
 using namespace Microsoft::glTF;
 
@@ -1706,8 +1712,9 @@ namespace {
 			std::experimental::filesystem::create_directory(sjisStr);
 		}
 #else
-		if (!std::filesystem::exists(baseFileDir)) {
-			std::filesystem::create_directory(baseFileDir);
+		struct stat st;
+		if (stat(baseFileDir.c_str(), &st) != 0) {
+			mkdir(baseFileDir.c_str(), 0777);
 		}
 #endif
 

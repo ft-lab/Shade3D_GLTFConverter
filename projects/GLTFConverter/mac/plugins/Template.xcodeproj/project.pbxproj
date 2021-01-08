@@ -25,6 +25,8 @@
 		922E4B3F2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 922E4B3E2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h */; };
 		928BF04624A868D700725966 /* WarningCheck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 928BF04424A868D600725966 /* WarningCheck.cpp */; };
 		928BF04724A868D700725966 /* WarningCheck.h in Headers */ = {isa = PBXBuildFile; fileRef = 928BF04524A868D700725966 /* WarningCheck.h */; };
+		92E223AE25A87BE2001690FE /* DOKIMaterialParam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 92E223AC25A87BE2001690FE /* DOKIMaterialParam.cpp */; };
+		92E223AF25A87BE2001690FE /* DOKIMaterialParam.h in Headers */ = {isa = PBXBuildFile; fileRef = 92E223AD25A87BE2001690FE /* DOKIMaterialParam.h */; };
 		92F6FC0A213E409F005655E6 /* glTFConverter.info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 92F6FC09213E409F005655E6 /* glTFConverter.info.plist */; };
 		92F6FC0C213E4209005655E6 /* libGLTFSDK.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 92F6FC0B213E4209005655E6 /* libGLTFSDK.a */; };
 		92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F6FC0D213E4238005655E6 /* GLTFSaver.h */; };
@@ -122,6 +124,8 @@
 		922E4B3E2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AlphaModeMaterialAttributeInterface.h; path = ../../source/AlphaModeMaterialAttributeInterface.h; sourceTree = "<group>"; };
 		928BF04424A868D600725966 /* WarningCheck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WarningCheck.cpp; path = ../../source/WarningCheck.cpp; sourceTree = "<group>"; };
 		928BF04524A868D700725966 /* WarningCheck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WarningCheck.h; path = ../../source/WarningCheck.h; sourceTree = "<group>"; };
+		92E223AC25A87BE2001690FE /* DOKIMaterialParam.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DOKIMaterialParam.cpp; path = ../../source/DOKIMaterialParam.cpp; sourceTree = "<group>"; };
+		92E223AD25A87BE2001690FE /* DOKIMaterialParam.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DOKIMaterialParam.h; path = ../../source/DOKIMaterialParam.h; sourceTree = "<group>"; };
 		92F6FC09213E409F005655E6 /* glTFConverter.info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = glTFConverter.info.plist; path = plists/glTFConverter.info.plist; sourceTree = "<group>"; };
 		92F6FC0B213E4209005655E6 /* libGLTFSDK.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLTFSDK.a; path = ../GLTFSDK/lib/release/libGLTFSDK.a; sourceTree = "<group>"; };
 		92F6FC0D213E4238005655E6 /* GLTFSaver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFSaver.h; path = ../../source/GLTFSaver.h; sourceTree = "<group>"; };
@@ -289,6 +293,8 @@
 		4A3E5BC70B0029410006A4FF /* sources */ = {
 			isa = PBXGroup;
 			children = (
+				92E223AC25A87BE2001690FE /* DOKIMaterialParam.cpp */,
+				92E223AD25A87BE2001690FE /* DOKIMaterialParam.h */,
 				92F6FC28213E423C005655E6 /* AnimationData.cpp */,
 				928BF04424A868D600725966 /* WarningCheck.cpp */,
 				922E4B3C2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp */,
@@ -352,6 +358,7 @@
 				9213EBA61B12E3E00023FEDA /* GlobalHeader.h in Headers */,
 				922E4B3F2377AD3200759D95 /* AlphaModeMaterialAttributeInterface.h in Headers */,
 				9224B4F021647D3100A38EEA /* Shade3DArray.h in Headers */,
+				92E223AF25A87BE2001690FE /* DOKIMaterialParam.h in Headers */,
 				92F6FC40213E423F005655E6 /* ImageData.h in Headers */,
 				92F6FC35213E423F005655E6 /* GLTFSaver.h in Headers */,
 				92F6FC44213E423F005655E6 /* Shade3DUtil.h in Headers */,
@@ -471,6 +478,7 @@
 				92F6FC58213E423F005655E6 /* SkinData.cpp in Sources */,
 				922E4B3D2377AD2300759D95 /* AlphaModeMaterialAttributeInterface.cpp in Sources */,
 				92F6FC37213E423F005655E6 /* GLTFExporterInterface.cpp in Sources */,
+				92E223AE25A87BE2001690FE /* DOKIMaterialParam.cpp in Sources */,
 				92F6FC5C213E423F005655E6 /* MorphTargetsData.cpp in Sources */,
 				92F6FC3E213E423F005655E6 /* StreamCtrl.cpp in Sources */,
 				92F6FC50213E423F005655E6 /* AnimationData.cpp in Sources */,
