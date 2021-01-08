@@ -134,7 +134,7 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 
 	// 最終的にPBRマテリアルとしてDiffuse/Mettalic/Roughness/Opacityなどで補正するため、.
 	// 「UVレイヤが異なる場合」「テクスチャの繰り返し回数が異なる場合」は正しいベイク結果にはならない.
-	// 「テクスチャの繰り返し」は、すべて同一の繰り返し回数になるようにする.
+	// 「テクスチャの繰り返し」は、「法線」「発光」以外はすべて同一の繰り返し回数になるようにする.
 	{
 		const sx::vec<int,2> repeat1(1, 1);
 		sx::vec<int,2> dRepeat(0, 0);
@@ -159,14 +159,14 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 			if (dRepeat[0] == 0) dRepeat = m_roughnessRepeat;
 			if (dRepeat != m_roughnessRepeat) chkF = true;
 		}
-		if (m_hasGlowImage) {
-			if (dRepeat[0] == 0) dRepeat = m_glowRepeat;
-			if (dRepeat != m_glowRepeat) chkF = true;
-		}
-		if (m_hasNormalImage) {
-			if (dRepeat[0] == 0) dRepeat = m_normalRepeat;
-			if (dRepeat != m_normalRepeat) chkF = true;
-		}
+		//if (m_hasGlowImage) {
+		//	if (dRepeat[0] == 0) dRepeat = m_glowRepeat;
+		//	if (dRepeat != m_glowRepeat) chkF = true;
+		//}
+		//if (m_hasNormalImage) {
+		//	if (dRepeat[0] == 0) dRepeat = m_normalRepeat;
+		//	if (dRepeat != m_normalRepeat) chkF = true;
+		//}
 		if (m_hasOcclusionImage) {
 			if (dRepeat[0] == 0) dRepeat = m_occlusionRepeat;
 			if (dRepeat != m_occlusionRepeat) chkF = true;
@@ -178,8 +178,8 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 			m_diffuseRepeat = repeat1;
 			m_reflectionRepeat = repeat1;
 			m_roughnessRepeat = repeat1;
-			m_glowRepeat = repeat1;
-			m_normalRepeat = repeat1;
+			//m_glowRepeat = repeat1;
+			//m_normalRepeat = repeat1;
 			m_occlusionRepeat = repeat1;
 		}
 	}
@@ -1388,8 +1388,46 @@ void CImagesBlend::m_convTransparencyData ()
 		return;
 	}
 
-	// 透明テクスチャと拡散反射テクスチャが存在する場合、.
+	// 透明テクスチャと拡散反射テクスチャが存在する場合、拡散反射テクスチャに対して透明度を合成.
+	{
+		const int diffuseWid = m_diffuseImage->get_size().x;
+		const int diffuseHei = m_diffuseImage->get_size().y;
 
+		// UVレイヤが異なる場合は処理できないためreturn.
+		if (m_diffuseTexCoord != m_transparencyTexCoord) return;
+
+		if (m_diffuseRepeat == m_transparencyRepeat) {
+			compointer<sxsdk::image_interface> tImg = Shade3DUtil::resizeImageWithAlpha(m_pScene, m_transparencyImage, sx::vec<int,2>(diffuseWid, diffuseHei));
+
+			std::vector<sxsdk::rgba_class> lineCols, lineCols2;
+			lineCols.resize(diffuseWid);
+			lineCols2.resize(diffuseWid);
+			float vR;
+			sxsdk::rgba_class col;
+			for (int y = 0; y < diffuseHei; ++y) {
+				tImg->get_pixels_rgba_float(0, y, diffuseWid, 1, &(lineCols[0]));
+				m_diffuseImage->get_pixels_rgba_float(0, y, diffuseWid, 1, &(lineCols2[0]));
+				for (int x = 0; x < diffuseWid; ++x) {
+					vR  = lineCols[x].red * m_transparency;
+					col = lineCols2[x] * sxsdk::rgba_class(m_diffuseColor, 1.0f);
+					lineCols[x].red   = transCol.red   * vR + col.red   * (1.0f - vR);
+					lineCols[x].green = transCol.green * vR + col.green * (1.0f - vR);
+					lineCols[x].blue  = transCol.blue  * vR + col.blue  * (1.0f - vR);
+					lineCols[x].alpha = col.alpha;
+				}
+				m_diffuseImage->set_pixels_rgba_float(0, y, diffuseWid, 1, &(lineCols[0]));
+			}
+
+			m_diffuseColor = sxsdk::rgb_class(1, 1, 1);
+			m_diffuseTexturesCount = 1;
+			m_hasDiffuseImage   = true;
+			m_diffuseAlphaTrans = false;
+			m_useDiffuseAlpha   = false;
+			return;
+		} else {
+			// ここに来ることはないはず (あらかじめ、同一の反復回数でベイク済みのため).
+		}
+	}
 }
 
 /**
