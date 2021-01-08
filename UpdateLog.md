@@ -1,5 +1,13 @@
 # 更新履歴
 
+[2021/01/08] ver.0.2.5.0   
+
+* [Fixed] Export : 拡散反射マップ使用時+テクスチャにアルファ値がある場合にチャンネル合成が「アルファ乗算済み」を使うと正しい結果にならない場合がある問題を修正
+* [Fixed] Export : マテリアルのマッピングの「法線」「発光」の反復は、個別の繰り返し回数を指定できるようにした。
+* [Added] Export : Unigine/Unity向けのテクスチャを出力するオプション「エンジン別にテクスチャを別途出力」を追加
+* [Added] Export : 「「不透明(Opacity)」と「透明(Transmission)」を分ける」オプションを追加
+* [Added] Export : glTFの拡張機能、KHR_materials_transmission/KHR_materials_sheen/KHR_materials_clearcoatの情報出力
+
 [2020/12/30] ver.0.2.4.3   
 
 * [Fixed] Export : 「テクスチャを加工せずにベイク」がOnのとき、「荒さ」の値またはマッピングの「適用率」が1.0より小さい場合に、不正なラフネステクスチャが出力される問題を修正

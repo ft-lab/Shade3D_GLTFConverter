@@ -10,6 +10,7 @@ glTFの処理で、「Microsoft glTF SDK」( https://github.com/Microsoft/glTF-S
 
 * glTF 2.0の拡張子「gltf」「glb」の3D形状ファイルをShade3Dに読み込み (インポート)
 * Shade3DのシーンからglTF 2.0の「gltf」「glb」の3D形状ファイルを出力 （エクスポート）
+* glTFエクスポート時に、Unity/Unigine用のテクスチャを別途出力する機能 (ver.0.2.5.0 -)
 
 ## 動作環境
 
@@ -70,6 +71,10 @@ Draco圧縮はAnimation/Morph Targets/Texture Imageの圧縮には対応して�
 * AlphaMode(Opaque/Blend/Mask)の入出力。ver.0.2.1.1で追加。    
 * AlphaCutoffの入出力。ver.0.2.1.1で追加。    
 * エクスポート時に表面材質のマッピングで複数テクスチャ使用時のベイク対応。ver.0.2.2.0で追加。    
+* エクスポート時に、「不透明(Opacity)」と「透明(Transmission)」を分けるオプション指定(KHR_materials_transmissionの対応)。ver.0.2.5.0で追加。    
+* エクスポート時に、Unity/Unigine用のテクスチャを別途出力する機能。ver.0.2.5.0で追加。    
+* エクスポート時に、KHR_materials_clearcoat/KHR_materials_sheenを出力。ver.0.2.5.0で追加。    
+これは「DOKI for Shade3D」( http://www.ft-lab.ne.jp/shade3d/DOKI/ )のパラメータを参照しています。    
 
 PBR表現としては、metallic-roughnessマテリアルモデルとしてデータを格納しています。  
 
@@ -153,9 +158,18 @@ glTFの1つのMeshに複数のPrimitiveを持つ構造の場合(フェイスグ�
 「Draco圧縮」チェックボックスをオンにすると、ジオメトリデータを圧縮して出力します (ver.0.2.0.2 追加)。    
 ただし、Draco圧縮はジオメトリのみの圧縮となり、Morph Targets/アニメーション/テクスチャイメージは圧縮されません。    
 「色をリニアに変換」チェックボックスをオンにすると、拡散反射色/発光色/頂点カラーが逆ガンマ補正されてリニアな状態で出力されます (ver.0.2.1.0 追加)。    
+
 「テクスチャを加工せずにベイク」チェックボックスをオンにすると、
-拡散反射/反射/荒さなどをPBRマテリアルに加工せずに出力します(ver.0.2.4.2 追加)。     
+拡散反射/反射/荒さなどをPBRマテリアルに加工せずに出力します (ver.0.2.4.2 追加)。     
 詳しくは後述の「テクスチャを加工せずにベイク」の説明をご参照くださいませ。     
+「「不透明(Opacity)」と「透明(Transmission)」を分ける」チェックボックスをオンにすると、
+「透明」の指定は「KHR_materials_transmission」として分けて出力されます (ver.0.2.5.0 追加)。     
+オフにすると、「不透明」と「透明」は混ぜて出力され、Alpha BlendかAlpha Maskのいずれかで半透明を対応することになります。    
+これは後述します。    
+
+「エンジン別にテクスチャを別途出力」チェックボックスをオンにすると、「Unity (Standard Shader/URP)」「Unity (HDRP)」「Unigine」用のテクスチャを別途出力します (ver.0.2.5.0 追加)。    
+これは後述します。    
+
 
 「Asset情報」で主にOculus Homeにglbファイルを持っていくときの情報を指定できます(ver.0.1.0.8 追加)。    
 <img src="./wiki_images/gltfConverter_export_dlg_asset.png"/>     
@@ -460,6 +474,45 @@ PBRマテリアルとしての加工を行いません。
 半透明は、glTFではBaseColorのAlpha値に格納しています。     
 本来は、不透明マスク(Opacity)と透明(Transparency)は異なる存在です。    
 glTFの標準仕様での半透明はOpacityのみですので、そこに押し込むようにしています。    
+
+## エクスポート時の「「不透明(Opacity)」と「透明(Transmission)」を分ける」 (ver.0.2.5.0 -)
+
+エクスポート時に「「不透明(Opacity)」と「透明(Transmission)」を分ける」チェックボックスをオンにした場合、     
+glTFの拡張機能の「KHR_materials_transmission」を使用します。    
+glTFの標準仕様では、半透明は「AlphaMode」の「Alpha Blend」を使用します。    
+BaseColorのAlpha値で不透明度を指定しています。    
+これは、「透明(Transparancy)」ではなく「不透明(Opacity)」としての挙動になります。     
+Opacityはアルファ値による単純なアルファ合成が行われます。    
+このとき、「屈折」や透過した先の背景がラフネスでボケる表現は行われません。     
+以下は、左の球が「Alpha Blend」を使用した半透明、右がTransmissionを使用した半透明です。      
+![gltfConverter_export_transmission_01](./wiki_images/gltfConverter_export_transmission_01.jpg)    
+Transmissionを使用した半透明の場合は、背景がマテリアルのラフネスによりボケています。     
+
+なお、2021年1月段階では、Transmission表現はWebGLフレームワークでも対応しているものが少ないです。     
+上記画像は「Filament」( https://google.github.io/filament/ )を使用して表示しました。    
+
+## エクスポート時のClearcoat/Sheen対応 (ver.0.2.5.0 -)
+
+※ 仮対応になります。     
+
+glTF Converter ver.0.2.5.0より、glTFの拡張機能「KHR_materials_clearcoat」「KHR_materials_sheen」の出力に一部対応しています。     
+「KHR_materials_clearcoat」はクリアコート表現を行います。     
+表面のラフネスを変える効果が出せます。     
+「KHR_materials_sheen」は光沢の表現です。     
+
+これらの機能はShade3Dの標準ではありません。     
+現在の実装は、「DOKI for Shade3D」( http://www.ft-lab.ne.jp/shade3d/DOKI/ )の追加属性からこれらを持ってきています。     
+
+以下は、DOKI for Shade3Dの追加マテリアル情報です。    
+![gltfConverter_export_clearcoat_sheen_01](./wiki_images/gltfConverter_export_clearcoat_sheen_01.png)    
+クリアコート値とラフネス値が渡されます。     
+クリアコート値が0の場合は、クリアコート情報は出力されません。     
+なお、glTFの「KHR_materials_clearcoat」の仕様では、クリアコート色を渡すことはできません。    
+
+上記の「光沢」がSheenに相当します。     
+「光沢」の値と色、ラフネス値が渡されます。     
+光沢の値が0の場合は、光沢(Sheen)情報は出力されません。     
+
 
 ## 制限事項
 
