@@ -159,14 +159,6 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 			if (dRepeat[0] == 0) dRepeat = m_roughnessRepeat;
 			if (dRepeat != m_roughnessRepeat) chkF = true;
 		}
-		//if (m_hasGlowImage) {
-		//	if (dRepeat[0] == 0) dRepeat = m_glowRepeat;
-		//	if (dRepeat != m_glowRepeat) chkF = true;
-		//}
-		//if (m_hasNormalImage) {
-		//	if (dRepeat[0] == 0) dRepeat = m_normalRepeat;
-		//	if (dRepeat != m_normalRepeat) chkF = true;
-		//}
 		if (m_hasOcclusionImage) {
 			if (dRepeat[0] == 0) dRepeat = m_occlusionRepeat;
 			if (dRepeat != m_occlusionRepeat) chkF = true;
@@ -178,8 +170,6 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 			m_diffuseRepeat = repeat1;
 			m_reflectionRepeat = repeat1;
 			m_roughnessRepeat = repeat1;
-			//m_glowRepeat = repeat1;
-			//m_normalRepeat = repeat1;
 			m_occlusionRepeat = repeat1;
 		}
 	}
