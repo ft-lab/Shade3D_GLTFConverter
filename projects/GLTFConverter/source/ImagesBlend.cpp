@@ -139,38 +139,90 @@ CImagesBlend::IMAGE_BAKE_RESULT CImagesBlend::blendImages (const CExportDlgParam
 		const sx::vec<int,2> repeat1(1, 1);
 		sx::vec<int,2> dRepeat(0, 0);
 		bool chkF = false;
-		if (m_hasTransparencyImage) {
-			if (dRepeat[0] == 0) dRepeat = m_transparencyRepeat;
-			if (dRepeat != m_transparencyRepeat) chkF = true;
-		}
-		if (m_hasOpacityMaskImage) {
-			if (dRepeat[0] == 0) dRepeat = m_opacityMaskRepeat;
-			if (dRepeat != m_opacityMaskRepeat) chkF = true;
-		}
-		if (m_hasDiffuseImage) {
-			if (dRepeat[0] == 0) dRepeat = m_diffuseRepeat;
-			if (dRepeat != m_diffuseRepeat) chkF = true;
-		}
-		if (m_hasReflectionImage) {
-			if (dRepeat[0] == 0) dRepeat = m_reflectionRepeat;
-			if (dRepeat != m_reflectionRepeat) chkF = true;
-		}
-		if (m_hasRoughnessImage) {
-			if (dRepeat[0] == 0) dRepeat = m_roughnessRepeat;
-			if (dRepeat != m_roughnessRepeat) chkF = true;
-		}
-		if (m_hasOcclusionImage) {
-			if (dRepeat[0] == 0) dRepeat = m_occlusionRepeat;
-			if (dRepeat != m_occlusionRepeat) chkF = true;
-		}
-		if (chkF) {
-			result = CImagesBlend::bake_mixed_repeat;
-			m_transparencyRepeat = repeat1;
-			m_opacityMaskRepeat = repeat1;
-			m_diffuseRepeat = repeat1;
-			m_reflectionRepeat = repeat1;
-			m_roughnessRepeat = repeat1;
-			m_occlusionRepeat = repeat1;
+
+		if (!m_exportParam.bakeWithoutProcessingTextures) {
+			chkF = false;
+			if (m_hasTransparencyImage) {
+				if (dRepeat[0] == 0) dRepeat = m_transparencyRepeat;
+				if (dRepeat != m_transparencyRepeat) chkF = true;
+			}
+			if (m_hasOpacityMaskImage) {
+				if (dRepeat[0] == 0) dRepeat = m_opacityMaskRepeat;
+				if (dRepeat != m_opacityMaskRepeat) chkF = true;
+			}
+			if (m_hasDiffuseImage) {
+				if (dRepeat[0] == 0) dRepeat = m_diffuseRepeat;
+				if (dRepeat != m_diffuseRepeat) chkF = true;
+			}
+			if (m_hasReflectionImage) {
+				if (dRepeat[0] == 0) dRepeat = m_reflectionRepeat;
+				if (dRepeat != m_reflectionRepeat) chkF = true;
+			}
+			if (m_hasRoughnessImage) {
+				if (dRepeat[0] == 0) dRepeat = m_roughnessRepeat;
+				if (dRepeat != m_roughnessRepeat) chkF = true;
+			}
+			if (m_hasOcclusionImage) {
+				if (m_hasReflectionImage || m_hasRoughnessImage) {
+					if (dRepeat[0] == 0) dRepeat = m_occlusionRepeat;
+					if (dRepeat != m_occlusionRepeat) chkF = true;
+				}
+			}
+			if (chkF) {
+				result = CImagesBlend::bake_mixed_repeat;
+				m_transparencyRepeat = repeat1;
+				m_opacityMaskRepeat = repeat1;
+				m_diffuseRepeat = repeat1;
+				m_reflectionRepeat = repeat1;
+				m_roughnessRepeat = repeat1;
+				m_occlusionRepeat = repeat1;
+			}
+		} else {
+			// テクスチャを加工せずにベイクする場合、.
+			// Transparency/Opacity/Diffuse と Reflection/Roughness/Occlusionを分けて考える.
+			dRepeat = sx::vec<int,2>(0, 0);
+			chkF = false;
+			if (m_hasTransparencyImage) {
+				if (dRepeat[0] == 0) dRepeat = m_transparencyRepeat;
+				if (dRepeat != m_transparencyRepeat) chkF = true;
+			}
+			if (m_hasOpacityMaskImage) {
+				if (dRepeat[0] == 0) dRepeat = m_opacityMaskRepeat;
+				if (dRepeat != m_opacityMaskRepeat) chkF = true;
+			}
+			if (m_hasDiffuseImage) {
+				if (dRepeat[0] == 0) dRepeat = m_diffuseRepeat;
+				if (dRepeat != m_diffuseRepeat) chkF = true;
+			}
+			if (chkF) {
+				result = CImagesBlend::bake_mixed_repeat;
+				m_transparencyRepeat = repeat1;
+				m_opacityMaskRepeat = repeat1;
+				m_diffuseRepeat = repeat1;
+			}
+
+			dRepeat = sx::vec<int,2>(0, 0);
+			chkF = false;
+			if (m_hasReflectionImage) {
+				if (dRepeat[0] == 0) dRepeat = m_reflectionRepeat;
+				if (dRepeat != m_reflectionRepeat) chkF = true;
+			}
+			if (m_hasRoughnessImage) {
+				if (dRepeat[0] == 0) dRepeat = m_roughnessRepeat;
+				if (dRepeat != m_roughnessRepeat) chkF = true;
+			}
+			if (m_hasOcclusionImage) {
+				if (m_hasReflectionImage || m_hasRoughnessImage) {
+					if (dRepeat[0] == 0) dRepeat = m_occlusionRepeat;
+					if (dRepeat != m_occlusionRepeat) chkF = true;
+				}
+			}
+			if (chkF) {
+				result = CImagesBlend::bake_mixed_repeat;
+				m_reflectionRepeat = repeat1;
+				m_roughnessRepeat = repeat1;
+				m_occlusionRepeat = repeat1;
+			}
 		}
 	}
 
