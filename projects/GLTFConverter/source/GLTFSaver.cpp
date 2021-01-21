@@ -1821,6 +1821,9 @@ namespace {
 						colLine2.resize(wid);
 						float vR, vG, vB;
 
+						const float metallicV  = materialD.metallicFactor;
+						const float roughnessV = materialD.roughnessFactor;
+
 						std::string fName = "";
 						if (exportParam.engineType == GLTFConverter::engine_unigine) {
 							// Unigineの場合.
@@ -1829,7 +1832,9 @@ namespace {
 							for (int y = 0; y < hei; ++y) {
 								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
 								for (int x = 0; x < wid; ++x) {
-									colLine2[x] = sxsdk::rgba_class(colLine[x].blue, colLine[x].green, 1.0f, 1.0f);
+									vB = colLine[x].blue * metallicV;			// Metallic.
+									vG = colLine[x].green * roughnessV;			// Roughness.
+									colLine2[x] = sxsdk::rgba_class(vB, vG, 1.0f, 1.0f);
 								}
 								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
 							}
@@ -1841,8 +1846,8 @@ namespace {
 							for (int y = 0; y < hei; ++y) {
 								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
 								for (int x = 0; x < wid; ++x) {
-									vB = colLine[x].blue;		// Metallic.
-									vG = colLine[x].green;		// Roughness.
+									vB = colLine[x].blue * metallicV;					// Metallic.
+									vG = colLine[x].green * roughnessV;					// Roughness.
 									colLine2[x] = sxsdk::rgba_class(vB, vB, vB, 1.0f - vG);
 								}
 								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
@@ -1855,9 +1860,9 @@ namespace {
 							for (int y = 0; y < hei; ++y) {
 								image->get_pixels_rgba_float(0, y, wid, 1, &(colLine[0]));
 								for (int x = 0; x < wid; ++x) {
-									vB = colLine[x].blue;			// Metallic.
-									vG = colLine[x].green;			// Roughness.
-									vR = colLine[x].red;			// Occlusion.
+									vB = colLine[x].blue * metallicV;		// Metallic.
+									vG = colLine[x].green * roughnessV;		// Roughness.
+									vR = colLine[x].red;					// Occlusion.
 									colLine2[x] = sxsdk::rgba_class(vB, vR, 1.0f, 1.0f - vG);
 								}
 								sImage->set_pixels_rgba_float(0, y, wid, 1, &(colLine2[0]));
