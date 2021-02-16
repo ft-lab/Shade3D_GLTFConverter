@@ -8,8 +8,8 @@
 	<string id="title" value="gltf"/>
 	<string id="gltf_importer_title" value="glTF (gltf/glb) Shade3D Material ..."/>
 	<string id="gltf_exporter_title" value="glTF (glb) Shade3D Material ..."/>
-	<string id="occlusion_shader_title" value="Occlusion (glTF) Shade3D Material "/>
-	<string id="alpha_mode_title" value="AlphaMode (glTF) Shade3D Material ..."/>
+	<string id="occlusion_shader_title" value="Occlusion (glTF/USD) "/>
+	<string id="alpha_mode_title" value="AlphaMode (glTF/USD) ..."/>
 	<string id="license_dialog_title" value="glTF License"/>
 
 	<string id="license_All_rights_reserved" value="Has copyright." />
