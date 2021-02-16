@@ -106,7 +106,7 @@ glTFフォーマットでは、デフォルトでは表面のみ表示されま�
 
 ### エクスポート時のAlphaModeの指定について (ver.0.2.1.0 - )
 
-表面材質の「情報」ポップアップメニューより「AlphaMode (glTF) Shade3D Material」を選択することで、    
+表面材質の「情報」ポップアップメニューより「AlphaMode (glTF/USD) 」を選択することで、    
 glTFのalphaModeを指定できます。     
 <img src="./wiki_images/gltfConverter_alphamode_01.png"/>     
 
@@ -251,8 +251,8 @@ Ambient Occlusionの効果はマッピングレイヤの拡散反射の乗算と
 ### Occlusionのマッピングレイヤ (ver.0.1.0.12 対応)
 
 glTFでRoughness MetallicのOcclusion(R)要素を使用せず、単体のOcclusionテクスチャイメージを持つ場合、    
-インポート時はglTF Converterプラグインで用意している「Occlusion (glTF) Shade3D Material」のレイヤが使用されます。    
-これは、「Occlusion (glTF)/拡散反射」として「乗算」合成を割り当てて使用します。    
+インポート時はglTF Converterプラグインで用意している「Occlusion (glTF/USD)」のレイヤが使用されます。    
+これは、「Occlusion (glTF/USD)/拡散反射」として「乗算」合成を割り当てて使用します。    
 <img src="./wiki_images/gltfConverter_mapping_layer_occlusion_01.png"/>     
 レンダリングした場合、「イメージ/拡散反射」のマッピングレイヤと同じ挙動になります。    
 
@@ -263,16 +263,16 @@ Occlusionテクスチャイメージがマッピングレイヤで指定され�
 UV1/UV2のいずれかを指定できます(ver.0.1.0.13-)。投影は「ラップ（UVマッピング）」になります。    
 「適用率」の指定が、glTFのocclusionTexture.strengthになります。    
 
-UV1/UV2の選択は、「Occlusion (glTF) Shade3D Material/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
+UV1/UV2の選択は、「Occlusion (glTF/USD)/拡散反射」マッピングレイヤで「その他」ボタンを押し、表示されるダイアログボックスの「UV」で指定します。    
 <img src="./wiki_images/gltfConverter_mapping_layer_occlusion_uv.png"/>     
 「チャンネル」はイメージのR/G/B/AのどのチャンネルをOcclusionとして採用するか指定します(ver.0.2.2.0 -)。    
 
 ### Occlusionのマッピングレイヤをインポートした場合の注意事項 (ver.0.1.0.13 - )
 
-glTFインポート時、「Occlusion (glTF) Shade3D Material/拡散反射」マッピングレイヤでのUV層の選択が、読み込んだ直後はレンダリングに反映されません。    
+glTFインポート時、「Occlusion (glTF/USD)/拡散反射」マッピングレイヤでのUV層の選択が、読み込んだ直後はレンダリングに反映されません。    
 (Shade3Dのsxsdk::shader_interfaceに外部からアクセスできないため)     
 内部パラメータとしては反映されています。    
-Shade3DにglTFをインポートした後は、一度表面材質の「Occlusion (glTF)/拡散反射」マッピングレイヤで「その他」ボタンを押し、OKボタンで確定する必要があります。    
+Shade3DにglTFをインポートした後は、一度表面材質の「Occlusion (glTF/USD)/拡散反射」マッピングレイヤで「その他」ボタンを押し、OKボタンで確定する必要があります。    
 
 ### 表面材質（マテリアル）の拡散反射値と反射値の関係 (ver.0.1.0.9 対応)
 
@@ -339,8 +339,6 @@ BaseColorのAlphaチャンネルに不透明度が割り当てられます。
 <img src="./wiki_images/gltfConverter_export_mapping_layer_01.png"/>     
 「チャンネル合成」の指定は、「イメージ/拡散反射」の場合は「アルファ乗算済み」「アルファ透明」を指定できます。    
 「グレイスケール（平均）」「グレイスケール(R)」「グレイスケール(G)」「グレイスケール(B)」「グレイスケール(A)」を指定できます。    
-
-なお、「反復」の指定はver.0.1.0.9でいったん仕様外にしました。正しく動作しません。    
 
 「イメージ/拡散反射」「イメージ/反射」のマッピングレイヤを元に、glTFのBaseColor/Metallicを計算しています。    
 「イメージ/荒さ」のマッピングレイヤを元に、glTFのRoughnessを計算しています。    
@@ -559,6 +557,11 @@ Unityの場合、標準機能ではglTF(glb)ファイルの読み込みに対応
 |オクルージョン|マテリアル名_occlusion.png|RGB : Occlusion|     
 |メタリック-ラフネス|マテリアル名_shading.png|R : Metallic<br>G : Roughness<br>B : Specular Reflection(1.0)<br>A : Microfiber(1.0)|     
 
+## USD Exporterと共有する部分 (ver.0.2.5.2 - )
+
+表面材質の追加属性「AlphaMode (glTF/USD)」の指定は、USD Exporter ( https://github.com/ft-lab/Shade3D_USDExporter )でも同じパラメータを使用します。      
+
+表面材質のマッピングレイヤの「Occlusion (glTF/USD)」は、USD Exporter でも同じパラメータを使用します。      
 
 ## 制限事項
 

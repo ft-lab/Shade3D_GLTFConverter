@@ -1,5 +1,11 @@
 # 更新履歴
 
+[2021/02/16] ver.0.2.5.2   
+
+* [Changed] 表面材質マッピングの「Occlusion (glTF) Shade3D Material」を「Occlusion (glTF/USD)」に名前変更
+* [Changed] 表面材質の属性「AlphaMode (glTF) Shade3D Material」を「AlphaMode (glTF/USD)」に名前変更    
+→ USD Exporter ( https://github.com/ft-lab/Shade3D_USDExporter ) と情報を共有するようにしました。    
+
 [2021/01/23] ver.0.2.5.1   
 
 * [Fixed] Export : マテリアルの反復回数を指定している場合、無駄なベイクが発生しないようにした    
